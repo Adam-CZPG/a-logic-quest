@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { ArrowLeft, Flame, Sparkles, Volume2, VolumeX, Check } from 'lucide-react';
 import { generateLogicPuzzle, getLogicStats, saveLogicStats } from '@/lib/logicEngine';
-import { isSoundOn, toggleSound, vibrate, playTap, playWin, playClick, playBlock } from '@/lib/sfx';
+import { isSoundOn, toggleSound, vibrate, playWin, playClick, playBlock } from '@/lib/sfx';
 import { getLang, t } from '@/lib/i18n';
 
 export default function LogicGame() {
