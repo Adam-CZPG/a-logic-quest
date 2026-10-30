@@ -7,8 +7,12 @@ export const LANGS = [
 
 const LANG_KEY = 'mathpuzzle_lang';
 
+// The brain-games section follows the app-wide language (src/i18n); languages
+// these older games don't have fall back to English.
 export function getLang() {
   try {
+    const app = JSON.parse(localStorage.getItem('lq_settings_v1') || '{}').lang;
+    if (app) return STRINGS[app] ? app : 'en';
     return localStorage.getItem(LANG_KEY) || 'en';
   } catch {
     return 'en';
