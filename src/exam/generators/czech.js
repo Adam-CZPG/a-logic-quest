@@ -1,4 +1,6 @@
 // Český jazyk – generátory z ověřených seznamů slov + vlastní (originální) úlohy.
+import { CURATED_EXTRA } from './czechBank';
+
 // Obsah je vždy česky, protože předmětem je čeština. Formát úloh odpovídá
 // jednotné přijímací zkoušce (uzavřené úlohy A–D, ANO/NE, otevřené odpovědi).
 
@@ -382,6 +384,8 @@ const CURATED = [
   { topic: 'tvaroslovi', grades: [9, 9], type: 'choice', text: 'Ve které větě je sloveso v trpném rodě?', options: ['Dům postavili dělníci.', 'Dům byl postaven loni.', 'Dělníci stavějí dům.', 'Budeme stavět dům.'], answer: 1 },
 ];
 
+CURATED.push(...CURATED_EXTRA);
+
 function curatedPick(topic) {
   return (r, ctx) => {
     const pool = [];
@@ -412,7 +416,7 @@ export const CZECH_GENERATORS = {
   slovni_zasoba: [synAnt, synAnt, family, curatedPick('slovni_zasoba')],
   porozumeni: [curatedPick('porozumeni')],
   sloh: [curatedPick('sloh')],
-  literatura: [literature, literature, curatedPick('porozumeni')],
+  literatura: [literature, literature, curatedPick('literatura'), curatedPick('literatura')],
 };
 
 export function czechGeneratorsFor(topic) {
