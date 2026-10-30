@@ -11,6 +11,17 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			paper: { DEFAULT: 'hsl(var(--paper) / <alpha-value>)' },
+  			grid: { DEFAULT: 'hsl(var(--grid) / <alpha-value>)' },
+  			sheet: { DEFAULT: 'hsl(var(--sheet) / <alpha-value>)' },
+  			ink: { DEFAULT: 'hsl(var(--ink) / <alpha-value>)' },
+  			pen: { DEFAULT: 'hsl(var(--pen) / <alpha-value>)', soft: 'hsl(var(--pen-soft) / <alpha-value>)' },
+  			redpen: { DEFAULT: 'hsl(var(--redpen) / <alpha-value>)', soft: 'hsl(var(--redpen-soft) / <alpha-value>)' },
+  			ok: { DEFAULT: 'hsl(var(--ok) / <alpha-value>)', soft: 'hsl(var(--ok-soft) / <alpha-value>)' },
+  			marker: { DEFAULT: 'hsl(var(--marker) / <alpha-value>)' },
+  			line: { DEFAULT: 'hsl(var(--line) / <alpha-value>)' },
+  			'ink-soft': 'hsl(var(--ink-soft) / <alpha-value>)',
+  			'on-pen': 'hsl(var(--on-pen) / <alpha-value>)',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

@@ -1,0 +1,39 @@
+{
+  "name": "Ukázkový balíček",
+  "version": 1,
+  "questions": [
+    {
+      "subject": "math",
+      "topic": "slovni",
+      "grades": [5, 7],
+      "type": "number",
+      "text": "Vypočtěte, o kolik litrů se liší tři čtvrtiny z 24 litrů a třetina z 12 litrů.",
+      "prefix": "o",
+      "unit": "l",
+      "answer": 14,
+      "explain": "24 · 3/4 = 18; 12 : 3 = 4; 18 − 4 = 14"
+    },
+    {
+      "subject": "czech",
+      "topic": "pravopis",
+      "grade": 7,
+      "type": "choice",
+      "text": "Ve které možnosti je slovo zapsáno správně?",
+      "options": ["mlíny", "mlýny", "mlýni", "mlíni"],
+      "answer": 1
+    }
+  ],
+  "tests": [
+    {
+      "title": "Můj test od paní učitelky",
+      "subject": "math",
+      "grade": 5,
+      "minutes": 20,
+      "questions": [
+        { "subject": "math", "type": "number", "points": 2, "text": "Vypočítejte: 125 + 75 × 2", "answer": 275 },
+        { "subject": "math", "type": "tf", "points": 2, "text": "Rozhodněte, zda je tvrzení pravdivé.", "statements": ["Číslo 36 je dělitelné 4.", "Číslo 45 je sudé."], "answer": [true, false] },
+        { "subject": "math", "type": "match", "points": 3, "text": "Přiřaďte ke každé délce stejnou délku.", "left": ["1 km", "1 m", "1 dm"], "right": ["10 cm", "1000 m", "100 cm"], "answer": [1, 2, 0] }
+      ]
+    }
+  ]
+}

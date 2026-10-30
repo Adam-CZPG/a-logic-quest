@@ -37,7 +37,7 @@ export default function Achievements() {
       <div className="relative max-w-3xl mx-auto px-4 py-8 pb-20">
         <div className="flex items-center gap-3 mb-8">
           <Link
-            to="/"
+            to="/games"
             onClick={() => { vibrate(10); playClick(); }}
             className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition"
             aria-label={t(lang, 'home')}

@@ -1,92 +1,143 @@
+@import '@fontsource/bricolage-grotesque/500.css';
+@import '@fontsource/bricolage-grotesque/700.css';
+@import '@fontsource/bricolage-grotesque/800.css';
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* "Squared exercise book" design tokens:
+   paper with a blue grid, fountain-pen ink, the teacher's red pen, a highlighter. */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --font-heading: ui-sans-serif, system-ui, sans-serif;
-    --font-body: ui-sans-serif, system-ui, sans-serif;
-    --font-display: ui-sans-serif, system-ui, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --paper: 228 33% 98%;        /* #F7F8FC */
+    --grid: 222 50% 90%;         /* grid lines */
+    --sheet: 0 0% 100%;          /* cards / answer sheet */
+    --ink: 222 40% 15%;          /* main text */
+    --ink-soft: 222 15% 42%;
+    --pen: 228 72% 44%;          /* fountain-pen blue #1F3FBF */
+    --pen-soft: 228 80% 95%;
+    --on-pen: 0 0% 100%;
+    --redpen: 356 74% 54%;       /* teacher's red #E0313B */
+    --redpen-soft: 356 90% 96%;
+    --ok: 158 67% 37%;           /* correct green */
+    --ok-soft: 152 60% 93%;
+    --marker: 46 100% 65%;       /* highlighter yellow #FFD84D */
+    --line: 222 30% 86%;
+
+    /* shadcn/ui compatibility */
+    --background: var(--paper);
+    --foreground: var(--ink);
+    --card: var(--sheet);
+    --card-foreground: var(--ink);
+    --popover: var(--sheet);
+    --popover-foreground: var(--ink);
+    --primary: var(--pen);
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 40% 95%;
+    --secondary-foreground: var(--ink);
+    --muted: 222 40% 95%;
+    --muted-foreground: var(--ink-soft);
+    --accent: var(--pen-soft);
+    --accent-foreground: var(--ink);
+    --destructive: var(--redpen);
+    --destructive-foreground: 0 0% 100%;
+    --border: var(--line);
+    --input: var(--line);
+    --ring: var(--pen);
+    --radius: 0.9rem;
+
+    --font-heading: 'Bricolage Grotesque', 'Atkinson Hyperlegible', system-ui, sans-serif;
+    --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Arabic', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-display: var(--font-heading);
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --paper: 225 38% 11%;        /* night "school board" */
+    --grid: 225 30% 18%;
+    --sheet: 225 32% 15%;
+    --ink: 220 30% 93%;
+    --ink-soft: 222 15% 68%;
+    --pen: 226 90% 72%;
+    --pen-soft: 226 40% 22%;
+    --on-pen: 225 45% 10%;
+    --redpen: 356 85% 66%;
+    --redpen-soft: 356 40% 20%;
+    --ok: 155 55% 55%;
+    --ok-soft: 155 35% 18%;
+    --marker: 46 95% 62%;
+    --line: 225 25% 24%;
+    --secondary: 225 30% 20%;
+    --muted: 225 30% 20%;
   }
 }
 
-
-
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
-
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply text-foreground font-body antialiased;
+    background-color: hsl(var(--paper));
+    font-size: 17px;
+    line-height: 1.5;
   }
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 3px solid hsl(var(--pen) / 0.55);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* squared paper – the app's surface */
+  .paper {
+    background-color: hsl(var(--paper));
+    background-image:
+      linear-gradient(hsl(var(--grid)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid)) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+  }
+  .sheet {
+    background: hsl(var(--sheet));
+    border: 1.5px solid hsl(var(--line));
+    border-radius: 18px;
+  }
+  .marker {
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background-image: linear-gradient(transparent 55%, hsl(var(--marker) / 0.85) 55%, hsl(var(--marker) / 0.85) 92%, transparent 92%);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .ink-stroke {
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+    animation: draw 420ms cubic-bezier(.6, .1, .3, 1) forwards;
+  }
+  @keyframes draw {
+    to { stroke-dashoffset: 0; }
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
 }

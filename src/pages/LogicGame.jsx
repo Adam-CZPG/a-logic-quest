@@ -60,7 +60,7 @@ export default function LogicGame() {
       {/* Top bar */}
       <div className="relative flex items-center justify-between px-4 py-4 max-w-xl mx-auto w-full">
         <Link
-          to="/"
+          to="/games"
           onClick={() => { vibrate(10); playClick(); }}
           className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition"
         >

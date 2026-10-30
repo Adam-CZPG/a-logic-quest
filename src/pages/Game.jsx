@@ -23,8 +23,8 @@ export default function Game() {
 
   const progress = useMemo(() => getProgress(), [level]);
 
-  if (!levelNum || levelNum < 1 || levelNum > TOTAL_LEVELS) return <Navigate to="/" replace />;
-  if (!isUnlocked(levelNum, progress)) return <Navigate to="/" replace />;
+  if (!levelNum || levelNum < 1 || levelNum > TOTAL_LEVELS) return <Navigate to="/games" replace />;
+  if (!isUnlocked(levelNum, progress)) return <Navigate to="/games" replace />;
 
   return <GameBoard levelNum={levelNum} />;
 }
@@ -176,7 +176,7 @@ function GameBoard({ levelNum }) {
       {/* Top bar */}
       <div className="relative flex items-center justify-between px-4 py-4 max-w-xl mx-auto w-full">
         <Link
-          to="/"
+          to="/games"
           onClick={() => { vibrate(10); playClick(); }}
           className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition"
         >
@@ -394,7 +394,7 @@ function GameBoard({ levelNum }) {
               </div>
               <div className="flex gap-3">
                 <Link
-                  to="/"
+                  to="/games"
                   onClick={playClick}
                   className="flex-1 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 font-semibold transition"
                 >
@@ -410,7 +410,7 @@ function GameBoard({ levelNum }) {
                   </Link>
                 ) : (
                   <Link
-                    to="/"
+                    to="/games"
                     onClick={playClick}
                     className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 font-semibold transition"
                   >
@@ -450,7 +450,7 @@ function GameBoard({ levelNum }) {
               <p className="text-white/50 text-sm mb-6">{t(lang, 'timesUpDesc')}</p>
               <div className="flex gap-3">
                 <Link
-                  to="/"
+                  to="/games"
                   onClick={playClick}
                   className="flex-1 py-3 rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 font-semibold transition"
                 >

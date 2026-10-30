@@ -1,0 +1,20 @@
+{
+  "appId": "com.adamczpg.logicquest",
+  "appName": "Logic Quest",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#f7f8fc"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#1f3fbf",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#1f3fbf"
+    }
+  }
+}
