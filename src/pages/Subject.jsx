@@ -93,7 +93,8 @@ export default function Subject() {
                   <span className="font-heading font-bold w-[4.5rem] shrink-0 text-sm">{t('tests.series', { n: series })}</span>
                   <div className="flex-1 grid grid-cols-4 gap-1.5">
                     {MOCK_VARIANTS_PER_SERIES.map((v) => {
-                      const best = s.mocks[`${subject}:${grade}:${series}${v}`];
+                      const key = `${subject}:${grade}:${series}${v}`;
+                      const best = s.mocks[key] ?? s.tried[key];
                       return (
                         <button key={v}
                           onClick={() => setPick({ href: `/play/mock?subject=${subject}&series=${series}&variant=${v}`, title: t('tests.variantL', { v: `${series}${v}` }), timed: true })}
@@ -162,7 +163,8 @@ export default function Subject() {
                   <span className="font-heading font-bold w-12 shrink-0 tabular">{year}</span>
                   <div className="flex-1 grid grid-cols-4 gap-1.5">
                     {Array.from({ length: terms }, (_, i) => i + 1).map((term) => {
-                      const best = s.mocks[`${subject}:${grade}:${year}/${term}`];
+                      const key = `${subject}:${grade}:${year}/${term}`;
+                      const best = s.mocks[key] ?? s.tried[key];
                       return (
                         <button key={term}
                           onClick={() => setPick({ href: `/play/year?subject=${subject}&year=${year}&term=${term}`, title: t('official.yearTitle', { year, term }), timed: true, year })}

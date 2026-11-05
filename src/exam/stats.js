@@ -12,6 +12,7 @@ function fresh() {
     xp: 0, solved: 0, correct: 0, fixed: 0, dailyCount: 0,
     streak: { count: 0, last: null },
     topics: {}, mocks: {}, history: [], mistakes: [], dailyDone: {}, badges: {},
+    tried: {}, // every full test the child finished, even half-empty – shown green in the lists
     days: {}, // 'YYYY-MM-DD' → { a, c, m: { math: {a, c}, czech: {a, c} } } – progress over time
     firstAt: null,
   };
@@ -23,6 +24,7 @@ export function getStats() {
     if (!raw) return fresh();
     const s = { ...fresh(), ...JSON.parse(raw) };
     if (!s.days || typeof s.days !== 'object') s.days = {};
+    if (!s.tried || typeof s.tried !== 'object') s.tried = {};
     // older versions had no day log: rebuild a rough one from the finished tests
     if (!Object.keys(s.days).length && s.history.length) {
       s.history.forEach((h) => {
@@ -117,7 +119,14 @@ export function recordAnswer(q, result, { grade, firstTry = true } = {}) {
 export function recordFinish(set, { score, max, ms, grade, mode, answered = 0, count = 1 }) {
   const s = getStats();
   // a test only counts (history, XP, badges) when at least half of it was answered
-  if (answered * 2 < count) return [];
+  if (set.kind === 'mock' && answered > 0) {
+    const k = `${set.subject}:${grade}:${set.series}${set.variant}`;
+    s.tried[k] = Math.max(s.tried[k] ?? 0, score);
+  }
+  if (answered * 2 < count) {
+    save(s);
+    return [];
+  }
   const entry = { at: Date.now(), kind: set.kind, subject: set.subject, grade, score, max, ms, mode, series: set.series, variant: set.variant, topic: set.topic };
   s.history = [entry, ...s.history].slice(0, MAX_HISTORY);
   if (set.kind === 'mock') {

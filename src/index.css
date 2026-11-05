@@ -53,8 +53,9 @@
     --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Arabic', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     --font-display: var(--font-heading);
     --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Capacitor's SystemBars plugin may publish insets as --safe-area-inset-*; take whichever is larger */
+    --safe-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+    --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
   }
 
   .dark {
