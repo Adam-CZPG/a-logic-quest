@@ -3,7 +3,7 @@
 Gimnaziya va o'rta maktabga kirish imtihoniga (CERMAT jednotná přijímací zkouška) tayyorlov ilovasi. Web va Android (APK) — bitta kod.
 
 - **Chexiya rejimi:** matematika + chex tili va adabiyoti, 5 / 7 / 9-sinflar uchun alohida.
-- **Xalqaro rejim:** faqat matematika — butun dunyo uchun, 14 tilda.
+- **Xalqaro rejim:** faqat matematika — butun dunyo uchun, 4 tilda.
 - **To'liq testlar ("celý test"):** har bir fan va sinf uchun 10 seriya × 4 variant = **40 ta test**, har biri CERMAT formatida: 50 ball, matematika 70 daqiqa, chex tili 60 daqiqa.
 - **Mavzular ("skupiny úloh"):** TAU'dagi kategoriyalar (Číslo a početní operace, Převody jednotek, Geometrie v rovině, Osová souměrnost …) — har biri cheksiz yangi savollar beradi.
 - **Ikki rejim** (TAU kabi): *Simulace* — taymer, xatoni tuzatib bo'lmaydi; *Procvičování* — darhol tekshirish, xatoni tuzatish, yechim.
@@ -13,7 +13,9 @@ Gimnaziya va o'rta maktabga kirish imtihoniga (CERMAT jednotná přijímací zko
 - **Test to'plamlarini import qilish** (JSON) — o'qituvchi testlari yoki ruxsat olingan materiallar uchun. Format: [CONTENT.md](CONTENT.md).
 - Eski "Logic Quest" jumboq o'yinlari "Hry / Games" bo'limida qoldi.
 
-Tillar: čeština, English, українська, o'zbekcha, русский, Deutsch, español, français, português, polski, Türkçe, 中文, हिन्दी, العربية (RTL).
+Tillar: čeština, українська, English, русский — Chexiyada eng ko'p ishlatiladigan 4 ta til.
+
+**Ma'lumotlar yangilanishda saqlanadi:** APK doim bitta kalit (`android/app/logicquest.keystore`) bilan imzolanadi, shuning uchun yangi versiya eskisining ustiga o'rnatiladi va bolaning ismi va natijalari o'chmaydi. Qo'shimcha himoya: Sozlamalar → Zaxira nusxa.
 
 ## Savollar qayerdan keladi va nega doim to'g'ri
 

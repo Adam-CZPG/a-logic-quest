@@ -11,11 +11,12 @@ export default function Onboarding() {
   const { settings, update, t } = useSettings();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [name, setName] = useState(settings.name || '');
 
   const choose = (patch, next) => {
     update(patch);
     if (next === 'done') {
-      update({ onboarded: true });
+      update((prev) => ({ onboarded: true, startedAt: prev.startedAt || Date.now(), startGrade: prev.startGrade || prev.grade }));
       navigate('/', { replace: true });
     } else setStep(next);
   };
@@ -30,7 +31,7 @@ export default function Onboarding() {
             </button>
           )}
           <div className="ms-auto flex gap-1.5" aria-hidden="true">
-            {[0, 1, 2].map((i) => <span key={i} className={cn('h-2 rounded-full transition-all', i === step ? 'w-6 bg-pen' : 'w-2 bg-line')} />)}
+            {[0, 1, 2, 3].map((i) => <span key={i} className={cn('h-2 rounded-full transition-all', i === step ? 'w-6 bg-pen' : 'w-2 bg-line')} />)}
           </div>
         </div>
 
@@ -46,8 +47,8 @@ export default function Onboarding() {
                   {LANGS.map((l) => (
                     <button
                       key={l.code}
-                      onClick={() => choose({ lang: l.code, curriculum: l.code === 'cs' ? 'cz' : settings.curriculum }, 1)}
-                      className={cn('sheet flex items-center gap-3 px-4 py-3 text-start font-bold hover:border-pen', settings.lang === l.code && 'border-pen bg-pen-soft')}
+                      onClick={() => choose({ lang: l.code, curriculum: 'cz' }, 1)}
+                      className={cn('sheet flex items-center gap-2.5 px-3 py-3 text-start font-bold text-[15px] hover:border-pen', settings.lang === l.code && 'border-pen bg-pen-soft')}
                     >
                       <span className="text-2xl" aria-hidden="true">{l.flag}</span>
                       <span className="truncate">{l.name}</span>
@@ -58,13 +59,25 @@ export default function Onboarding() {
             )}
 
             {step === 1 && (
+              <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) choose({ name: name.trim().slice(0, 30) }, 2); }}>
+                <h1 className="font-heading font-extrabold text-3xl mt-6">{t('ob.name')}</h1>
+                <p className="mt-2 text-ink-soft">{t('ob.nameHint')}</p>
+                <input autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={30} placeholder={t('ob.namePh')} aria-label={t('ob.namePh')}
+                  className="mt-6 w-full rounded-2xl border-2 border-line focus:border-pen outline-none bg-sheet px-4 py-3.5 text-xl font-bold" />
+                <button type="submit" disabled={!name.trim()} className="mt-4 w-full rounded-2xl bg-pen text-on-pen py-3.5 font-bold text-lg disabled:opacity-40">
+                  {t('ob.continue')}
+                </button>
+              </form>
+            )}
+
+            {step === 2 && (
               <>
                 <h1 className="font-heading font-extrabold text-3xl mt-6">{t('ob.pickCountry')}</h1>
                 <div className="mt-6 space-y-3">
                   {Object.values(CURRICULA).map((c) => (
                     <button
                       key={c.id}
-                      onClick={() => choose({ curriculum: c.id }, 2)}
+                      onClick={() => choose({ curriculum: c.id }, 3)}
                       className={cn('sheet w-full flex items-center gap-4 p-5 text-start hover:border-pen', settings.curriculum === c.id && 'border-pen bg-pen-soft')}
                     >
                       <span className="text-4xl" aria-hidden="true">{c.flag}</span>
@@ -78,7 +91,7 @@ export default function Onboarding() {
               </>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <>
                 <h1 className="font-heading font-extrabold text-3xl mt-6">{t('ob.pickGrade')}</h1>
                 <div className="mt-6 space-y-3">

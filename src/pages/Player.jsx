@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Timer, ListChecks, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw } from 'lucide-react';
+import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels } from '@/exam/engine';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
@@ -11,6 +11,7 @@ import { getPackTests } from '@/exam/packs';
 import { hashString } from '@/exam/rng';
 import { TOPIC_EMOJI } from '@/exam/taxonomy';
 import QuestionView, { PenMark } from '@/components/exam/QuestionView';
+import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,13 @@ import { cn } from '@/lib/utils';
 function buildSet(kind, params, settings) {
   const { lang, grade, curriculum } = settings;
   const subject = params.get('subject') || 'math';
+  if (kind === 'year') {
+    // "in the style of" an official CERMAT year/term: same structure and difficulty, our own tasks
+    const year = Number(params.get('year'));
+    const term = Number(params.get('term') || 1);
+    const set = buildMockTest({ subject, grade, series: `${year}/${term}`, variant: '', lang, curriculum });
+    return { ...set, year, term, title: { key: 'official.yearTitle', vars: { year, term } } };
+  }
   if (kind === 'mock') {
     return buildMockTest({ subject, grade, series: Number(params.get('series') || 1), variant: params.get('variant') || 'A', lang, curriculum });
   }
@@ -98,8 +106,10 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
   const [elapsed, setElapsed] = useState(0);
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
+  const [overview, setOverview] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [drafts, setDrafts] = useState(() => qs.map(() => []));
   const started = useRef(Date.now());
-  const pillsRef = useRef(null);
 
   const q = qs[idx];
   const check = checks[idx];
@@ -151,16 +161,10 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     playClick();
   }, [qs.length]);
 
-  // keep the active pill visible
-  useEffect(() => {
-    const el = pillsRef.current?.querySelector(`[data-i="${idx}"]`);
-    el?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-  }, [idx]);
-
   // keyboard
   useEffect(() => {
     const onKey = (e) => {
-      if (result || confirm) return;
+      if (result || confirm || overview) return;
       if (e.target?.tagName === 'INPUT' && e.key !== 'Enter') return;
       const rtl = document.documentElement.dir === 'rtl';
       if (e.key === 'ArrowRight') go(idx + (rtl ? -1 : 1));
@@ -168,7 +172,7 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [idx, go, result, confirm]);
+  }, [idx, go, result, confirm, overview]);
 
   // swipe
   const touch = useRef(null);
@@ -244,7 +248,7 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
               {t('p.finish')}
             </button>
           </div>
-          <div className="mt-2 flex items-center gap-4 text-sm text-ink-soft tabular">
+          <div className="mt-1.5 flex items-center gap-3 text-sm text-ink-soft tabular">
             {mode === 'sim' || set.kind === 'mock' ? (
               <span className={cn('flex items-center gap-1.5', timed && set.minutes * 60 - elapsed < 300 && 'text-redpen font-bold')}>
                 <Timer className="w-4 h-4" />
@@ -253,43 +257,22 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
             ) : (
               <span className="flex items-center gap-1.5"><XCircle className="w-4 h-4" />{t('p.mistakes', { n: mistakes })}</span>
             )}
-            <span className="flex items-center gap-1.5"><ListChecks className="w-4 h-4" />{t('p.tasks', { n: qs.length })}</span>
-            <span className="ms-auto font-bold text-ink">{t('p.points', { a: points, b: maxPoints })}</span>
+            <span className="font-bold text-ink">{t('p.points', { a: points, b: maxPoints })}</span>
+            {/* one compact button instead of a long scrolling strip of task numbers */}
+            <button onClick={() => setOverview(true)} aria-label={t('p.overview')} className="ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
+              {t('p.taskOf', { a: labels[idx], b: qs.length })}
+              <LayoutGrid className="w-4 h-4 text-pen" />
+            </button>
           </div>
           {/* progress hairline */}
           <div className="mt-2 h-1 rounded-full bg-line overflow-hidden">
             <div className="h-full bg-pen transition-all" style={{ width: `${(answeredCount / qs.length) * 100}%` }} />
           </div>
-          {/* task pills */}
-          <div ref={pillsRef} className="mt-2 flex gap-2 overflow-x-auto no-scrollbar py-1" role="tablist">
-            {qs.map((qq, i) => {
-              const c = checks[i];
-              const filled = answers[i] !== null && answers[i] !== '' && !c;
-              return (
-                <button
-                  key={qq.id + i}
-                  data-i={i}
-                  role="tab"
-                  aria-selected={i === idx}
-                  onClick={() => go(i)}
-                  className={cn(
-                    'shrink-0 min-w-[3rem] h-10 px-3 rounded-full border-2 font-bold text-sm tabular transition-colors',
-                    i === idx ? 'bg-ink text-paper border-ink' : 'bg-sheet border-line',
-                    i !== idx && c?.correct && 'border-ok text-ok',
-                    i !== idx && c && !c.correct && 'border-redpen text-redpen',
-                    i !== idx && filled && 'border-pen/60',
-                  )}
-                >
-                  {labels[i]}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </header>
 
       {/* task */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-5 pb-40">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4" style={{ paddingBottom: draftOpen ? 'calc(46vh + 24px)' : 160 }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={idx} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.16 }}>
             <QuestionView
@@ -320,7 +303,16 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
       </main>
 
       {/* answer band – the blue strip from the official app, in fountain-pen ink */}
-      <footer className="fixed bottom-0 inset-x-0 z-20" style={{ paddingBottom: 'var(--safe-bottom)' }}>
+      {draftOpen && (
+        <Scratchpad
+          strokes={drafts[idx]}
+          onChange={(st) => setDrafts((d) => d.map((x, i) => (i === idx ? st : x)))}
+          onClose={() => setDraftOpen(false)}
+          t={t}
+        />
+      )}
+
+      <footer className="fixed bottom-0 inset-x-0 z-30" style={{ paddingBottom: 'var(--safe-bottom)' }}>
         <div className="max-w-3xl mx-auto px-3 pb-3">
           <div className="rounded-2xl bg-pen text-on-pen shadow-[0_8px_24px_-8px_hsl(var(--pen)/0.6)] flex items-center gap-2 p-2">
             <button
@@ -330,7 +322,12 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
             >
               <Check className="w-5 h-5" />{t('p.check')}
             </button>
-            <span className="text-sm font-bold opacity-90 px-1 tabular whitespace-nowrap">{t('p.pts', { n: q.points || 1 })}</span>
+            <button onClick={() => setDraftOpen((o) => !o)} aria-pressed={draftOpen} aria-label={t('p.draft')}
+              className={cn('relative w-11 h-11 rounded-xl grid place-items-center', draftOpen ? 'bg-on-pen text-pen' : 'bg-on-pen/15 hover:bg-on-pen/25')}>
+              <PencilLine className="w-5 h-5" />
+              {!draftOpen && drafts[idx]?.length > 0 && <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-marker" />}
+            </button>
+            <span className="text-sm font-bold opacity-90 px-0.5 tabular whitespace-nowrap">{t('p.pts', { n: q.points || 1 })}</span>
             <div className="ms-auto flex items-center gap-1.5">
               <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label={t('common.back')} className="w-11 h-11 rounded-xl bg-on-pen/15 hover:bg-on-pen/25 disabled:opacity-30 grid place-items-center">
                 <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
@@ -350,6 +347,38 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
       </footer>
 
       <AnimatePresence>
+        {overview && (
+          <motion.div className="fixed inset-0 z-40 bg-ink/40 grid place-items-end sm:place-items-center p-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOverview(false)}>
+            <motion.div role="dialog" aria-modal="true" aria-label={t('p.overview')} className="sheet w-full max-w-md p-4 max-h-[75vh] overflow-y-auto" initial={{ y: 30 }} animate={{ y: 0 }} exit={{ y: 30 }} onClick={(e) => e.stopPropagation()} style={{ marginBottom: 'var(--safe-bottom)' }}>
+              <div className="flex items-center mb-3">
+                <h2 className="font-heading font-bold text-lg flex-1">{t('p.overview')}</h2>
+                <button onClick={() => setOverview(false)} aria-label={t('common.close')} className="w-9 h-9 rounded-xl grid place-items-center hover:bg-pen-soft"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {qs.map((qq, i) => {
+                  const c = checks[i];
+                  const filled = answers[i] !== null && answers[i] !== '' && !c;
+                  return (
+                    <button
+                      key={qq.id + i}
+                      onClick={() => { go(i); setOverview(false); }}
+                      aria-current={i === idx}
+                      className={cn(
+                        'h-11 rounded-xl border-2 font-bold text-sm tabular',
+                        i === idx ? 'bg-ink text-paper border-ink' : 'bg-sheet border-line',
+                        i !== idx && c?.correct && 'border-ok bg-ok-soft text-ok',
+                        i !== idx && c && !c.correct && 'border-redpen bg-redpen-soft text-redpen',
+                        i !== idx && filled && 'border-pen/60 bg-pen-soft',
+                      )}
+                    >
+                      {labels[i]}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
         {confirm && (
           <motion.div className="fixed inset-0 z-40 bg-ink/40 grid place-items-end sm:place-items-center p-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setConfirm(false)}>
             <motion.div role="dialog" aria-modal="true" className="sheet w-full max-w-sm p-5" initial={{ y: 30 }} animate={{ y: 0 }} exit={{ y: 30 }} onClick={(e) => e.stopPropagation()}>
