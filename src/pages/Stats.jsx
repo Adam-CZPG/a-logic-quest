@@ -157,10 +157,10 @@ export default function Stats() {
           {BADGES.map((b) => {
             const got = !!s.badges[b.id];
             return (
-              <div key={b.id} className={cn('sheet p-3 flex items-center gap-3', !got && 'opacity-55')}>
-                <span className={cn('text-3xl', !got && 'grayscale')}>{b.emoji}</span>
+              <div key={b.id} className={cn('sheet p-2.5 flex items-center gap-2.5 min-w-0', !got && 'opacity-55')}>
+                <span className={cn('text-2xl shrink-0', !got && 'grayscale')}>{b.emoji}</span>
                 <div className="min-w-0">
-                  <p className="font-bold leading-tight">{t(`b.${b.id}`)}</p>
+                  <p className="font-bold text-sm leading-tight break-words hyphens-auto">{t(`b.${b.id}`)}</p>
                   <p className="text-xs text-ink-soft leading-tight">{t(`b.${b.id}_d`)}</p>
                 </div>
               </div>

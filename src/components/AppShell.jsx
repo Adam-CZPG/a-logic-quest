@@ -20,7 +20,7 @@ export default function AppShell({ header, children }) {
           <div className="max-w-2xl mx-auto px-4 py-2.5">{header}</div>
         </header>
       )}
-      <div className="max-w-2xl mx-auto px-4 pb-24" style={{ paddingTop: header ? 12 : 'calc(var(--safe-top) + 12px)' }}>
+      <div className="max-w-2xl mx-auto px-4" style={{ paddingTop: header ? 12 : 'calc(var(--safe-top) + 12px)', paddingBottom: 'calc(var(--safe-bottom) + 120px)' }}>
         {children}
       </div>
       <nav className="fixed bottom-0 inset-x-0 z-30 bg-sheet/95 backdrop-blur border-t border-line" style={{ paddingBottom: 'var(--safe-bottom)' }}>
