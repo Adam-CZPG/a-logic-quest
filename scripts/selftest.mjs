@@ -97,9 +97,24 @@ for (const grade of tax.GRADES) {
   }
 }
 
+// 2b) "in the style of a CERMAT year" tests: 50 points, deterministic
+for (const grade of tax.GRADES) {
+  for (const subject of ['math', 'czech']) {
+    for (const { year, terms } of tax.OFFICIAL_YEARS) {
+      for (let term = 1; term <= terms; term++) {
+        const t = engine.buildMockTest({ subject, grade, series: `${year}/${term}`, variant: '', lang: 'cs', curriculum: 'cz' });
+        const pts = t.questions.reduce((a, q) => a + q.points, 0);
+        if (pts !== 50) fail(`year ${subject}/${grade}/${year}/${term}: ${pts} points`);
+        t.questions.forEach((q) => validate(q, `year ${subject}/${grade}`));
+        mocks++;
+      }
+    }
+  }
+}
+
 // 3) daily plan = 3 per subject
 for (const grade of tax.GRADES) {
-  const p = engine.buildDailyPlan({ grade, lang: 'uz', curriculum: 'cz' });
+  const p = engine.buildDailyPlan({ grade, lang: 'uk', curriculum: 'cz' });
   if (p.questions.length !== 6) fail(`daily ${grade}: ${p.questions.length} questions`);
   const p2 = engine.buildDailyPlan({ grade, lang: 'en', curriculum: 'intl' });
   if (p2.questions.length !== 3) fail(`daily intl ${grade}: ${p2.questions.length}`);

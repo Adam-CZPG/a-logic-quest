@@ -95,7 +95,7 @@ export function checkAnswer(q, response) {
   }
 }
 
-const COMMA_LANGS = new Set(['cs', 'uk', 'uz', 'ru', 'de', 'es', 'fr', 'pt', 'pl', 'tr']);
+const COMMA_LANGS = new Set(['cs', 'uk', 'ru']);
 
 export function decimalSep(lang) {
   return COMMA_LANGS.has(lang) ? ',' : '.';

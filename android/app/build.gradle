@@ -7,8 +7,9 @@ android {
         applicationId "com.adamczpg.logicquest"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "2.0.0"
+        // CI passes its run number, so every new APK installs over the previous one
+        versionCode((System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger() + 10)
+        versionName "2.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +17,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // One fixed signing key, stored in the repo. Android only lets an update install over the
+    // old app (keeping the child's name and results) when both APKs carry the same signature.
+    signingConfigs {
+        shared {
+            storeFile file('logicquest.keystore')
+            storePassword 'logicquest'
+            keyAlias 'logicquest'
+            keyPassword 'logicquest'
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.shared
+        }
         release {
+            signingConfig signingConfigs.shared
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

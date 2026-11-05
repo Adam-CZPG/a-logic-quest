@@ -12,6 +12,8 @@ function fresh() {
     xp: 0, solved: 0, correct: 0, fixed: 0, dailyCount: 0,
     streak: { count: 0, last: null },
     topics: {}, mocks: {}, history: [], mistakes: [], dailyDone: {}, badges: {},
+    days: {}, // 'YYYY-MM-DD' → { a, c, m: { math: {a, c}, czech: {a, c} } } – progress over time
+    firstAt: null,
   };
 }
 
@@ -19,7 +21,19 @@ export function getStats() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fresh();
-    return { ...fresh(), ...JSON.parse(raw) };
+    const s = { ...fresh(), ...JSON.parse(raw) };
+    if (!s.days || typeof s.days !== 'object') s.days = {};
+    // older versions had no day log: rebuild a rough one from the finished tests
+    if (!Object.keys(s.days).length && s.history.length) {
+      s.history.forEach((h) => {
+        const d = (s.days[dailyKey(new Date(h.at))] ||= { a: 0, c: 0, m: {} });
+        const n = Math.max(1, Math.round(h.max / 3));
+        d.a += n;
+        d.c += Math.round((h.score / Math.max(1, h.max)) * n);
+      });
+    }
+    if (!s.firstAt) s.firstAt = s.history.length ? s.history[s.history.length - 1].at : null;
+    return s;
   } catch {
     return fresh();
   }
@@ -74,6 +88,12 @@ export function recordAnswer(q, result, { grade, firstTry = true } = {}) {
     if (result.correct) t.c++;
     s.topics[k] = t;
     s.solved++;
+    const d = (s.days[dailyKey()] ||= { a: 0, c: 0, m: {} });
+    const m = (d.m[q.subject] ||= { a: 0, c: 0 });
+    d.a++;
+    m.a++;
+    if (result.correct) { d.c++; m.c++; }
+    if (!s.firstAt) s.firstAt = Date.now();
     if (result.correct) {
       s.correct++;
       s.xp += 10 * (q.points || 1);
@@ -165,4 +185,60 @@ export function weakTopics(s, grade, curriculum) {
     out[sub] = list.sort((a, b) => (a.acc ?? -1) - (b.acc ?? -1)).map((x) => x.t);
   });
   return out;
+}
+
+// ---------------------------------------------------------------- progress over time
+function mondayOf(date) {
+  const d = new Date(date);
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+
+// Last `n` weeks (oldest first): tasks tried and accuracy, overall and per subject.
+export function weeklyTrend(s, n = 8) {
+  const start = mondayOf(new Date());
+  const weeks = [];
+  for (let w = n - 1; w >= 0; w--) {
+    const from = new Date(start);
+    from.setDate(from.getDate() - 7 * w);
+    const row = { from, a: 0, c: 0, m: {} };
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(from);
+      day.setDate(day.getDate() + i);
+      const d = s.days[dailyKey(day)];
+      if (!d) continue;
+      row.a += d.a;
+      row.c += d.c;
+      Object.entries(d.m || {}).forEach(([sub, v]) => {
+        const r = (row.m[sub] ||= { a: 0, c: 0 });
+        r.a += v.a;
+        r.c += v.c;
+      });
+    }
+    row.acc = row.a ? row.c / row.a : null;
+    weeks.push(row);
+  }
+  return weeks;
+}
+
+// The child's journey: since when, how many days, how much better than at the start.
+export function journey(s) {
+  const keys = Object.keys(s.days).sort();
+  const daysActive = keys.length;
+  const first = keys.slice(0, 3).reduce((acc, k) => ({ a: acc.a + s.days[k].a, c: acc.c + s.days[k].c }), { a: 0, c: 0 });
+  const last = keys.slice(-3).reduce((acc, k) => ({ a: acc.a + s.days[k].a, c: acc.c + s.days[k].c }), { a: 0, c: 0 });
+  const firstAcc = first.a ? first.c / first.a : null;
+  const lastAcc = last.a ? last.c / last.a : null;
+  const tests = s.history.filter((h) => h.kind === 'mock').length;
+  const attempts = s.history.length;
+  return {
+    firstAt: s.firstAt,
+    daysActive,
+    firstAcc,
+    lastAcc,
+    gain: daysActive >= 4 && firstAcc !== null && lastAcc !== null ? lastAcc - firstAcc : null,
+    tests,
+    attempts,
+  };
 }

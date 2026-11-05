@@ -1,10 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { translate, detectLang, isRtl } from '@/i18n';
+import { translate, detectLang, isRtl, ALL_DICTS } from '@/i18n';
 
 const KEY = 'lq_settings_v1';
 
 const DEFAULTS = {
   lang: null,
+  name: '',
+  startedAt: null, // first day with the app – the start of the child's journey
+  startGrade: null,
   curriculum: 'cz',
   grade: 5,
   onboarded: false,
@@ -15,7 +18,9 @@ const DEFAULTS = {
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { ...DEFAULTS, ...raw, lang: raw.lang || detectLang() };
+    // languages removed in 2.1 fall back to the device language
+    const lang = raw.lang && ALL_DICTS[raw.lang] ? raw.lang : detectLang();
+    return { ...DEFAULTS, ...raw, lang, startedAt: raw.startedAt || (raw.onboarded ? Date.now() : null), startGrade: raw.startGrade || raw.grade || null };
   } catch {
     return { ...DEFAULTS, lang: detectLang() };
   }

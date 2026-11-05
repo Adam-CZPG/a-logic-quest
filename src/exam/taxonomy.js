@@ -94,6 +94,7 @@ export const MOCK_VARIANTS_PER_SERIES = ['A', 'B', 'C', 'D'];
 
 // Official CERMAT archive (opened in TAU – the tests themselves belong to CERMAT).
 export const OFFICIAL_YEARS = [
+  { year: 2026, terms: 4 }, { year: 2025, terms: 4 },
   { year: 2024, terms: 4 }, { year: 2023, terms: 4 }, { year: 2022, terms: 4 }, { year: 2021, terms: 4 },
   { year: 2020, terms: 1 }, { year: 2019, terms: 2 }, { year: 2018, terms: 2 }, { year: 2017, terms: 2 },
   { year: 2016, terms: 1 }, { year: 2015, terms: 1 },
