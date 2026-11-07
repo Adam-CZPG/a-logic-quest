@@ -139,6 +139,20 @@ for (const lang of ['ru', 'uk']) {
   });
 }
 
+// 2d) update safety: old green tests (v2.1 keys) stay green after the update
+{
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i], get length() { return Object.keys(store).length; } };
+  globalThis.window = globalThis.window || { dispatchEvent() {} };
+  store.lq_stats_v1 = JSON.stringify({ xp: 777, solved: 42, mocks: { 'math:5:3B': 38 }, tried: { 'czech:9:1A': 12, 'math:5:2024/1': 20 }, history: [] });
+  const st = await load('/src/exam/stats.js');
+  const s1 = st.getStats();
+  if (s1.xp !== 777 || s1.solved !== 42) fail('update: old stats lost');
+  if (st.getRound(s1, 'math', 5).items['t:10'] !== 38) fail('update: old green test 3B lost');
+  if (st.getRound(s1, 'czech', 9).items['t:1'] !== 12) fail('update: old green test 1A lost');
+  delete globalThis.localStorage;
+}
+
 // 3) daily plan = 3 per subject
 for (const grade of tax.GRADES) {
   const p = engine.buildDailyPlan({ grade, lang: 'uk', curriculum: 'cz' });

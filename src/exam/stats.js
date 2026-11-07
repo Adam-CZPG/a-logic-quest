@@ -29,6 +29,18 @@ export function getStats() {
     if (!s.days || typeof s.days !== 'object') s.days = {};
     if (!s.tried || typeof s.tried !== 'object') s.tried = {};
     if (!s.rounds || typeof s.rounds !== 'object') s.rounds = {};
+    // v2.1 → v2.2: tests already done stay green in the new layout (series 3, variant B → test 10)
+    if (!s.roundsMigrated) {
+      [s.mocks, s.tried].forEach((map) => Object.entries(map || {}).forEach(([k, score]) => {
+        const m = k.match(/^(math|czech):(\d+):(\d+)([A-D])$/);
+        if (!m) return;
+        const n = (Number(m[3]) - 1) * 4 + 'ABCD'.indexOf(m[4]) + 1;
+        if (n < 1 || n > MOCK_COUNT) return;
+        const round = (s.rounds[`${m[1]}:${m[2]}`] ||= { cycle: 0, items: {} });
+        round.items[`t:${n}`] = Math.max(round.items[`t:${n}`] ?? 0, score);
+      }));
+      s.roundsMigrated = true;
+    }
     // older versions had no day log: rebuild a rough one from the finished tests
     if (!Object.keys(s.days).length && s.history.length) {
       s.history.forEach((h) => {
