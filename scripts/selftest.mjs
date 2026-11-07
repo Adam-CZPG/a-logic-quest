@@ -64,10 +64,15 @@ function validate(q, where) {
 
 // 1) every topic × grade × language, many seeds
 const langs = i18n.LANGS.map((l) => l.code);
-for (const grade of tax.GRADES) {
-  for (const subject of ['math', 'czech']) {
+// every country × its grades × its subjects
+const COMBOS = [];
+for (const c of Object.values(tax.CURRICULA)) for (const grade of c.grades) for (const subject of c.subjects) {
+  if (!COMBOS.some((x) => x.grade === grade && x.subject === subject)) COMBOS.push({ grade, subject, curriculum: c.id });
+}
+for (const { grade, subject } of COMBOS) {
+  {
     for (const topic of tax.topicsFor(subject, grade)) {
-      for (const lang of subject === 'czech' ? ['cs', 'en'] : langs) {
+      for (const lang of subject === 'math' ? langs : ['cs', 'en', 'de']) {
         for (let seed = 0; seed < (lang === 'cs' || lang === 'en' ? 12 : 3); seed++) {
           const set = engine.buildTopicSet({ subject, grade, topic, lang, curriculum: 'cz', count: 10, seed });
           if (set.questions.length < 8) fail(`${subject}/${grade}/${topic}/${lang}: only ${set.questions.length} questions`);
@@ -80,8 +85,8 @@ for (const grade of tax.GRADES) {
 
 // 2) mock tests: all 40 per subject/grade sum to 50 points, are deterministic, and change per round
 let mocks = 0;
-for (const grade of tax.GRADES) {
-  for (const subject of ['math', 'czech']) {
+for (const { grade, subject } of COMBOS) {
+  {
     for (let n = 1; n <= tax.MOCK_COUNT; n++) {
       for (const cycle of [0, 1]) {
         const t = engine.buildMockTest({ subject, grade, number: n, cycle, lang: 'cs', curriculum: 'cz' });
@@ -102,8 +107,8 @@ for (const grade of tax.GRADES) {
 }
 
 // 2b) fixed topic variants: deterministic within a round, different between rounds
-for (const grade of tax.GRADES) {
-  for (const subject of ['math', 'czech']) {
+for (const { grade, subject } of COMBOS) {
+  {
     for (const topic of tax.topicsFor(subject, grade)) {
       for (let v = 1; v <= tax.TOPIC_VARIANTS; v++) {
         const a = engine.buildTopicSet({ subject, grade, topic, lang: 'cs', curriculum: 'cz', variant: v, cycle: 0 });
@@ -154,11 +159,17 @@ for (const lang of ['ru', 'uk']) {
 }
 
 // 3) daily plan = 3 per subject
-for (const grade of tax.GRADES) {
-  const p = engine.buildDailyPlan({ grade, lang: 'uk', curriculum: 'cz' });
-  if (p.questions.length !== 6) fail(`daily ${grade}: ${p.questions.length} questions`);
-  const p2 = engine.buildDailyPlan({ grade, lang: 'en', curriculum: 'intl' });
-  if (p2.questions.length !== 3) fail(`daily intl ${grade}: ${p2.questions.length}`);
+for (const c of Object.values(tax.CURRICULA)) {
+  for (const grade of c.grades) {
+    const p = engine.buildDailyPlan({ grade, lang: c.id === 'de' ? 'de' : 'uk', curriculum: c.id });
+    if (p.questions.length !== 3 * c.subjects.length) fail(`daily ${c.id}/${grade}: ${p.questions.length} questions`);
+    p.questions.forEach((q) => validate(q, `daily ${c.id}/${grade}`));
+  }
+}
+// German UI: gendered names resolve, currency is €
+{
+  const set = engine.buildTopicSet({ subject: 'math', grade: 4, topic: 'slovni', lang: 'de', curriculum: 'de', count: 12, seed: 3 });
+  set.questions.forEach((q) => { if (/Kč|\{/.test(q.text)) fail('de: wrong currency or placeholder', q); });
 }
 
 // 4) checker edge cases

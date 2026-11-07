@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
 import { getStats, levelFromXp, currentStreak, topicAccuracy } from '@/exam/stats';
 import { dailyKey } from '@/exam/engine';
-import { CURRICULA, SUBJECTS, topicsFor } from '@/exam/taxonomy';
+import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 
 export function useStats() {
@@ -110,13 +110,24 @@ export default function Home() {
         <ChevronRight className="w-5 h-5 opacity-70" />
       </Link>
 
+      {curriculum === 'de' && (() => {
+        const info = deInfo(settings.state, grade);
+        if (!info) return (
+          <Link to="/settings" className="mt-2.5 block text-sm rounded-2xl border-2 border-dashed border-line px-3 py-2 text-ink-soft">{t('ob.pickState')} →</Link>
+        );
+        return <p className="mt-2.5 text-xs text-ink-soft rounded-2xl border border-line bg-sheet px-3 py-2">{t(info.key, { ...info.vars, exam: info.vars.exam || t('de.exam10') })}</p>;
+      })()}
+
       <h2 className="mt-5 mb-2 font-heading font-bold">{t('home.subjects')}</h2>
       <div className={cn('grid gap-2.5', subjectStats.length > 1 ? 'grid-cols-2' : 'grid-cols-1')}>
         {subjectStats.map(({ sub, avg, tried, total, mocks }) => (
           <Link key={sub} to={`/subject/${sub}`} className="sheet p-3 hover:border-pen transition-colors">
             <div className="flex items-center gap-2">
               <span className="w-9 h-9 rounded-xl bg-pen-soft grid place-items-center text-xl shrink-0" aria-hidden="true">{SUBJECTS[sub].emoji}</span>
-              <h3 className="font-heading font-bold text-[15px] leading-tight flex-1 min-w-0 line-clamp-2 break-words">{t(`subject.${sub}`)}</h3>
+              <h3 className="font-heading font-bold text-[15px] leading-tight flex-1 min-w-0 line-clamp-2 break-words">
+                {t(`subject.${sub}`)}
+                {subjectLevel(sub, grade) && <span className="ms-1 align-middle text-[11px] font-bold rounded-md bg-pen-soft text-pen px-1.5 py-0.5">{subjectLevel(sub, grade)}</span>}
+              </h3>
             </div>
             <div className="mt-2.5 flex items-end justify-between gap-2">
               <span className="text-xs text-ink-soft leading-tight">{tried}/{total}<br />{t('tests.count', { n: mocks })}</span>
