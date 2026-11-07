@@ -377,4 +377,8 @@ export default {
   'de.g10': 'Abschlussprüfung Klasse 10 in {state}: {exam}. Genaue Aufgaben und Termine legt dein Bundesland fest – frag an deiner Schule.',
   'de.exam10': 'Mittlerer Schulabschluss',
   'cz.standard': 'Übungstests nach dem Cermat-Standard für die tschechische Aufnahmeprüfung.',
+  'resume.continue': 'Dort weitermachen, wo ich aufgehört habe',
+  'resume.progress': '{a} von {b} Aufgaben erledigt',
+  'resume.continued': 'Du machst dort weiter, wo du aufgehört hast: {a} von {b} erledigt',
+  'resume.daily': 'Weitermachen: {a} von {b} erledigt',
 };

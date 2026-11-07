@@ -7,6 +7,7 @@ import { getStats, levelFromXp, currentStreak, topicAccuracy } from '@/exam/stat
 import { dailyKey } from '@/exam/engine';
 import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
+import { listResume } from '@/lib/resume';
 
 export function useStats() {
   const [s, setS] = useState(getStats);
@@ -47,6 +48,18 @@ export default function Home() {
   const streak = currentStreak(s);
   const subjects = CURRICULA[curriculum]?.subjects || ['math'];
   const doneToday = !!s.dailyDone[dailyKey()];
+  const [dailyRun, setDailyRun] = useState(null);
+  useEffect(() => {
+    const r = () => setDailyRun(listResume((m) => m.kind === 'daily' && m.day === dailyKey() && m.grade === grade)[0] || null);
+    r();
+    window.addEventListener('lq-resume', r);
+    window.addEventListener('focus', r);
+    return () => {
+      window.removeEventListener('lq-resume', r);
+      window.removeEventListener('focus', r);
+    };
+  }, [grade]);
+  const dailyLeft = !doneToday && dailyRun;
   const accuracy = s.solved ? Math.round((s.correct / s.solved) * 100) : null;
 
   const subjectStats = useMemo(() => subjects.map((sub) => {
@@ -94,16 +107,16 @@ export default function Home() {
         </Link>
       )}
       {/* today's plan – the daily discipline */}
-      <Link to="/play/daily?mode=practice" className={cn('flex items-center gap-3 rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.99]', doneToday ? 'bg-ok-soft border-ok/50' : 'bg-pen text-on-pen border-pen shadow-[0_8px_24px_-12px_hsl(var(--pen)/0.7)]')}>
+      <Link to={`/play/daily?mode=${dailyLeft ? dailyLeft.meta.mode : 'practice'}`} className={cn('flex items-center gap-3 rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.99]', doneToday ? 'bg-ok-soft border-ok/50' : 'bg-pen text-on-pen border-pen shadow-[0_8px_24px_-12px_hsl(var(--pen)/0.7)]')}>
         <span className={cn('w-10 h-10 rounded-xl grid place-items-center shrink-0', doneToday ? 'bg-ok text-white' : 'bg-on-pen/15')}>
           {doneToday ? <Check className="w-5 h-5" /> : <CalendarCheck className="w-5 h-5" />}
         </span>
         <div className="flex-1 min-w-0">
           <h2 className="font-heading font-bold leading-tight">{t('home.daily')}</h2>
-          <p className={cn('text-sm leading-snug truncate', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : t('home.dailyDesc')}</p>
+          <p className={cn('text-sm leading-snug truncate', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : dailyLeft ? `↺ ${t('resume.daily', { a: dailyLeft.answered, b: dailyLeft.meta.total })}` : t('home.dailyDesc')}</p>
           <div className="mt-1.5 flex gap-1">
-            {subjects.flatMap((sub) => [0, 1, 2].map((i) => (
-              <span key={`${sub}${i}`} className={cn('h-1.5 flex-1 rounded-full', doneToday ? 'bg-ok' : 'bg-on-pen/30')} />
+            {subjects.flatMap((sub, si) => [0, 1, 2].map((i) => (
+              <span key={`${sub}${i}`} className={cn('h-1.5 flex-1 rounded-full', doneToday || (dailyLeft && si * 3 + i < dailyLeft.answered) ? 'bg-ok' : 'bg-on-pen/30')} />
             )))}
           </div>
         </div>

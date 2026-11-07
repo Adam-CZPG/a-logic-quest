@@ -158,6 +158,27 @@ for (const lang of ['ru', 'uk']) {
   delete globalThis.localStorage;
 }
 
+// 2e) a test stopped in the middle continues where it stopped; finished or old runs disappear
+{
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i], get length() { return Object.keys(store).length; } };
+  globalThis.window = globalThis.window || { dispatchEvent() {} };
+  const rs = await load('/src/lib/resume.js');
+  const set = engine.buildDailyPlan({ grade: 5, lang: 'cs', curriculum: 'cz' });
+  const set2 = engine.buildDailyPlan({ grade: 5, lang: 'cs', curriculum: 'cz' });
+  const k = rs.resumeKey(set, 'practice', 5);
+  if (k !== rs.resumeKey(set2, 'practice', 5)) fail('resume: same daily plan gives a different key');
+  if (k === rs.resumeKey(set, 'sim', 5)) fail('resume: sim and practice share a key');
+  const answers = set.questions.map((q, i) => (i < 4 ? 0 : null));
+  rs.saveResume(k, { meta: rs.metaFor(set, 5, 'practice'), idx: 4, answers, checks: answers.map(() => null), reveal: answers.map(() => false), mistakes: 1, ms: 90000, answered: 4 });
+  const back = rs.loadResume(k, set.questions.length);
+  if (!back || back.idx !== 4 || back.answered !== 4 || back.ms !== 90000) fail('resume: saved run not restored');
+  if (rs.listResume((m) => m.kind === 'daily').length !== 1) fail('resume: daily run not listed');
+  rs.clearResume(k);
+  if (rs.loadResume(k, set.questions.length)) fail('resume: finished run still there');
+  delete globalThis.localStorage;
+}
+
 // 3) daily plan = 3 per subject
 for (const c of Object.values(tax.CURRICULA)) {
   for (const grade of c.grades) {

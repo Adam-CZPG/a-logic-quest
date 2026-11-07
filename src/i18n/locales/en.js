@@ -377,4 +377,8 @@ export default {
   'de.g10': 'Final exam of grade 10 in {state}: {exam}. The exact tasks and dates are set by your state – ask your school.',
   'de.exam10': 'Mittlerer Schulabschluss',
   'cz.standard': 'Practice tests modelled on the Cermat standard for the Czech entrance exam.',
+  'resume.continue': 'Continue where I stopped',
+  'resume.progress': '{a} of {b} tasks done',
+  'resume.continued': 'Continuing where you stopped: {a} of {b} tasks done',
+  'resume.daily': 'Continue: {a} of {b} tasks done',
 };

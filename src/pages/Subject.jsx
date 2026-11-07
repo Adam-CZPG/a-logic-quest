@@ -7,6 +7,7 @@ import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
 import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
+import { listResume } from '@/lib/resume';
 
 const LEVEL_EMOJI = ['🌱', '🚲', '🚀', '🏔️'];
 
@@ -28,6 +29,9 @@ export default function Subject() {
 
   const s = getStats();
   const round = getRound(s, subject, grade);
+  // unfinished runs of this subject in this round → orange ring + "continue" in the mode picker
+  const runs = listResume((m) => m.subject === subject && m.grade === grade && (m.cycle ?? 0) === round.cycle);
+  const runsFor = (kind, a, b) => runs.filter((x) => x.meta.kind === kind && (kind === 'mock' ? x.meta.number === a : x.meta.topic === a && x.meta.variant === b));
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = blueprintFor(subject, grade).length;
   const topics = topicsFor(subject, grade);
@@ -132,10 +136,11 @@ export default function Subject() {
                       {nums.map((n) => {
                         const best = round.items[`t:${n}`];
                         const done = best !== undefined;
+                        const going = !done && runsFor('mock', n).length > 0;
                         return (
                           <button key={n} aria-label={t('tests.variant', { n })}
-                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true })}
-                            className={cn('h-12 rounded-full border-2 flex flex-col items-center justify-center font-bold leading-none tabular', done ? 'border-ok bg-ok text-white' : 'border-line bg-sheet hover:border-pen')}>
+                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n) })}
+                            className={cn('h-12 rounded-full border-2 flex flex-col items-center justify-center font-bold leading-none tabular', done ? 'border-ok bg-ok text-white' : going ? 'border-marker bg-marker/25' : 'border-line bg-sheet hover:border-pen')}>
                             <span>{done ? <Check className="w-4 h-4" /> : n}</span>
                             {done && <span className="text-[10px] mt-0.5">{best}/50</span>}
                           </button>
@@ -184,10 +189,11 @@ export default function Subject() {
                   <div className="mt-2 flex gap-1.5">
                     {variants.map((v) => {
                       const done = round.items[`v:${topic}:${v}`] !== undefined;
+                      const going = !done && runsFor('topic', topic, v).length > 0;
                       return (
                         <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })}
-                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false })}
-                          className={cn('flex-1 h-9 rounded-lg border-2 font-bold text-sm tabular', done ? 'border-ok bg-ok text-white' : 'border-line bg-sheet hover:border-pen')}>
+                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v) })}
+                          className={cn('flex-1 h-9 rounded-lg border-2 font-bold text-sm tabular', done ? 'border-ok bg-ok text-white' : going ? 'border-marker bg-marker/25' : 'border-line bg-sheet hover:border-pen')}>
                           {done ? '✓' : v}
                         </button>
                       );
@@ -212,6 +218,12 @@ export default function Subject() {
               <p className="text-sm text-ink-soft">{t('mode.title')}</p>
               <h2 className="font-heading font-bold text-xl mb-1">{pick.title}</h2>
               <div className="space-y-2 mt-3">
+                {(pick.runs || []).map((run) => (
+                  <button key={run.key} onClick={() => start(run.meta.mode)} className="w-full flex items-start gap-3 rounded-2xl border-2 border-marker bg-marker/20 p-3.5 text-start">
+                    <span className="text-xl leading-none mt-0.5" aria-hidden="true">↺</span>
+                    <span><span className="block font-bold">{t('resume.continue')}</span><span className="block text-sm text-ink-soft">{t(run.meta.mode === 'sim' ? 'mode.sim' : 'mode.practice')} · {t('resume.progress', { a: run.answered, b: run.meta.total })}</span></span>
+                  </button>
+                ))}
                 {pick.timed && (
                   <button onClick={() => start('sim')} className="w-full flex items-start gap-3 rounded-2xl border-2 border-line p-3.5 text-start hover:border-pen">
                     <Timer className="w-6 h-6 text-pen shrink-0 mt-0.5" />

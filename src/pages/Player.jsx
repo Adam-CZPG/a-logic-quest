@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
-import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels } from '@/exam/engine';
+import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels, dailyKey } from '@/exam/engine';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
 import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
@@ -15,6 +15,22 @@ import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
+import { resumeKey, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
+
+const DAILY_KEY = 'lq_daily_plan_v1';
+function dailyWeak(grade, curriculum) {
+  const day = dailyKey();
+  const id = `${day}:${grade}:${curriculum}`;
+  try {
+    const c = JSON.parse(localStorage.getItem(DAILY_KEY) || 'null');
+    if (c && c.id === id && c.weak) return c.weak;
+  } catch {}
+  const weak = weakTopics(getStats(), grade, curriculum);
+  try {
+    localStorage.setItem(DAILY_KEY, JSON.stringify({ id, weak }));
+  } catch {}
+  return weak;
+}
 
 function buildSet(kind, params, settings) {
   const { lang, grade, curriculum } = settings;
@@ -31,7 +47,8 @@ function buildSet(kind, params, settings) {
     return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12, variant, cycle });
   }
   if (kind === 'daily') {
-    return buildDailyPlan({ grade, lang, curriculum, weakTopics: weakTopics(getStats(), grade, curriculum) });
+    // the plan is fixed for the whole day (weak topics taken in the morning), so a break never changes it
+    return buildDailyPlan({ grade, lang, curriculum, weakTopics: dailyWeak(grade, curriculum) });
   }
   if (kind === 'mistakes') {
     return buildMistakesSet(getStats().mistakes);
@@ -96,18 +113,41 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
   const maxPoints = qs.reduce((a, q) => a + (q.points || 1), 0);
   const timed = mode === 'sim' && !!set.minutes;
 
-  const [idx, setIdx] = useState(0);
-  const [answers, setAnswers] = useState(() => qs.map(() => null));
-  const [checks, setChecks] = useState(() => qs.map(() => null)); // {correct, score, max, n, first}
-  const [reveal, setReveal] = useState(() => qs.map(() => false));
-  const [mistakes, setMistakes] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  // an unfinished run of exactly this set (same tasks, same mode) continues where it stopped
+  const rKey = useMemo(() => resumeKey(set, mode, settings.grade), [set, mode, settings.grade]);
+  const saved = useMemo(() => loadResume(rKey, qs.length), [rKey, qs.length]);
+
+  const [idx, setIdx] = useState(() => Math.min(saved?.idx ?? 0, qs.length - 1));
+  const [answers, setAnswers] = useState(() => saved?.answers ?? qs.map(() => null));
+  const [checks, setChecks] = useState(() => saved?.checks ?? qs.map(() => null)); // {correct, score, max, n, first}
+  const [reveal, setReveal] = useState(() => saved?.reveal ?? qs.map(() => false));
+  const [mistakes, setMistakes] = useState(() => saved?.mistakes ?? 0);
+  const [elapsed, setElapsed] = useState(() => (saved?.ms ?? 0) / 1000);
+  const [resumed, setResumed] = useState(!!saved);
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
   const [overview, setOverview] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);
   const [drafts, setDrafts] = useState(() => qs.map(() => []));
-  const started = useRef(Date.now());
+  // time spent before a break counts, the break itself does not
+  const started = useRef(Date.now() - (saved?.ms ?? 0));
+
+  // keep the run on the device after every change (and every few seconds for the clock)
+  const finished = useRef(false);
+  useEffect(() => {
+    if (finished.current) return;
+    const touched = answers.some((a) => a !== null && a !== '') || checks.some(Boolean);
+    if (!touched) return;
+    saveResume(rKey, {
+      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes,
+      ms: Date.now() - started.current, answered: answers.filter((a) => a !== null && a !== '').length,
+    });
+  }, [rKey, set, settings.grade, mode, idx, answers, checks, reveal, mistakes, Math.floor(elapsed / 5)]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!resumed) return;
+    const id = setTimeout(() => setResumed(false), 3500);
+    return () => clearTimeout(id);
+  }, [resumed]);
 
   const q = qs[idx];
   const check = checks[idx];
@@ -137,6 +177,8 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     });
     const total = score + extra;
     const answered = final.filter((c) => !c.empty).length;
+    finished.current = true;
+    clearResume(rKey);
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
     setChecks(final);
     setResult({ score: total, ms, badges, counted: answered * 2 >= qs.length, roundFinished: !!set.roundFinished });
@@ -144,7 +186,7 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
       playWin();
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#1f3fbf', '#ffd84d', '#1f9d6b', '#e0313b'] });
     }
-  }, [checks, answers, qs, set, maxPoints, settings.grade, mode]);
+  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey]);
 
   useEffect(() => {
     if (timed && !result && elapsed >= set.minutes * 60) {
@@ -269,6 +311,11 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
             <div className="h-full bg-pen transition-all" style={{ width: `${(answeredCount / qs.length) * 100}%` }} />
           </div>
         </div>
+        {resumed && (
+          <div className="max-w-3xl mx-auto px-3 pb-2">
+            <p className="rounded-xl bg-ok-soft border border-ok/40 px-3 py-1.5 text-sm font-bold text-ok">↺ {t('resume.continued', { a: answers.filter((a) => a !== null && a !== '').length, b: qs.length })}</p>
+          </div>
+        )}
       </header>
 
       {/* task */}

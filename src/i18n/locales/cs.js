@@ -371,8 +371,12 @@ export default {
   'de.g4.probe': 'V zemi {state} je zkušební výuka (Probeunterricht), když známky nestačí – tyto úlohy ti pomohou se připravit.',
   'de.g4.eignung': 'V zemi {state} píší žáci se slabšími známkami test způsobilosti na gymnázium – tyto úlohy ti pomohou se připravit.',
   'de.g4.six': 'V zemi {state} se na gymnázium obvykle přechází po 6. třídě – úlohy pro 4. třídu jsou dobrý trénink základů.',
-  'de.g4.default': 'V zemi {state} rozhoduje doporučení školy a známky – s těmito úlohami budeš dobře připraven/a.',
+  'de.g4.default': 'V zemi {state} rozhoduje doporučení školy a známky – tyto úlohy ti pomohou se dobře připravit.',
   'de.g10': 'Závěrečná zkouška 10. třídy v zemi {state}: {exam}. Přesné úlohy a termíny určuje spolková země – zeptej se ve škole.',
   'de.exam10': 'Mittlerer Schulabschluss',
   'cz.standard': 'Vzorové testy podle standardu Cermat pro jednotnou přijímací zkoušku.',
+  'resume.continue': 'Pokračovat v rozdělané práci',
+  'resume.progress': 'Hotovo {a} z {b} úloh',
+  'resume.continued': 'Pokračuješ v rozdělané práci: hotovo {a} z {b} úloh',
+  'resume.daily': 'Pokračovat: {a} z {b} úloh hotovo',
 };
