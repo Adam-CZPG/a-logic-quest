@@ -18,7 +18,7 @@ export function backupFileName(name) {
   const d = new Date();
   const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const who = (name || '').normalize('NFD').replace(/[^\w]+/g, '').slice(0, 20);
-  return `Examigo-${who ? `${who}-` : ''}${day}.json`;
+  return `GB-Exam-${who ? `${who}-` : ''}${day}.json`;
 }
 
 export async function exportBackup(name) {

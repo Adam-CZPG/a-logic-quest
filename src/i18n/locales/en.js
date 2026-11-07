@@ -1,6 +1,6 @@
 // English – the master dictionary. Every other language falls back to these keys.
 export default {
-  'app.name': 'Examigo',
+  'app.name': 'GB Exam',
   'app.tagline': 'Exam prep for grades 5 · 7 · 9',
   'app.taglineCz': 'Gymnasium entrance exam prep',
 
@@ -321,7 +321,7 @@ export default {
   'set.backupDesc': 'Name and all results in one file — keep it on Google Drive or send it to yourself.',
   'set.restore': 'Restore from backup',
   'set.restored': 'Restored ✓',
-  'set.restoreError': 'This file is not a Examigo backup.',
+  'set.restoreError': 'This file is not a GB Exam backup.',
   'set.since': 'since {date}',
   'set.edit': 'Edit',
   'set.save': 'Save',

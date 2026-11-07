@@ -1,5 +1,5 @@
 export default {
-  'app.name': 'Examigo',
+  'app.name': 'GB Exam',
   'app.tagline': 'Příprava pro 5. · 7. · 9. ročník',
   'app.taglineCz': 'Příprava na přijímačky na gymnázium',
 
@@ -319,7 +319,7 @@ export default {
   'set.backupDesc': 'Jméno a všechny výsledky v jednom souboru — ulož si ho na Google Disk nebo pošli sobě.',
   'set.restore': 'Obnovit ze zálohy',
   'set.restored': 'Obnoveno ✓',
-  'set.restoreError': 'Tento soubor není záloha Examigo.',
+  'set.restoreError': 'Tento soubor není záloha GB Exam.',
   'set.since': 'od {date}',
   'set.edit': 'Upravit',
   'set.save': 'Uložit',

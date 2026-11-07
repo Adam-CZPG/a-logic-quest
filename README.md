@@ -1,4 +1,4 @@
-# Examigo — imtihonga tayyorlov (Chexiya · Germaniya · butun dunyo)
+# GB Exam (GBLine Technology) — imtihonga tayyorlov (Chexiya · Germaniya · butun dunyo)
 
 Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barcha topshiriqlar o'zimizniki yoki ilova tomonidan yaratiladi; ilova hech qaysi imtihon tashkiloti bilan bog'liq emas.
 

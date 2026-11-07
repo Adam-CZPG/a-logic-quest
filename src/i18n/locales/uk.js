@@ -1,5 +1,5 @@
 export default {
-  'app.name': 'Examigo',
+  'app.name': 'GB Exam',
   'app.tagline': 'Підготовка до іспитів для 5 · 7 · 9 класів',
   'app.taglineCz': 'Підготовка до вступу в гімназію',
 
@@ -319,7 +319,7 @@ export default {
   'set.backupDesc': 'Ім’я та всі результати в одному файлі — збережи на Google Диск або надішли собі.',
   'set.restore': 'Відновити з копії',
   'set.restored': 'Відновлено ✓',
-  'set.restoreError': 'Цей файл не є копією Examigo.',
+  'set.restoreError': 'Цей файл не є копією GB Exam.',
   'set.since': 'з {date}',
   'set.edit': 'Змінити',
   'set.save': 'Зберегти',
