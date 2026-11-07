@@ -8,7 +8,6 @@ import { slovakGeneratorsFor, readingGroups as slovakReading } from './generator
 import { SUBJECTS, topicsFor, CURRICULA, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
-import { getPackQuestions } from './packs';
 
 export function makeCtx({ lang, grade, curriculum }) {
   return {
@@ -55,13 +54,7 @@ export function generateQuestion(subject, topic, r, ctx0, points) {
   // generators see the grade their task bank is written for (+ English level / real grade)
   const ctx = { ...ctx0, grade: contentGrade(subject, ctx0.grade), realGrade: ctx0.grade, level: englishLevel(ctx0.grade) };
   const gens = generatorsFor(subject, topic, ctx0.grade);
-  const packs = getPackQuestions({ subject, grade: ctx0.grade, topic });
   for (let attempt = 0; attempt < 12; attempt++) {
-    // imported packs get a fair share of the pool
-    if (packs.length && r.chance(packs.length / (packs.length + gens.length * 3))) {
-      const p = r.pick(packs);
-      return finalize({ ...p }, { subject, topic, points: points ?? p.points });
-    }
     if (!gens.length) break;
     // prefer a generator not yet used in this set, so one test never repeats the same kind of task
     const used = ctx.usedGens || new Set();

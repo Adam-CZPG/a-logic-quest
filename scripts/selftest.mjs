@@ -246,15 +246,6 @@ for (const [code, d] of Object.entries(i18n.ALL_DICTS)) {
   if (d['m.weekdays_full'] && d['m.weekdays_full'].length !== 7) fail(`locale ${code} weekdays`);
 }
 
-// 6) the example content pack is valid and its answers pass the checker
-const packs = await load('/src/exam/packs.js');
-const fs = await import('node:fs');
-const pack = packs.parsePack(fs.readFileSync('content-packs/example-pack.json', 'utf8'));
-[...pack.questions, ...pack.tests.flatMap((t) => t.questions)].forEach((q) => validate({ points: 1, ...q }, 'example pack'));
-let bad = false;
-try { packs.parsePack({ name: 'x', questions: [{ subject: 'math', type: 'choice', text: 'a', options: ['a', 'b'], answer: 5 }] }); } catch { bad = true; }
-if (!bad) fail('invalid pack accepted');
-
 // 7) rng sanity
 const r = makeRng(1);
 if (r.int(1, 1) !== 1) fail('rng');

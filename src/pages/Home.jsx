@@ -8,6 +8,7 @@ import { dailyKey } from '@/exam/engine';
 import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
+import InviteSheet from '@/components/InviteSheet';
 
 export function useStats() {
   const [s, setS] = useState(getStats);
@@ -49,6 +50,7 @@ export default function Home() {
   const subjects = CURRICULA[curriculum]?.subjects || ['math'];
   const doneToday = !!s.dailyDone[dailyKey()];
   const [dailyRun, setDailyRun] = useState(null);
+  const [invite, setInvite] = useState(false);
   useEffect(() => {
     const r = () => setDailyRun(listResume((m) => m.kind === 'daily' && m.day === dailyKey() && m.grade === grade)[0] || null);
     r();
@@ -152,6 +154,16 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      <button onClick={() => setInvite(true)} className="sheet mt-2.5 w-full flex items-center gap-3 p-3 text-start hover:border-pen transition-colors">
+        <span className="w-10 h-10 rounded-xl bg-marker/30 grid place-items-center text-xl" aria-hidden="true">🤝</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-bold leading-tight">{t('invite.title')}</span>
+          <span className="block text-xs text-ink-soft">{t('invite.short')}</span>
+        </span>
+        <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
+      </button>
+      <InviteSheet open={invite} onClose={() => setInvite(false)} />
 
       {s.mistakes.length > 0 && (
         <Link to="/play/mistakes?mode=practice" className="sheet mt-2.5 flex items-center gap-3 p-3 hover:border-redpen transition-colors">

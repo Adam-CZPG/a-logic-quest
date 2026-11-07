@@ -7,8 +7,6 @@ import { useSettings } from '@/lib/settings';
 import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels, dailyKey } from '@/exam/engine';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
 import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
-import { getPackTests } from '@/exam/packs';
-import { hashString } from '@/exam/rng';
 import { TOPIC_EMOJI } from '@/exam/taxonomy';
 import QuestionView, { PenMark } from '@/components/exam/QuestionView';
 import Scratchpad from '@/components/exam/Scratchpad';
@@ -52,15 +50,6 @@ function buildSet(kind, params, settings) {
   }
   if (kind === 'mistakes') {
     return buildMistakesSet(getStats().mistakes);
-  }
-  if (kind === 'pack') {
-    const test = getPackTests({ subject, grade }).find((x) => x.packId === params.get('pack') && String(x.index) === params.get('i'));
-    if (!test) return null;
-    const qs = test.questions.map((q, i) => ({
-      topic: 'pack', points: 1, ...q, subject: test.subject,
-      id: `pack:${test.packId}:${test.index}:${i}:${hashString(q.text)}`,
-    }));
-    return { kind: 'pack', subject, grade, minutes: test.minutes, questions: qs, title: { text: test.title } };
   }
   return null;
 }

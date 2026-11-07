@@ -1,17 +1,17 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import AppShell, { PageTitle } from '@/components/AppShell';
 import { Avatar } from '@/pages/Home';
 import { useSettings } from '@/lib/settings';
 import { LANGS } from '@/i18n';
 import { CURRICULA, DE_STATES, gradesFor, fitGrade } from '@/exam/taxonomy';
 import { resetStats } from '@/exam/stats';
-import { getPacks, addPack, removePack, parsePack } from '@/exam/packs';
 import { isSoundOn, toggleSound } from '@/lib/sfx';
 import { syncReminder, isNative } from '@/lib/native';
 import { cn } from '@/lib/utils';
+import InviteSheet from '@/components/InviteSheet';
 import {
-  Upload, Trash2, Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
-  Volume2, Bell, Package, RotateCcw, Info,
+  Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
+  Volume2, Bell, RotateCcw, Info, UserPlus,
 } from 'lucide-react';
 
 function Group({ title, children }) {
@@ -64,11 +64,10 @@ function Switch({ on, onClick, label }) {
 export default function Settings() {
   const { settings, update, t } = useSettings();
   const [sound, setSound] = useState(isSoundOn);
-  const [packs, setPacks] = useState(getPacks);
   const [msg, setMsg] = useState(null);
+  const [invite, setInvite] = useState(false);
   const [editing, setEditing] = useState(!settings.name);
   const [draftName, setDraftName] = useState(settings.name || '');
-  const packRef = useRef(null);
 
   const since = settings.startedAt ? new Date(settings.startedAt).toLocaleDateString(settings.lang) : null;
 
@@ -76,19 +75,6 @@ export default function Settings() {
     e?.preventDefault();
     update({ name: draftName.trim().slice(0, 30) });
     setEditing(false);
-  }
-
-  async function onPack(e) {
-    const f = e.target.files?.[0];
-    e.target.value = '';
-    if (!f) return;
-    try {
-      const pack = parsePack(await f.text());
-      setPacks(addPack(pack));
-      setMsg({ ok: true, text: t('set.imported', { n: pack.count }) });
-    } catch {
-      setMsg({ ok: false, text: t('set.importError') });
-    }
   }
 
   async function setReminder(patch) {
@@ -173,21 +159,14 @@ export default function Settings() {
       </Group>
 
       <Group title={t('set.data')}>
-        <Row icon={Package} label={t('set.packs')} hint={t('set.packsDesc')} onClick={() => packRef.current?.click()}>
-          <Upload className="w-4 h-4 text-ink-soft" />
-        </Row>
-        {packs.map((p) => (
-          <div key={p.id} className="flex items-center gap-2 ps-14 pe-3 py-1.5 text-sm">
-            <span className="flex-1 truncate"><b>{p.name}</b> <span className="text-ink-soft">· {p.count}</span></span>
-            <button onClick={() => setPacks(removePack(p.id))} aria-label={t('set.remove')} className="w-8 h-8 rounded-lg grid place-items-center hover:bg-redpen-soft text-redpen">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
         <Row icon={RotateCcw} label={t('set.reset')} danger onClick={() => { if (window.confirm(t('set.resetConfirm'))) { resetStats(); setMsg({ ok: true, text: '✓' }); } }} />
       </Group>
-      <input ref={packRef} type="file" accept="application/json,.json" className="hidden" onChange={onPack} />
       {msg && <p className={cn('mt-2 px-1 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
+
+      <Group title={t('invite.title')}>
+        <Row icon={UserPlus} label={t('invite.title')} hint={t('invite.desc')} onClick={() => setInvite(true)} />
+      </Group>
+      <InviteSheet open={invite} onClose={() => setInvite(false)} />
 
       <Group title={t('set.about')}>
         <Row icon={Info} label={`${t('app.name')} ${t('set.version')} ${import.meta.env.APP_VERSION} · © GBLine Technology`} hint={settings.curriculum === 'cz' ? `${t('set.disclaimer')} ${t('cz.standard')}` : t('set.disclaimer')} />

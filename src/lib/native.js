@@ -80,3 +80,21 @@ export async function exitApp() {
 export function openExternal(url) {
   window.open(url, '_blank', 'noopener');
 }
+
+// The phone's own share menu (every messenger the person has installed).
+export function canShareNative() {
+  return isNative() || (typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+}
+
+export async function shareNative({ title, text, url }) {
+  try {
+    if (isNative()) {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({ title, text, url, dialogTitle: title });
+    } else if (navigator.share) {
+      await navigator.share({ title, text, url });
+    }
+  } catch {
+    // the person closed the share menu – nothing to do
+  }
+}

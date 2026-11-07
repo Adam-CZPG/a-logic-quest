@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, Package, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
-import { getPackTests } from '@/exam/packs';
 import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
@@ -35,7 +34,6 @@ export default function Subject() {
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = blueprintFor(subject, grade).length;
   const topics = topicsFor(subject, grade);
-  const packTests = getPackTests({ subject, grade });
   const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')]];
 
   const start = (mode) => {
@@ -152,20 +150,6 @@ export default function Subject() {
               })}
             </div>
 
-            {packTests.length > 0 && (
-              <div className="sheet p-3 mt-3">
-                <h3 className="font-heading font-bold mb-1 flex items-center gap-2"><Package className="w-4 h-4" />{t('packs.title')}</h3>
-                <ul>
-                  {packTests.map((pt) => (
-                    <li key={`${pt.packId}${pt.index}`}>
-                      <button onClick={() => setPick({ href: `/play/pack?subject=${subject}&pack=${encodeURIComponent(pt.packId)}&i=${pt.index}`, title: pt.title, timed: !!pt.minutes })} className="w-full text-start py-1.5 hover:text-pen">
-                        {pt.title} <span className="text-ink-soft text-sm">· {pt.packName}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </>
         )}
 

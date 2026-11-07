@@ -11,7 +11,7 @@ Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barc
 - **Yashil progress:** yechilgan test/to'plam yashil bo'ladi; hammasi yashil bo'lgach yangi "kolo" yangi topshiriqlar bilan boshlanadi (ball va statistika saqlanadi).
 - **Ikki rejim:** *Simulyatsiya* (taymer, tuzatishsiz) va *Mashq* (darhol tekshirish, yechim).
 - **Bugungi reja:** har fandan 3 tadan savol, kunlik eslatma (Android). Xatolar ustida ishlash, XP, nishonlar, statistika.
-- **Test to'plamlarini import qilish** (JSON) — format: [CONTENT.md](CONTENT.md).
+- **Do'stni taklif qilish:** WhatsApp, Telegram, Viber, SMS yoki telefonning ulashish menyusi orqali.
 
 Interfeys tillari: čeština, slovenčina, українська, English, русский, Deutsch.
 
@@ -55,7 +55,6 @@ npm run android:open   # Android Studio'da ochadi → Run ▶
 - `src/exam/engine.js` – testlar, mavzu to'plamlari, kunlik reja
 - `src/exam/checker.js` – javobni tekshirish (2,5 = 2.5 = 5/2; ANO/NE qisman ball)
 - `src/exam/stats.js` – XP, ketma-ketlik, statistika, xatolar, nishonlar
-- `src/exam/packs.js` – JSON test to'plamlarini import qilish
 - `src/i18n/locales/*.js` – 14 til (`en.js` — asosiy)
 - `src/pages/` – Onboarding, Home, Subject, Player, Stats, Settings + eski o'yinlar
 - `android/` – Capacitor Android loyihasi
