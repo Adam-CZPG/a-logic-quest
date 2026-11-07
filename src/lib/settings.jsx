@@ -15,6 +15,7 @@ const DEFAULTS = {
   onboarded: false,
   theme: 'system',
   reminder: { on: false, time: '17:00' },
+  avatar: null, // animal sticker shown in duels
 };
 
 function load() {

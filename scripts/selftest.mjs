@@ -204,6 +204,30 @@ for (const lang of ['ru', 'uk']) {
   }
 }
 
+// 2g) duel: both phones get the same tasks (whatever the interface language); links survive the trip
+{
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i], get length() { return Object.keys(store).length; } };
+  const duel = await load('/src/lib/duel.js');
+  for (const c of Object.values(tax.CURRICULA)) for (const grade of c.grades) for (const subject of c.subjects) {
+    for (const seed of ['abc', 'k9x2', '77']) {
+      const sets = ['cs', 'en', 'de', 'sk', 'uk'].map((lang) => engine.buildDuelSet({ subject, grade, curriculum: c.id, lang, seed }));
+      if (sets[0].questions.length !== engine.DUEL_SIZE) fail(`duel ${c.id}/${subject}/${grade}: ${sets[0].questions.length} tasks`);
+      const key = (st) => JSON.stringify(st.questions.map((q) => [q.type, q.answer, q.topic]));
+      sets.forEach((st) => { if (key(st) !== key(sets[0])) fail(`duel ${c.id}/${subject}/${grade}/${seed}: tasks differ between languages`); st.questions.forEach((q) => validate(q, `duel ${c.id}/${subject}`)); });
+    }
+  }
+  const d = { id: 'x1', subject: 'math', grade: 5, curriculum: 'cz', seed: 'abc', a: { n: 'Petra', v: '🦊', l: 'cs', p: 8, t: 192000 } };
+  const back = duel.decodeDuel(duel.encodeDuel(d));
+  if (!back || back.a.n !== 'Petra' || back.a.v !== '🦊' || back.seed !== 'abc' || back.b) fail('duel: link round trip');
+  if (duel.decodeDuel('garbage') !== null || duel.decodeDuel(duel.encodeDuel({ ...d, subject: 'czech', curriculum: 'de' })) !== null) fail('duel: bad link accepted');
+  const done = { ...d, role: 'a', b: { n: 'Tomáš', v: '🐼', l: 'sk', p: 8, t: 150000 } };
+  if (duel.outcome(done) !== 'them') fail('duel: same points, faster should win');
+  if (duel.outcome({ ...done, role: 'b' }) !== 'me') fail('duel: winner seen from the other side');
+  if (!/^https:\/\/.+#\/d\?d=[A-Za-z0-9_-]+$/.test(duel.duelLink(d))) fail('duel: link format');
+  delete globalThis.localStorage;
+}
+
 // 3) daily plan = 3 per subject
 for (const c of Object.values(tax.CURRICULA)) {
   for (const grade of c.grades) {
@@ -244,6 +268,8 @@ for (const [code, d] of Object.entries(i18n.ALL_DICTS)) {
     }
   }
   if (d['m.weekdays_full'] && d['m.weekdays_full'].length !== 7) fail(`locale ${code} weekdays`);
+  // same number of names everywhere → duels give the same tasks in every language
+  if (d['m.names'].length !== en['m.names'].length || d['m.namesG'].length !== d['m.names'].length) fail(`locale ${code} names`);
 }
 
 // 7) rng sanity

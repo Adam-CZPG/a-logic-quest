@@ -163,6 +163,28 @@ export function buildDailyPlan({ grade, lang, curriculum, weakTopics = {}, date 
   return { kind: 'daily', day, grade, questions: qs, title: { key: 'p.daily' } };
 }
 
+// ---------------------------------------------------------------- duel
+// 10 short tasks of one subject. The same seed + subject + grade + country give exactly the same
+// tasks on every phone (in every interface language), so two children can compete without a server.
+export const DUEL_SIZE = 10;
+export function buildDuelSet({ subject, grade, curriculum, lang, seed }) {
+  const r = makeRng(`duel:${subject}:${grade}:${curriculum}:${seed}`);
+  const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set() };
+  ctx.usedGens = new Set();
+  // the money must not depend on the interface language, or the two players would get different numbers
+  if (curriculum === 'intl') ctx.cur = '€';
+  // no long reading texts in a duel – it should be quick
+  const topics = topicsFor(subject, grade).filter((t) => t !== READING_TOPIC[subject]);
+  const start = hashString(String(seed)) % topics.length;
+  const qs = [];
+  for (let i = 0; qs.length < DUEL_SIZE && i < DUEL_SIZE * 3; i++) {
+    const topic = topics[(start + i) % topics.length];
+    const q = generateQuestion(subject, topic, r.fork(`d${i}`), ctx, 1);
+    if (q && !q.context) qs.push(q);
+  }
+  return { kind: 'duel', subject, grade, seed, curriculum, minutes: 12, questions: qs, title: { key: 'duel.title' } };
+}
+
 // ---------------------------------------------------------------- mistakes review
 export function buildMistakesSet(mistakes, max = 15) {
   const qs = mistakes.slice(0, max).map((m) => ({ ...m.q, mistakeId: m.q.id }));

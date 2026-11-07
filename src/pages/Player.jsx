@@ -4,7 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
-import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels, dailyKey } from '@/exam/engine';
+import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, buildDuelSet, taskLabels, dailyKey } from '@/exam/engine';
+import { getDuel, saveDuel } from '@/lib/duel';
+import { useMe, WEB_ONLY } from '@/pages/Duel';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
 import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
 import { TOPIC_EMOJI } from '@/exam/taxonomy';
@@ -32,6 +34,12 @@ function dailyWeak(grade, curriculum) {
 
 function buildSet(kind, params, settings) {
   const { lang, grade, curriculum } = settings;
+  if (kind === 'duel') {
+    // the duel's own subject, grade and country – so both players get the very same tasks
+    const d = getDuel(params.get('id'));
+    if (!d) return null;
+    return { ...buildDuelSet({ subject: d.subject, grade: d.grade, curriculum: d.curriculum, lang, seed: d.seed }), duelId: d.id };
+  }
   const subject = params.get('subject') || 'math';
   const cycle = getRound(getStats(), subject, grade).cycle;
   if (kind === 'mock') {
@@ -82,7 +90,7 @@ export default function Player() {
   const navigate = useNavigate();
   const [nonce, setNonce] = useState(0);
 
-  const set = useMemo(() => buildSet(kind, params, settings), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
+  const set = useMemo(() => (WEB_ONLY && kind !== 'duel' ? null : buildSet(kind, params, settings)), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
   const mode = params.get('mode') === 'sim' ? 'sim' : 'practice';
 
   if (!set || !set.questions.length) {
@@ -93,10 +101,11 @@ export default function Player() {
       </div>
     );
   }
-  return <Session key={`${nonce}-${set.questions[0].id}`} set={set} mode={mode} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} />;
+  return <Session key={`${nonce}-${set.questions[0].id}`} set={set} mode={mode} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} onDuelDone={(id) => navigate(`/duel/${id}`, { replace: true })} />;
 }
 
-function Session({ set, mode, t, settings, onRestart, onExit }) {
+function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
+  const { me } = useMe();
   const qs = set.questions;
   const labels = useMemo(() => taskLabels(qs), [qs]);
   const maxPoints = qs.reduce((a, q) => a + (q.points || 1), 0);
@@ -169,13 +178,23 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     finished.current = true;
     clearResume(rKey);
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
+    if (set.duelId) {
+      // a duel ends on the VS screen, not on the normal results
+      const d = getDuel(set.duelId);
+      if (d) {
+        const res = me(total, Math.max(ms, 1000));
+        saveDuel(d.role === 'a' ? { ...d, a: res } : { ...d, b: res });
+        onDuelDone(d.id);
+        return;
+      }
+    }
     setChecks(final);
     setResult({ score: total, ms, badges, counted: answered * 2 >= qs.length, roundFinished: !!set.roundFinished });
     if (total / maxPoints >= 0.8) {
       playWin();
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#1f3fbf', '#ffd84d', '#1f9d6b', '#e0313b'] });
     }
-  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey]);
+  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey, me, onDuelDone]);
 
   useEffect(() => {
     if (timed && !result && elapsed >= set.minutes * 60) {

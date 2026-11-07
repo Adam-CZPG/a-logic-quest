@@ -46,10 +46,11 @@ export function translate(lang, key, vars) {
   return s;
 }
 
+// The country decides the money; only "another country" falls back to the interface language.
 export function currencyFor(lang, curriculum) {
-  if (curriculum === 'cz' || (lang === 'cs' && curriculum !== 'de')) return 'Kč';
+  if (curriculum === 'cz') return 'Kč';
   if (curriculum === 'de' || curriculum === 'sk') return '€';
-  return { en: '€', uk: '₴', ru: '€', de: '€', sk: '€' }[lang] || '€';
+  return { cs: 'Kč', uk: '₴' }[lang] || '€';
 }
 
 export const ALL_DICTS = DICTS;

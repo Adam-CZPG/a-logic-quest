@@ -8,16 +8,18 @@ import { openExternal, shareNative, canShareNative } from '@/lib/native';
 export const INVITE_URL = 'https://play.google.com/store/apps/details?id=com.adamczpg.logicquest';
 
 // Invite a friend: WhatsApp, Telegram, Viber, SMS, the phone's own share menu, or copy the link.
-export default function InviteSheet({ open, onClose }) {
+// Also used to send a duel challenge: pass title/desc/text/url.
+export default function InviteSheet({ open, onClose, title, desc, text: customText, url: customUrl }) {
   const { t } = useSettings();
   const [copied, setCopied] = useState(false);
-  const text = t('invite.message', { app: t('app.name') });
-  const full = `${text} ${INVITE_URL}`;
+  const text = customText || t('invite.message', { app: t('app.name') });
+  const link = customUrl || INVITE_URL;
+  const full = `${text} ${link}`;
   const enc = encodeURIComponent;
 
   const targets = [
     { id: 'whatsapp', label: 'WhatsApp', icon: MessageCircle, color: 'bg-[#25D366]', url: `https://wa.me/?text=${enc(full)}` },
-    { id: 'telegram', label: 'Telegram', icon: Send, color: 'bg-[#229ED9]', url: `https://t.me/share/url?url=${enc(INVITE_URL)}&text=${enc(text)}` },
+    { id: 'telegram', label: 'Telegram', icon: Send, color: 'bg-[#229ED9]', url: `https://t.me/share/url?url=${enc(link)}&text=${enc(text)}` },
     { id: 'viber', label: 'Viber', icon: Phone, color: 'bg-[#7360F2]', url: `viber://forward?text=${enc(full)}` },
     { id: 'sms', label: 'SMS', icon: MessageSquare, color: 'bg-ink-soft', url: `sms:?&body=${enc(full)}` },
   ];
@@ -42,10 +44,10 @@ export default function InviteSheet({ open, onClose }) {
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-40 bg-ink/40 grid place-items-end sm:place-items-center p-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-          <motion.div role="dialog" aria-modal="true" aria-label={t('invite.title')} className="sheet w-full max-w-md p-4"
+          <motion.div role="dialog" aria-modal="true" aria-label={title || t('invite.title')} className="sheet w-full max-w-md p-4"
             initial={{ y: 40 }} animate={{ y: 0 }} exit={{ y: 40 }} onClick={(e) => e.stopPropagation()} style={{ marginBottom: 'var(--safe-bottom)' }}>
-            <h2 className="font-heading font-bold text-xl">{t('invite.title')}</h2>
-            <p className="text-sm text-ink-soft mt-1">{t('invite.desc')}</p>
+            <h2 className="font-heading font-bold text-xl">{title || t('invite.title')}</h2>
+            <p className="text-sm text-ink-soft mt-1">{desc || t('invite.desc')}</p>
             <p className="mt-3 rounded-xl bg-paper border border-line px-3 py-2 text-sm">{text}</p>
 
             <div className="grid grid-cols-4 gap-2 mt-4">
@@ -59,7 +61,7 @@ export default function InviteSheet({ open, onClose }) {
 
             <div className="grid grid-cols-2 gap-2 mt-3">
               {canShareNative() && (
-                <button onClick={() => shareNative({ title: t('app.name'), text, url: INVITE_URL })} className="rounded-xl border-2 border-line bg-sheet py-2.5 font-bold flex items-center justify-center gap-2 hover:border-pen">
+                <button onClick={() => shareNative({ title: title || t('app.name'), text, url: link })} className="rounded-xl border-2 border-line bg-sheet py-2.5 font-bold flex items-center justify-center gap-2 hover:border-pen">
                   <Share2 className="w-4 h-4" />{t('invite.more')}
                 </button>
               )}

@@ -9,6 +9,8 @@ import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/tax
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 import InviteSheet from '@/components/InviteSheet';
+import { usePendingDuel } from '@/pages/Duel';
+import { record as duelRecord, listDuels } from '@/lib/duel';
 
 export function useStats() {
   const [s, setS] = useState(getStats);
@@ -51,6 +53,9 @@ export default function Home() {
   const doneToday = !!s.dailyDone[dailyKey()];
   const [dailyRun, setDailyRun] = useState(null);
   const [invite, setInvite] = useState(false);
+  usePendingDuel();
+  const duels = duelRecord();
+  const duelTurn = listDuels().filter((d) => d.role === 'b' && !d.b).length;
   useEffect(() => {
     const r = () => setDailyRun(listResume((m) => m.kind === 'daily' && m.day === dailyKey() && m.grade === grade)[0] || null);
     r();
@@ -154,6 +159,16 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      {/* duel – the playful one: a sticker card in marker yellow */}
+      <Link to="/duel" className="mt-3 flex items-center gap-3 rounded-2xl border-[3px] border-[#1B2340] bg-marker text-[#1B2340] p-3 shadow-[4px_4px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-transform" style={{ transform: 'rotate(-0.8deg)' }}>
+        <span className="text-3xl" aria-hidden="true">⚔️</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-heading font-extrabold text-lg leading-tight">{t('duel.title')}</span>
+          <span className="block text-xs font-bold opacity-80">{duelTurn ? t('duel.turns', { n: duelTurn }) : t('duel.homeHint')}</span>
+        </span>
+        <span className="font-heading font-extrabold text-xl tabular">{duels.win}:{duels.loss}</span>
+      </Link>
 
       <button onClick={() => setInvite(true)} className="sheet mt-2.5 w-full flex items-center gap-3 p-3 text-start hover:border-pen transition-colors">
         <span className="w-10 h-10 rounded-xl bg-marker/30 grid place-items-center text-xl" aria-hidden="true">🤝</span>

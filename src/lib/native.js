@@ -98,3 +98,15 @@ export async function shareNative({ title, text, url }) {
     // the person closed the share menu – nothing to do
   }
 }
+
+// Links like gbexam://d?d=… open the installed app.
+export async function onAppUrl(handler) {
+  if (!isNative()) return () => {};
+  try {
+    const { App } = await import('@capacitor/app');
+    const sub = await App.addListener('appUrlOpen', (e) => handler(e.url));
+    return () => sub.remove();
+  } catch {
+    return () => {};
+  }
+}

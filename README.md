@@ -11,6 +11,7 @@ Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barc
 - **Yashil progress:** yechilgan test/to'plam yashil bo'ladi; hammasi yashil bo'lgach yangi "kolo" yangi topshiriqlar bilan boshlanadi (ball va statistika saqlanadi).
 - **Ikki rejim:** *Simulyatsiya* (taymer, tuzatishsiz) va *Mashq* (darhol tekshirish, yechim).
 - **Bugungi reja:** har fandan 3 tadan savol, kunlik eslatma (Android). Xatolar ustida ishlash, XP, nishonlar, statistika.
+- **⚔️ Duel (serversiz):** bola 10 ta savolni yechadi va havolani WhatsApp/Telegram/SMS orqali yuboradi; do'sti xuddi shu savollarni yechadi (ilovasiz, brauzerda ham), natija havola orqali qaytadi. G'olibga 👑 toj, har bir o'yinchida o'z davlati va tili bayrog'i.
 - **Do'stni taklif qilish:** WhatsApp, Telegram, Viber, SMS yoki telefonning ulashish menyusi orqali.
 
 Interfeys tillari: čeština, slovenčina, українська, English, русский, Deutsch.
@@ -63,3 +64,10 @@ npm run android:open   # Android Studio'da ochadi → Run ▶
 ## Huquqiy eslatma
 
 Chexiya bo'limidagi testlar CERMAT standarti bo'yicha namunaviy testlar: format bir xil, topshiriqlar esa to'liq o'zimizniki. CERMAT'ning asl testlarini ilovaga (masalan, test to'plami sifatida) qo'shish kerak bo'lsa, avval ulardan ruxsat oling.
+
+
+## Duel havolalari (GitHub Pages)
+
+Duel havolasi `https://adam-czpg.github.io/a-logic-quest/#/d?d=…` ko'rinishida bo'ladi. Bu sahifa faqat duel uchun (`VITE_WEB_DUEL=1`) – qolgan imkoniyatlar faqat ilovada.
+Bir martalik sozlash: GitHub → repo → **Settings → Pages → Source: GitHub Actions**. Shundan keyin `main` ga har bir push sahifani avtomatik yangilaydi (`.github/workflows/pages.yml`).
+Ilova o'rnatilgan telefonda `gbexam://d?d=…` havolasi to'g'ridan-to'g'ri ilovani ochadi.
