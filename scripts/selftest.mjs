@@ -38,6 +38,13 @@ function validate(q, where) {
     fail(`${where}: untranslated ${m && m[0]}`, q);
   }
   if (!q.text) fail(`${where}: no text`, q);
+  // a shown number answer never looks like 880,0000000000001
+  if (q.type === 'number' && !q.answerDisplay) {
+    for (const a of [].concat(q.answer)) if (Math.abs(a * 1000 - Math.round(a * 1000)) > 1e-6) fail(`${where}: answer not rounded ${a}`, q);
+  }
+  // no two options with the same text (that would make two answers right)
+  if (q.type === 'choice' && q.options.every((o) => typeof o === 'string') && new Set(q.options).size !== q.options.length) fail(`${where}: duplicate options`, q);
+  if (/\(a\)|\(la\)|\(а\)|\(ла\)/.test(q.text)) fail(`${where}: unresolved gender form`, q);
   if (q.type === 'choice') {
     if (!Array.isArray(q.options) || q.options.length < 2) fail(`${where}: options`, q);
     if (!(q.answer >= 0 && q.answer < q.options.length)) fail(`${where}: answer index`, q);
