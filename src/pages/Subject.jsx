@@ -208,6 +208,9 @@ export default function Subject() {
         {isCz && (subject === 'math' || subject === 'czech') && (
           <p className="mt-4 px-1 text-xs text-ink-soft">{t('cz.standard')}</p>
         )}
+        {curriculum === 'sk' && (subject === 'math' || subject === 'slovak') && (
+          <p className="mt-4 px-1 text-xs text-ink-soft">{t('sk.standard')}</p>
+        )}
       </div>
 
       {/* mode picker */}

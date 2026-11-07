@@ -189,7 +189,10 @@ function person(r, ctx, key = 'name') {
 // ---------------------------------------------------------------- slovní úlohy
 const slovni = {
   shopping(r, ctx) {
-    const n = r.int(5, 9), p = r.int(8, 45), bill = n * p < 100 ? 100 : n * p < 200 ? 200 : n * p < 500 ? 500 : 1000;
+    // euro prices are about 25× smaller than crowns, so the numbers stay realistic
+    const euro = ctx.cur === '€';
+    const n = r.int(5, 9), p = euro ? r.int(2, 9) : r.int(8, 45);
+    const bill = euro ? (n * p < 20 ? 20 : n * p < 50 ? 50 : 100) : n * p < 100 ? 100 : n * p < 200 ? 200 : n * p < 500 ? 500 : 1000;
     const ans = bill - n * p;
     return {
       type: 'number', unit: ctx.cur, answer: ans,
@@ -198,7 +201,7 @@ const slovni = {
     };
   },
   unitPrice(r, ctx) {
-    const unit = r.int(3, 15), n = r.int(5, 9), m = r.int(5, 14);
+    const unit = ctx.cur === '€' ? r.int(1, 4) : r.int(3, 15), n = r.int(5, 9), m = r.int(5, 14);
     if (m === n) return slovni.unitPrice(r, ctx);
     return {
       type: 'number', unit: ctx.cur, answer: unit * m,

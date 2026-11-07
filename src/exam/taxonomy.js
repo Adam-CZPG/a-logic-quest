@@ -11,6 +11,9 @@ export const CURRICULA = {
   // Germany – grade 4: move to Gymnasium (Übertritt / Probeunterricht / Eignungstest),
   // grade 10: final exams of lower secondary (MSA, ZP10 …) in maths, German, English
   de: { id: 'de', flag: '🇩🇪', grades: [4, 10], subjects: ['math', 'german', 'english'], states: true },
+  // Slovakia – grade 5: entrance exams to 8-year gymnasium (maths + Slovak, set by each school),
+  // grade 9: Testovanie 9 (maths + Slovak) and entrance exams to secondary schools
+  sk: { id: 'sk', flag: '🇸🇰', grades: [5, 9], subjects: ['math', 'slovak', 'english'] },
   // Everyone else – maths and English work in every country
   intl: { id: 'intl', flag: '🌍', grades: [5, 7, 9], subjects: ['math', 'english'] },
 };
@@ -30,6 +33,7 @@ export const SUBJECTS = {
   math: { id: 'math', emoji: '📐', minutes: 70, gradient: 'from-violet-500 to-indigo-600', glow: 'shadow-violet-600/30' },
   czech: { id: 'czech', emoji: '📖', minutes: 60, gradient: 'from-rose-500 to-orange-500', glow: 'shadow-rose-600/30' },
   english: { id: 'english', emoji: '🇬🇧', minutes: 50, gradient: 'from-sky-500 to-blue-600', glow: 'shadow-sky-600/30' },
+  slovak: { id: 'slovak', emoji: '📗', minutes: 60, gradient: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-600/30' },
   german: { id: 'german', emoji: '📘', minutes: 60, gradient: 'from-amber-500 to-red-500', glow: 'shadow-amber-600/30' },
 };
 
@@ -92,6 +96,7 @@ export const TOPIC_EMOJI = {
   pravopis: '✍️', tvaroslovi: '🔤', skladba: '🧱', slovni_zasoba: '📚', porozumeni: '👓',
   sloh: '💬', literatura: '🎭',
   en_grammar: '🧩', en_tenses: '⏳', en_vocab: '📚', en_reading: '👓', en_communication: '💬',
+  sk_pravopis: '✍️', sk_tvaroslovie: '🔤', sk_skladba: '🧱', sk_slovna_zasoba: '📚', sk_porozumenie: '👓', sk_literatura: '🎭',
   de_rechtschreibung: '✍️', de_grammatik: '🔤', de_zeichensetzung: '❗', de_wortschatz: '📚', de_lesen: '👓',
 };
 
@@ -106,7 +111,13 @@ const GERMAN_TOPICS = {
   10: ['de_rechtschreibung', 'de_grammatik', 'de_zeichensetzung', 'de_wortschatz', 'de_lesen'],
 };
 
+const SLOVAK_TOPICS = {
+  5: ['sk_pravopis', 'sk_tvaroslovie', 'sk_skladba', 'sk_slovna_zasoba', 'sk_porozumenie'],
+  9: ['sk_pravopis', 'sk_tvaroslovie', 'sk_skladba', 'sk_slovna_zasoba', 'sk_porozumenie', 'sk_literatura'],
+};
+
 export function topicsFor(subject, grade) {
+  if (subject === 'slovak') return SLOVAK_TOPICS[grade >= 7 ? 9 : 5];
   if (subject === 'english') return ENGLISH_TOPICS[englishLevel(grade)];
   if (subject === 'german') return GERMAN_TOPICS[grade >= 7 ? 10 : 4];
   const map = subject === 'czech' ? CZECH_TOPICS : MATH_TOPICS;
@@ -115,7 +126,7 @@ export function topicsFor(subject, grade) {
 }
 
 // the topic whose tasks share one source text – put first in a full test as one block
-export const READING_TOPIC = { czech: 'porozumeni', english: 'en_reading', german: 'de_lesen' };
+export const READING_TOPIC = { czech: 'porozumeni', english: 'en_reading', german: 'de_lesen', slovak: 'sk_porozumenie' };
 
 // Mock-test blueprints: [topic, points]. Every blueprint sums to 50 points like the real exam.
 export const BLUEPRINTS = {
@@ -171,6 +182,10 @@ BLUEPRINTS.english = {
   A2: twos([['en_reading', 6], ['en_grammar', 6], ['en_tenses', 6], ['en_vocab', 4], ['en_communication', 3]]),
   B1: twos([['en_reading', 6], ['en_grammar', 6], ['en_tenses', 7], ['en_vocab', 3], ['en_communication', 3]]),
 };
+BLUEPRINTS.slovak = {
+  5: twos([['sk_porozumenie', 5], ['sk_pravopis', 7], ['sk_tvaroslovie', 6], ['sk_skladba', 3], ['sk_slovna_zasoba', 4]]),
+  9: twos([['sk_porozumenie', 5], ['sk_pravopis', 6], ['sk_tvaroslovie', 5], ['sk_skladba', 4], ['sk_slovna_zasoba', 3], ['sk_literatura', 2]]),
+};
 BLUEPRINTS.german = {
   4: twos([['de_lesen', 5], ['de_rechtschreibung', 8], ['de_grammatik', 7], ['de_wortschatz', 5]]),
   10: twos([['de_lesen', 5], ['de_rechtschreibung', 6], ['de_grammatik', 6], ['de_zeichensetzung', 4], ['de_wortschatz', 4]]),
@@ -180,6 +195,7 @@ BLUEPRINTS.german = {
 export function blueprintFor(subject, grade) {
   if (subject === 'english') return BLUEPRINTS.english[englishLevel(grade)];
   if (subject === 'german') return BLUEPRINTS.german[grade >= 7 ? 10 : 4];
+  if (subject === 'slovak') return BLUEPRINTS.slovak[grade >= 7 ? 9 : 5];
   const map = BLUEPRINTS[subject];
   return map[contentGrade(subject, grade)] || map[5];
 }

@@ -4,6 +4,7 @@ import { mathGeneratorsFor } from './generators/math';
 import { czechGeneratorsFor, readingGroups as czechReading } from './generators/czech';
 import { englishGeneratorsFor, readingGroups as englishReading } from './generators/english';
 import { germanGeneratorsFor, readingGroups as germanReading } from './generators/german';
+import { slovakGeneratorsFor, readingGroups as slovakReading } from './generators/slovak';
 import { SUBJECTS, topicsFor, CURRICULA, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
@@ -37,6 +38,7 @@ function generatorsFor(subject, topic, grade) {
   if (subject === 'czech') return czechGeneratorsFor(topic);
   if (subject === 'english') return englishGeneratorsFor(topic);
   if (subject === 'german') return germanGeneratorsFor(topic);
+  if (subject === 'slovak') return slovakGeneratorsFor(topic);
   return mathGeneratorsFor(topic, contentGrade('math', grade));
 }
 
@@ -45,6 +47,7 @@ function readingFor(subject, grade) {
   if (subject === 'czech') return czechReading(contentGrade('czech', grade));
   if (subject === 'english') return englishReading(englishLevel(grade));
   if (subject === 'german') return germanReading(grade);
+  if (subject === 'slovak') return slovakReading(grade);
   return [];
 }
 

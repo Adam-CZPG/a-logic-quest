@@ -72,7 +72,7 @@ for (const c of Object.values(tax.CURRICULA)) for (const grade of c.grades) for 
 for (const { grade, subject } of COMBOS) {
   {
     for (const topic of tax.topicsFor(subject, grade)) {
-      for (const lang of subject === 'math' ? langs : ['cs', 'en', 'de']) {
+      for (const lang of subject === 'math' ? langs : ['cs', 'en', 'de', 'sk']) {
         for (let seed = 0; seed < (lang === 'cs' || lang === 'en' ? 12 : 3); seed++) {
           const set = engine.buildTopicSet({ subject, grade, topic, lang, curriculum: 'cz', count: 10, seed });
           if (set.questions.length < 8) fail(`${subject}/${grade}/${topic}/${lang}: only ${set.questions.length} questions`);
@@ -179,10 +179,28 @@ for (const lang of ['ru', 'uk']) {
   delete globalThis.localStorage;
 }
 
+// 2f) Slovak: the verb agrees with the subject (Petra kúpila, Peter kúpil, dieťa kúpilo, deti kúpili)
+{
+  const { SLOVAK_LISTS: L } = await load('/src/exam/generators/slovak.js');
+  for (let seed = 0; seed < 300; seed++) {
+    for (const grade of [5, 9]) {
+      const set = engine.buildTopicSet({ subject: 'slovak', grade, topic: 'sk_skladba', lang: 'sk', curriculum: 'sk', count: 10, seed });
+      set.questions.filter((q) => q.type === 'choice' && /zhoda/.test(q.text)).forEach((q) => {
+        const subj = L.SG_SUBJ.find(([n]) => q.expr.startsWith(`${n} `));
+        const right = q.options[q.answer];
+        if (subj) {
+          const v = L.VERBS.find((x) => x.includes(right));
+          if (!v || v[{ m: 0, f: 1, n: 2 }[subj[1]]] !== right) fail(`sk agreement: ${q.expr} → ${right}`, q);
+        } else if (!/li$/.test(right)) fail(`sk plural agreement: ${q.expr} → ${right}`, q);
+      });
+    }
+  }
+}
+
 // 3) daily plan = 3 per subject
 for (const c of Object.values(tax.CURRICULA)) {
   for (const grade of c.grades) {
-    const p = engine.buildDailyPlan({ grade, lang: c.id === 'de' ? 'de' : 'uk', curriculum: c.id });
+    const p = engine.buildDailyPlan({ grade, lang: { de: 'de', sk: 'sk' }[c.id] || 'uk', curriculum: c.id });
     if (p.questions.length !== 3 * c.subjects.length) fail(`daily ${c.id}/${grade}: ${p.questions.length} questions`);
     p.questions.forEach((q) => validate(q, `daily ${c.id}/${grade}`));
   }

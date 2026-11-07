@@ -3,6 +3,7 @@ import cs from './locales/cs';
 import uk from './locales/uk';
 import ru from './locales/ru';
 import de from './locales/de';
+import sk from './locales/sk';
 
 // The four languages most used by families in Czechia + German for Germany.
 export const LANGS = [
@@ -10,10 +11,11 @@ export const LANGS = [
   { code: 'uk', name: 'Українська', flag: '🇺🇦' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
 ];
 
-const DICTS = { en, cs, uk, ru, de };
+const DICTS = { en, cs, uk, ru, de, sk };
 
 export function isRtl() {
   return false;
@@ -22,8 +24,7 @@ export function isRtl() {
 export function detectLang() {
   try {
     const nav = (navigator.languages || [navigator.language || 'cs']).map((l) => l.toLowerCase().split('-')[0]);
-    // Slovak speakers read Czech comfortably
-    const found = nav.map((l) => (l === 'sk' ? 'cs' : l)).find((l) => DICTS[l]);
+    const found = nav.find((l) => DICTS[l]);
     return found || 'en';
   } catch {
     return 'en';
@@ -47,8 +48,8 @@ export function translate(lang, key, vars) {
 
 export function currencyFor(lang, curriculum) {
   if (curriculum === 'cz' || (lang === 'cs' && curriculum !== 'de')) return 'Kč';
-  if (curriculum === 'de') return '€';
-  return { en: '€', uk: '₴', ru: '€', de: '€' }[lang] || '€';
+  if (curriculum === 'de' || curriculum === 'sk') return '€';
+  return { en: '€', uk: '₴', ru: '€', de: '€', sk: '€' }[lang] || '€';
 }
 
 export const ALL_DICTS = DICTS;

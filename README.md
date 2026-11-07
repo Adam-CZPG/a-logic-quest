@@ -1,9 +1,10 @@
-# GB Exam (GBLine Technology) — imtihonga tayyorlov (Chexiya · Germaniya · butun dunyo)
+# GB Exam (GBLine Technology) — imtihonga tayyorlov (Chexiya · Slovakiya · Germaniya · butun dunyo)
 
 Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barcha topshiriqlar o'zimizniki yoki ilova tomonidan yaratiladi; ilova hech qaysi imtihon tashkiloti bilan bog'liq emas.
 
 - **🇨🇿 Chexiya:** gimnaziyaga qabul (5 / 7 / 9-sinf) — matematika + chex tili, qo'shimcha ingliz tili.
 - **🇩🇪 Germaniya:** Bundesland tanlanadi; 4-sinf (gimnaziyaga o'tish: Probeunterricht / Eignungstest / tavsiya) va 10-sinf (MSA, ZP10 …) — Mathe, Deutsch, Englisch.
+- **🇸🇰 Slovakiya:** 5-sinf (8 yillik gimnaziya qabuli) va 9-sinf (Testovanie 9 / o'rta maktab qabuli) — matematika, slovak tili, ingliz tili.
 - **🌍 Boshqa davlatlar:** matematika + ingliz tili.
 - **Ingliz tili** CEFR darajasida: 5-sinf → A1, 7 → A2, 9–10 → B1 (grammatika, zamonlar, lug'at, muloqot, o'z matnlarimiz bilan o'qish).
 - **To'liq testlar:** har fan va sinf uchun 40 ta (4 daraja × 10), har biri 50 ball. **Mavzular:** har mavzuda 5 ta to'plam.
@@ -12,7 +13,7 @@ Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barc
 - **Bugungi reja:** har fandan 3 tadan savol, kunlik eslatma (Android). Xatolar ustida ishlash, XP, nishonlar, statistika.
 - **Test to'plamlarini import qilish** (JSON) — format: [CONTENT.md](CONTENT.md).
 
-Interfeys tillari: čeština, українська, English, русский, Deutsch.
+Interfeys tillari: čeština, slovenčina, українська, English, русский, Deutsch.
 
 **Ma'lumotlar yangilanishda saqlanadi:** APK doim bitta kalit (`android/app/logicquest.keystore`) bilan imzolanadi, shuning uchun yangi versiya eskisining ustiga o'rnatiladi va bolaning ismi va natijalari o'chmaydi.
 
