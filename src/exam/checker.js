@@ -74,7 +74,7 @@ export function checkAnswer(q, response) {
         if (response[i] === a) right++;
       });
       const ok = right === total;
-      // CERMAT-style: full points for all correct, one point less for exactly one mistake
+      // exam-style: full points for all correct, one point less for exactly one mistake
       let score = 0;
       if (ok) score = max;
       else if (max >= 2 && right === total - 1) score = max - 1;

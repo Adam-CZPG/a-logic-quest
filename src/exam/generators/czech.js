@@ -115,29 +115,125 @@ function fillIY(r) {
   return null;
 }
 
-// shoda přísudku s podmětem: [podmět, koncovka]
+// ---------------------------------------------------------------- shoda přísudku s podmětem
+// Množné číslo: [podmět, koncovka, živé?]. Pravidlo: je-li v podmětu mužský životný → -i;
+// jinak mužský neživotný / ženský → -y; jen střední → -a.
 const SUBJECTS = [
-  ['Kluci', 'i'], ['Psi', 'i'], ['Učitelé', 'i'], ['Sousedé', 'i'], ['Chlapci', 'i'], ['Stromy', 'y'], ['Vlaky', 'y'], ['Hrady', 'y'],
-  ['Ženy', 'y'], ['Dívky', 'y'], ['Kočky', 'y'], ['Děti', 'y'], ['Husy', 'y'], ['Města', 'a'], ['Kuřata', 'a'], ['Auta', 'a'],
-  ['Koťata', 'a'], ['Chlapci a dívky', 'i'], ['Ženy a děti', 'y'], ['Kočky a psi', 'i'], ['Stromy a keře', 'y'], ['Vesnice a města', 'y'],
+  ['Kluci', 'i', 1], ['Psi', 'i', 1], ['Učitelé', 'i', 1], ['Sousedé', 'i', 1], ['Chlapci', 'i', 1], ['Ptáci', 'i', 1], ['Lvi', 'i', 1],
+  ['Stromy', 'y', 0], ['Vlaky', 'y', 0], ['Hrady', 'y', 0], ['Mraky', 'y', 0],
+  ['Ženy', 'y', 1], ['Dívky', 'y', 1], ['Kočky', 'y', 1], ['Děti', 'y', 1], ['Husy', 'y', 1], ['Myši', 'y', 1], ['Holky', 'y', 1],
+  ['Kuřata', 'a', 1], ['Koťata', 'a', 1], ['Štěňata', 'a', 1], ['Auta', 'a', 0], ['Okna', 'a', 0], ['Města', 'a', 0],
+  ['Chlapci a dívky', 'i', 1], ['Ženy a děti', 'y', 1], ['Kočky a psi', 'i', 1], ['Dědeček a babička', 'i', 1],
+  ['Maminka a tatínek', 'i', 1], ['Slepice a kuřata', 'y', 1], ['Stromy a keře', 'y', 0], ['Vesnice a města', 'y', 0],
+  ['Koťata a štěňata', 'a', 1],
 ];
+// [příčestí bez koncovky, doplnění, jen pro živé?]
 const VERBS = [
-  ['běhal', 'po hřišti'], ['zpíval', 'písničky'], ['čekal', 'na autobus'], ['spal', 'až do rána'], ['svítil', 'v dálce'],
-  ['stál', 'u cesty'], ['hrál', 'si na zahradě'], ['šustil', 'listím'], ['bručel', 'v zimě'],
+  ['běhal', 'po hřišti', 1], ['zpíval', 'písničky', 1], ['čekal', 'na autobus', 1], ['spal', 'až do rána', 1],
+  ['hrál', 'si na zahradě', 1], ['bručel', 'v zimě', 1], ['skákal', 'přes louži', 1], ['pískal', 'celé odpoledne', 1],
+  ['stál', 'u cesty', 0], ['zmizel', 'v mlze', 0], ['byl', 'vidět z dálky', 0], ['zůstal', 'za námi', 0],
 ];
+function pluralPair(r) {
+  const s = r.pick(SUBJECTS);
+  const v = r.pick(VERBS.filter((x) => s[2] || !x[2]));
+  return { s, v };
+}
 function agreement(r) {
-  let s, v, verbOk = true;
-  do {
-    s = r.pick(SUBJECTS);
-    v = r.pick(VERBS);
-    // only sensible combinations
-    verbOk = !(/Města|Vesnice|Stromy|Hrady|Vlaky/.test(s[0]) && /zpíval|spal|hrál|bručel|běhal|čekal/.test(v[0]));
-  } while (!verbOk);
+  const { s, v } = pluralPair(r);
   const opts = ['i', 'y', 'a'];
-  const sent = `${s[0]} ${v[0]}_ ${v[1]}.`;
   return {
-    type: 'choice', text: 'Doplňte správnou koncovku příčestí:', expr: sent, options: opts,
-    answer: opts.indexOf(s[1]), explain: `${s[0]} ${v[0]}${s[1]} ${v[1]}.`,
+    type: 'choice', text: 'Doplňte správnou koncovku příčestí minulého (shoda přísudku s podmětem):', expr: `${s[0]} ${v[0]}_ ${v[1]}.`, options: opts,
+    answer: opts.indexOf(s[1]), explain: `${s[0]} ${v[0]}${s[1]} ${v[1]}. ${agreementRule(s[1])}`,
+  };
+}
+function agreementRule(end) {
+  if (end === 'i') return 'Podmět je (nebo obsahuje) rod mužský životný → -i.';
+  if (end === 'y') return 'Rod mužský neživotný nebo ženský (bez mužského životného) → -y.';
+  return 'Rod střední v množném čísle → -a.';
+}
+
+// Jednotné číslo: podmět určuje rod tvaru slovesa (David koupil × Petra koupila × kotě koupilo …).
+// [podmět, rod: m | f | n]
+const SG_SUBJECTS = [
+  ['David', 'm'], ['Tomáš', 'm'], ['Jakub', 'm'], ['Dědeček', 'm'], ['Pan Novák', 'm'], ['Náš soused', 'm'],
+  ['Petra', 'f'], ['Anna', 'f'], ['Klára', 'f'], ['Babička', 'f'], ['Paní učitelka', 'f'], ['Moje sestra', 'f'],
+  ['Dítě', 'n'], ['Kotě', 'n'], ['Štěně', 'n'], ['Děvčátko', 'n'],
+];
+// [m, f, n, doplnění]
+const SG_VERBS = [
+  ['koupil', 'koupila', 'koupilo', 'nový sešit'], ['přišel', 'přišla', 'přišlo', 'pozdě domů'], ['snědl', 'snědla', 'snědlo', 'celý rohlík'],
+  ['utekl', 'utekla', 'uteklo', 'za roh'], ['usnul', 'usnula', 'usnulo', 'u televize'], ['našel', 'našla', 'našlo', 'ztracený klíč'],
+  ['nesl', 'nesla', 'neslo', 'těžkou tašku'], ['vypil', 'vypila', 'vypilo', 'sklenici mléka'], ['šel', 'šla', 'šlo', 'na procházku'],
+  ['mohl', 'mohla', 'mohlo', 'jít ven'], ['řekl', 'řekla', 'řeklo', 'pravdu'],
+];
+const ROD_IDX = { m: 0, f: 1, n: 2 };
+const ROD_NAME = { m: 'rod mužský', f: 'rod ženský', n: 'rod střední' };
+function sgSentence(r) {
+  const s = r.pick(SG_SUBJECTS);
+  // animals and small children don't buy notebooks or tell the truth
+  const v = r.pick(SG_VERBS.filter((x) => s[1] !== 'n' || !['koupil', 'nesl', 'řekl', 'mohl'].includes(x[0])));
+  return { s, v, right: v[ROD_IDX[s[1]]] };
+}
+function agreementSingular(r) {
+  const { s, v, right } = sgSentence(r);
+  // fourth option: plural masc. animate form (koupili, přišli, šli …)
+  const plural = { přišel: 'přišli', našel: 'našli', šel: 'šli' }[v[0]] || `${v[0]}i`;
+  const opts = r.shuffle([v[0], v[1], v[2], plural]);
+  return {
+    type: 'choice', text: 'Který tvar slovesa patří do věty? (shoda přísudku s podmětem)', expr: `${s[0]} ___ ${v[3]}.`,
+    options: opts, answer: opts.indexOf(right),
+    explain: `${s[0]} ${right} ${v[3]}. Podmět „${s[0]}“ je ${ROD_NAME[s[1]]} → ${right}.`,
+  };
+}
+function agreementTF(r) {
+  // ANO/NE: is the agreement in the sentence correct?
+  const statements = [];
+  const answer = [];
+  const seen = new Set();
+  while (statements.length < 4) {
+    const ok = r.chance(0.5);
+    let sent;
+    if (r.chance(0.5)) {
+      const { s, v, right } = sgSentence(r);
+      if (seen.has(s[0])) continue;
+      seen.add(s[0]);
+      const wrong = r.pick(v.slice(0, 3).filter((x) => x !== right));
+      sent = `${s[0]} ${ok ? right : wrong} ${v[3]}.`;
+    } else {
+      const { s, v } = pluralPair(r);
+      if (seen.has(s[0])) continue;
+      seen.add(s[0]);
+      const wrong = r.pick(['i', 'y', 'a'].filter((x) => x !== s[1]));
+      sent = `${s[0]} ${v[0]}${ok ? s[1] : wrong} ${v[1]}.`;
+    }
+    statements.push(`Ve větě „${sent}“ je shoda přísudku s podmětem správně.`);
+    answer.push(ok);
+  }
+  return { type: 'tf', text: 'Rozhodněte o každém z následujících tvrzení, zda je pravdivé (ANO), či nikoli (NE).', statements, answer };
+}
+function agreementWhich(r) {
+  // which of four sentences contains a mistake in agreement?
+  const sents = [];
+  const seen = new Set();
+  while (sents.length < 4) {
+    const plural = r.chance(0.5);
+    if (plural) {
+      const { s, v } = pluralPair(r);
+      if (seen.has(s[0])) continue;
+      seen.add(s[0]);
+      sents.push({ good: `${s[0]} ${v[0]}${s[1]} ${v[1]}.`, bad: `${s[0]} ${v[0]}${r.pick(['i', 'y', 'a'].filter((x) => x !== s[1]))} ${v[1]}.` });
+    } else {
+      const { s, v, right } = sgSentence(r);
+      if (seen.has(s[0])) continue;
+      seen.add(s[0]);
+      sents.push({ good: `${s[0]} ${right} ${v[3]}.`, bad: `${s[0]} ${r.pick(v.slice(0, 3).filter((x) => x !== right))} ${v[3]}.` });
+    }
+  }
+  const badIdx = r.int(0, 3);
+  const options = sents.map((x, i) => (i === badIdx ? x.bad : x.good));
+  return {
+    type: 'choice', text: 'Ve které z následujících vět je chyba ve shodě přísudku s podmětem?', options, answer: badIdx,
+    explain: `Správně: ${sents[badIdx].good}`,
   };
 }
 
@@ -406,9 +502,9 @@ export function readingGroups(grade) {
 }
 
 export const CZECH_GENERATORS = {
-  pravopis: [allCorrect, allCorrect, oneWrong, fillIY, agreement, curatedPick('pravopis')],
+  pravopis: [allCorrect, allCorrect, oneWrong, fillIY, agreement, agreementSingular, agreementTF, curatedPick('pravopis')],
   tvaroslovi: [partOfSpeech, partOfSpeech, nounPattern, verbCategory, curatedPick('tvaroslovi')],
-  skladba: [agreement, curatedPick('skladba'), curatedPick('skladba'), curatedPick('skladba')],
+  skladba: [agreement, agreementSingular, agreementWhich, agreementTF, curatedPick('skladba'), curatedPick('skladba')],
   slovni_zasoba: [synAnt, synAnt, family, curatedPick('slovni_zasoba')],
   porozumeni: [curatedPick('porozumeni')],
   sloh: [curatedPick('sloh')],
@@ -419,4 +515,4 @@ export function czechGeneratorsFor(topic) {
   return CZECH_GENERATORS[topic] || [];
 }
 
-export const CZECH_WORD_LISTS = { IY, EJE, SZ, CAPS, NN, SUBJECTS, POS, VZORY, ROD, ANTONYMS, SYNONYMS, FAMILIES };
+export const CZECH_WORD_LISTS = { IY, EJE, SZ, CAPS, NN, SUBJECTS, SG_SUBJECTS, SG_VERBS, POS, VZORY, ROD, ANTONYMS, SYNONYMS, FAMILIES };
