@@ -1,6 +1,6 @@
 {
   "appId": "com.adamczpg.logicquest",
-  "appName": "Logic Quest",
+  "appName": "Examigo",
   "webDir": "dist",
   "android": {
     "backgroundColor": "#f7f8fc"

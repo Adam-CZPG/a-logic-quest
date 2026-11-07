@@ -6,6 +6,7 @@ import { useSettings } from '@/lib/settings';
 import { LANGS } from '@/i18n';
 import { CURRICULA, DE_STATES, gradesFor, fitGrade } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.svg';
 
 export default function Onboarding() {
   const { settings, update, t } = useSettings();
@@ -39,8 +40,9 @@ export default function Onboarding() {
           <motion.div key={step} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
             {step === 0 && (
               <>
-                <h1 className="font-heading font-extrabold text-4xl mt-6 leading-tight">
-                  Logic Quest
+                <h1 className="font-heading font-extrabold text-4xl mt-6 leading-tight flex items-center gap-3">
+                  <img src={logo} alt="" className="w-14 h-14 rounded-2xl shadow-md" />
+                  {t('app.name')}
                 </h1>
                 <p className="mt-2 text-ink-soft text-lg">{t('ob.welcome')} {t('ob.pickLang')}</p>
                 <div className="mt-6 grid grid-cols-2 gap-2.5">

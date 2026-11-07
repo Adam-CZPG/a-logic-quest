@@ -1,6 +1,6 @@
 // Deutsch
 export default {
-  'app.name': 'Logic Quest',
+  'app.name': 'Examigo',
   'app.tagline': 'Prüfungsvorbereitung für die Klassen 5 · 7 · 9',
   'app.taglineCz': 'Vorbereitung auf die Aufnahmeprüfung am Gymnasium',
 
@@ -321,7 +321,7 @@ export default {
   'set.backupDesc': 'Name und alle Ergebnisse in einer Datei – speichere sie z. B. in Google Drive oder schick sie dir selbst.',
   'set.restore': 'Aus Sicherung wiederherstellen',
   'set.restored': 'Wiederhergestellt ✓',
-  'set.restoreError': 'Diese Datei ist keine Logic-Quest-Sicherung.',
+  'set.restoreError': 'Diese Datei ist keine Examigo-Sicherung.',
   'set.since': 'seit {date}',
   'set.edit': 'Ändern',
   'set.save': 'Speichern',
