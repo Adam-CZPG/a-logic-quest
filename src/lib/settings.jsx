@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { translate, detectLang, isRtl, ALL_DICTS } from '@/i18n';
+import { fitGrade, CURRICULA } from '@/exam/taxonomy';
 
 const KEY = 'lq_settings_v1';
 
@@ -10,6 +11,7 @@ const DEFAULTS = {
   startGrade: null,
   curriculum: 'cz',
   grade: 5,
+  state: null, // German federal state (curriculum 'de')
   onboarded: false,
   theme: 'system',
   reminder: { on: false, time: '17:00' },
@@ -20,7 +22,9 @@ function load() {
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
     // languages removed in 2.1 fall back to the device language
     const lang = raw.lang && ALL_DICTS[raw.lang] ? raw.lang : detectLang();
-    return { ...DEFAULTS, ...raw, lang, startedAt: raw.startedAt || (raw.onboarded ? Date.now() : null), startGrade: raw.startGrade || raw.grade || null };
+    const curriculum = CURRICULA[raw.curriculum] ? raw.curriculum : DEFAULTS.curriculum;
+    const grade = fitGrade(curriculum, Number(raw.grade) || DEFAULTS.grade);
+    return { ...DEFAULTS, ...raw, lang, curriculum, grade, startedAt: raw.startedAt || (raw.onboarded ? Date.now() : null), startGrade: raw.startGrade || raw.grade || null };
   } catch {
     return { ...DEFAULTS, lang: detectLang() };
   }

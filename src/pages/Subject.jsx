@@ -5,7 +5,7 @@ import { ArrowLeft, ExternalLink, Timer, Dumbbell, Check, CircleHelp, Package, R
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
-import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, tauUrl, TOPIC_EMOJI, BLUEPRINTS } from '@/exam/taxonomy';
+import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, tauUrl, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { openExternal } from '@/lib/native';
 import { cn } from '@/lib/utils';
 
@@ -30,7 +30,7 @@ export default function Subject() {
   const s = getStats();
   const round = getRound(s, subject, grade);
   const minutes = SUBJECTS[subject].minutes;
-  const nTasks = (BLUEPRINTS[subject][grade] || []).length;
+  const nTasks = blueprintFor(subject, grade).length;
   const topics = topicsFor(subject, grade);
   const packTests = getPackTests({ subject, grade });
   const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')]];
@@ -58,7 +58,7 @@ export default function Subject() {
             <span className="text-2xl" aria-hidden="true">{SUBJECTS[subject].emoji}</span>
             <div className="flex-1 min-w-0">
               <h1 className="font-heading font-extrabold text-xl leading-tight truncate">{t(`subject.${subject}`)}</h1>
-              <p className="text-xs text-ink-soft">{t('grade.n', { g: grade })}</p>
+              <p className="text-xs text-ink-soft">{t('grade.n', { g: grade })}{subjectLevel(subject, grade) && ` · ${t('level.en', { l: subjectLevel(subject, grade) })}`}</p>
             </div>
             <button onClick={() => setHelp((h) => !h)} aria-expanded={help} aria-label={t('howTo.title')} className={cn('w-10 h-10 rounded-xl grid place-items-center', help ? 'bg-pen-soft text-pen' : 'hover:bg-pen-soft')}>
               <CircleHelp className="w-5 h-5" />

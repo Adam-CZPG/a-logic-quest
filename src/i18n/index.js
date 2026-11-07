@@ -2,16 +2,18 @@ import en from './locales/en';
 import cs from './locales/cs';
 import uk from './locales/uk';
 import ru from './locales/ru';
+import de from './locales/de';
 
-// The four languages most used by families in Czechia.
+// The four languages most used by families in Czechia + German for Germany.
 export const LANGS = [
   { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
   { code: 'uk', name: 'Українська', flag: '🇺🇦' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
 ];
 
-const DICTS = { en, cs, uk, ru };
+const DICTS = { en, cs, uk, ru, de };
 
 export function isRtl() {
   return false;
@@ -44,8 +46,9 @@ export function translate(lang, key, vars) {
 }
 
 export function currencyFor(lang, curriculum) {
-  if (curriculum === 'cz' || lang === 'cs') return 'Kč';
-  return { en: '€', uk: '₴', ru: '€' }[lang] || '€';
+  if (curriculum === 'cz' || (lang === 'cs' && curriculum !== 'de')) return 'Kč';
+  if (curriculum === 'de') return '€';
+  return { en: '€', uk: '₴', ru: '€', de: '€' }[lang] || '€';
 }
 
 export const ALL_DICTS = DICTS;

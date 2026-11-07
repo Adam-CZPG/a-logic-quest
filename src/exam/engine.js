@@ -1,8 +1,10 @@
 // Builds question sets: topic practice, full practice tests, daily plan, mistakes review.
 import { makeRng, hashString, randomSeed } from './rng';
 import { mathGeneratorsFor } from './generators/math';
-import { czechGeneratorsFor, readingGroups } from './generators/czech';
-import { BLUEPRINTS, SUBJECTS, topicsFor, CURRICULA } from './taxonomy';
+import { czechGeneratorsFor, readingGroups as czechReading } from './generators/czech';
+import { englishGeneratorsFor, readingGroups as englishReading } from './generators/english';
+import { germanGeneratorsFor, readingGroups as germanReading } from './generators/german';
+import { SUBJECTS, topicsFor, CURRICULA, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
 import { getPackQuestions } from './packs';
@@ -31,9 +33,26 @@ function finalize(q, meta) {
   return { points: 1, ...q, ...meta, id, points: meta.points ?? q.points ?? 1 };
 }
 
-export function generateQuestion(subject, topic, r, ctx, points) {
-  const gens = subject === 'czech' ? czechGeneratorsFor(topic) : mathGeneratorsFor(topic, ctx.grade);
-  const packs = getPackQuestions({ subject, grade: ctx.grade, topic });
+function generatorsFor(subject, topic, grade) {
+  if (subject === 'czech') return czechGeneratorsFor(topic);
+  if (subject === 'english') return englishGeneratorsFor(topic);
+  if (subject === 'german') return germanGeneratorsFor(topic);
+  return mathGeneratorsFor(topic, contentGrade('math', grade));
+}
+
+// shared source texts (reading comprehension) for a subject and real grade
+function readingFor(subject, grade) {
+  if (subject === 'czech') return czechReading(contentGrade('czech', grade));
+  if (subject === 'english') return englishReading(englishLevel(grade));
+  if (subject === 'german') return germanReading(grade);
+  return [];
+}
+
+export function generateQuestion(subject, topic, r, ctx0, points) {
+  // generators see the grade their task bank is written for (+ English level / real grade)
+  const ctx = { ...ctx0, grade: contentGrade(subject, ctx0.grade), realGrade: ctx0.grade, level: englishLevel(ctx0.grade) };
+  const gens = generatorsFor(subject, topic, ctx0.grade);
+  const packs = getPackQuestions({ subject, grade: ctx0.grade, topic });
   for (let attempt = 0; attempt < 12; attempt++) {
     // imported packs get a fair share of the pool
     if (packs.length && r.chance(packs.length / (packs.length + gens.length * 3))) {
@@ -84,23 +103,24 @@ export function buildMockTest({ subject, grade, number, lang, curriculum, cycle 
   const variant = 'ABCD'[(number - 1) % 4];
   const r = makeRng(cycle ? `mock:${subject}:${grade}:${series}:${variant}:c${cycle}` : `mock:${subject}:${grade}:${series}:${variant}`);
   const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set(), usedGens: new Set() };
-  const blueprint = BLUEPRINTS[subject][grade] || BLUEPRINTS[subject][5];
+  const blueprint = blueprintFor(subject, grade);
   const qs = [];
 
   let bp = blueprint;
-  if (subject === 'czech') {
-    // reading comprehension comes first as one block with a shared source text (4.1, 4.2 …)
-    const groups = readingGroups(grade);
-    const comprSlots = bp.filter(([t]) => t === 'porozumeni');
+  const readTopic = READING_TOPIC[subject];
+  if (readTopic) {
+    // reading comprehension comes first as one block with a shared source text (1.1, 1.2 …)
+    const groups = readingFor(subject, grade);
+    const comprSlots = bp.filter(([t]) => t === readTopic);
     if (groups.length && comprSlots.length) {
       const g = groups[hashString(`${series}${variant}${cycle || ''}`) % groups.length];
       const items = g.items.slice(0, comprSlots.length);
       items.forEach((it, i) => {
-        qs.push(finalize({ ...it, context: g.context, source: g.source, group: g.group, groupIndex: i, curated: true }, { subject, topic: 'porozumeni', points: comprSlots[i][1] }));
+        qs.push(finalize({ ...it, context: g.context, source: g.source, group: g.group, groupIndex: i, curated: true }, { subject, topic: readTopic, points: comprSlots[i][1] }));
         ctx.exclude.add(it.text + g.context.slice(0, 20));
       });
       let removed = items.length;
-      bp = bp.filter(([t]) => (t === 'porozumeni' && removed-- > 0 ? false : true));
+      bp = bp.filter(([t]) => (t === readTopic && removed-- > 0 ? false : true));
     }
   }
   bp.forEach(([topic, pts], i) => {

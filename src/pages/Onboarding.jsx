@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Check } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { LANGS } from '@/i18n';
-import { GRADES, CURRICULA } from '@/exam/taxonomy';
+import { CURRICULA, DE_STATES, gradesFor, fitGrade } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.svg';
 
 export default function Onboarding() {
   const { settings, update, t } = useSettings();
@@ -26,12 +27,12 @@ export default function Onboarding() {
       <div className="max-w-md mx-auto px-5 pb-10">
         <div className="flex items-center h-10">
           {step > 0 && (
-            <button onClick={() => setStep(step - 1)} aria-label={t('common.back')} className="w-10 h-10 grid place-items-center rounded-xl hover:bg-pen-soft">
+            <button onClick={() => setStep(step === 4 && settings.curriculum !== 'de' ? 2 : step - 1)} aria-label={t('common.back')} className="w-10 h-10 grid place-items-center rounded-xl hover:bg-pen-soft">
               <ChevronLeft className="w-6 h-6 rtl:rotate-180" />
             </button>
           )}
           <div className="ms-auto flex gap-1.5" aria-hidden="true">
-            {[0, 1, 2, 3].map((i) => <span key={i} className={cn('h-2 rounded-full transition-all', i === step ? 'w-6 bg-pen' : 'w-2 bg-line')} />)}
+            {(settings.curriculum === 'de' ? [0, 1, 2, 3, 4] : [0, 1, 2, 4]).map((i) => <span key={i} className={cn('h-2 rounded-full transition-all', i === step ? 'w-6 bg-pen' : 'w-2 bg-line')} />)}
           </div>
         </div>
 
@@ -39,15 +40,16 @@ export default function Onboarding() {
           <motion.div key={step} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}>
             {step === 0 && (
               <>
-                <h1 className="font-heading font-extrabold text-4xl mt-6 leading-tight">
-                  Logic Quest
+                <h1 className="font-heading font-extrabold text-4xl mt-6 leading-tight flex items-center gap-3">
+                  <img src={logo} alt="" className="w-14 h-14 rounded-2xl shadow-md" />
+                  {t('app.name')}
                 </h1>
                 <p className="mt-2 text-ink-soft text-lg">{t('ob.welcome')} {t('ob.pickLang')}</p>
                 <div className="mt-6 grid grid-cols-2 gap-2.5">
                   {LANGS.map((l) => (
                     <button
                       key={l.code}
-                      onClick={() => choose({ lang: l.code, curriculum: 'cz' }, 1)}
+                      onClick={() => choose({ lang: l.code, curriculum: l.code === 'de' ? 'de' : 'cz', grade: fitGrade(l.code === 'de' ? 'de' : 'cz', settings.grade) }, 1)}
                       className={cn('sheet flex items-center gap-2.5 px-3 py-3 text-start font-bold text-[15px] hover:border-pen', settings.lang === l.code && 'border-pen bg-pen-soft')}
                     >
                       <span className="text-2xl" aria-hidden="true">{l.flag}</span>
@@ -77,13 +79,13 @@ export default function Onboarding() {
                   {Object.values(CURRICULA).map((c) => (
                     <button
                       key={c.id}
-                      onClick={() => choose({ curriculum: c.id }, 3)}
+                      onClick={() => choose({ curriculum: c.id, grade: fitGrade(c.id, settings.grade) }, c.states ? 3 : 4)}
                       className={cn('sheet w-full flex items-center gap-4 p-5 text-start hover:border-pen', settings.curriculum === c.id && 'border-pen bg-pen-soft')}
                     >
                       <span className="text-4xl" aria-hidden="true">{c.flag}</span>
                       <span>
-                        <span className="block font-heading font-bold text-xl">{t(c.id === 'cz' ? 'ob.cz' : 'ob.intl')}</span>
-                        <span className="block text-ink-soft">{t(c.id === 'cz' ? 'ob.czDesc' : 'ob.intlDesc')}</span>
+                        <span className="block font-heading font-bold text-xl">{t(`ob.${c.id}`)}</span>
+                        <span className="block text-ink-soft">{t(`ob.${c.id}Desc`)}</span>
                       </span>
                     </button>
                   ))}
@@ -93,9 +95,24 @@ export default function Onboarding() {
 
             {step === 3 && (
               <>
+                <h1 className="font-heading font-extrabold text-3xl mt-6">{t('ob.pickState')}</h1>
+                <p className="mt-2 text-ink-soft">{t('ob.stateHint')}</p>
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  {DE_STATES.map((st) => (
+                    <button key={st.id} onClick={() => choose({ state: st.id }, 4)}
+                      className={cn('sheet px-3 py-2.5 text-start font-bold text-sm hover:border-pen', settings.state === st.id && 'border-pen bg-pen-soft')}>
+                      {st.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {step === 4 && (
+              <>
                 <h1 className="font-heading font-extrabold text-3xl mt-6">{t('ob.pickGrade')}</h1>
                 <div className="mt-6 space-y-3">
-                  {GRADES.map((g) => (
+                  {gradesFor(settings.curriculum).map((g) => (
                     <button
                       key={g}
                       onClick={() => choose({ grade: g }, 'done')}
@@ -104,7 +121,7 @@ export default function Onboarding() {
                       <span className="w-14 h-14 rounded-2xl bg-pen text-on-pen grid place-items-center font-heading font-extrabold text-3xl shrink-0">{g}</span>
                       <span className="flex-1">
                         <span className="block font-heading font-bold text-xl">{t('grade.n', { g })}</span>
-                        <span className="block text-ink-soft">{t(settings.curriculum === 'cz' ? `grade.cz${g}` : `grade.intl${g}`)}</span>
+                        <span className="block text-ink-soft">{t(`grade.${settings.curriculum}${g}`)}</span>
                       </span>
                       {settings.grade === g && <Check className="w-5 h-5 text-pen" />}
                     </button>

@@ -18,7 +18,7 @@ export function backupFileName(name) {
   const d = new Date();
   const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const who = (name || '').normalize('NFD').replace(/[^\w]+/g, '').slice(0, 20);
-  return `LogicQuest-${who ? `${who}-` : ''}${day}.json`;
+  return `Examigo-${who ? `${who}-` : ''}${day}.json`;
 }
 
 export async function exportBackup(name) {
@@ -41,7 +41,7 @@ export async function exportBackup(name) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-// Throws on a file that is not a Logic Quest backup.
+// Throws on a file that is not an app backup (the internal id stays 'logic-quest' so old backups still load).
 export function importBackup(text) {
   const obj = JSON.parse(text);
   if (!obj || obj.app !== 'logic-quest' || !obj.data || typeof obj.data !== 'object') throw new Error('not a backup');

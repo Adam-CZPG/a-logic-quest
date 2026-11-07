@@ -3,7 +3,7 @@ import AppShell, { PageTitle } from '@/components/AppShell';
 import { Avatar } from '@/pages/Home';
 import { useSettings } from '@/lib/settings';
 import { LANGS } from '@/i18n';
-import { GRADES, CURRICULA } from '@/exam/taxonomy';
+import { CURRICULA, DE_STATES, gradesFor, fitGrade } from '@/exam/taxonomy';
 import { resetStats } from '@/exam/stats';
 import { getPacks, addPack, removePack, parsePack } from '@/exam/packs';
 import { isSoundOn, toggleSound } from '@/lib/sfx';
@@ -136,12 +136,21 @@ export default function Settings() {
 
       <Group title={t('set.learning')}>
         <Row icon={GraduationCap} label={t('set.grade')}>
-          <Seg value={settings.grade} onChange={(v) => update({ grade: v })} options={GRADES.map((g) => ({ v: g, label: `${g}.` }))} />
+          <Seg value={settings.grade} onChange={(v) => update({ grade: v })} options={gradesFor(settings.curriculum).map((g) => ({ v: g, label: `${g}.` }))} />
         </Row>
         <Row icon={Globe2} label={t('set.country')}>
-          <Seg value={settings.curriculum} onChange={(v) => update({ curriculum: v })}
-            options={Object.values(CURRICULA).map((c) => ({ v: c.id, label: c.flag, aria: t(c.id === 'cz' ? 'ob.cz' : 'ob.intl') }))} />
+          <Seg value={settings.curriculum} onChange={(v) => update({ curriculum: v, grade: fitGrade(v, settings.grade) })}
+            options={Object.values(CURRICULA).map((c) => ({ v: c.id, label: c.flag, aria: t(`ob.${c.id}`) }))} />
         </Row>
+        {CURRICULA[settings.curriculum]?.states && (
+          <Row icon={Globe2} label={t('set.state')}>
+            <select value={settings.state || ''} onChange={(e) => update({ state: e.target.value || null })} aria-label={t('set.state')}
+              className="rounded-xl border-2 border-line bg-paper px-2 py-1.5 text-sm font-bold max-w-[11rem]">
+              <option value="">—</option>
+              {DE_STATES.map((st) => <option key={st.id} value={st.id}>{st.name}</option>)}
+            </select>
+          </Row>
+        )}
       </Group>
 
       <Group title={t('set.app')}>
@@ -199,7 +208,7 @@ export default function Settings() {
       {msg && <p className={cn('mt-2 px-1 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
 
       <Group title={t('set.about')}>
-        <Row icon={Info} label={`Logic Quest ${t('set.version')} 2.1.0`} hint={t('set.disclaimer')} />
+        <Row icon={Info} label={`${t('app.name')} ${t('set.version')} ${import.meta.env.APP_VERSION}`} hint={t('set.disclaimer')} />
       </Group>
     </AppShell>
   );

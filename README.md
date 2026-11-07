@@ -1,19 +1,18 @@
-# Logic Quest — přijímačky 5 · 7 · 9
+# Examigo — imtihonga tayyorlov (Chexiya · Germaniya · butun dunyo)
 
-Gimnaziya va o'rta maktabga kirish imtihoniga (CERMAT jednotná přijímací zkouška) tayyorlov ilovasi. Web va Android (APK) — bitta kod.
+Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barcha topshiriqlar o'zimizniki yoki ilova tomonidan yaratiladi; ilova hech qaysi imtihon tashkiloti bilan bog'liq emas.
 
-- **Chexiya rejimi:** matematika + chex tili va adabiyoti, 5 / 7 / 9-sinflar uchun alohida.
-- **Xalqaro rejim:** faqat matematika — butun dunyo uchun, 4 tilda.
-- **To'liq testlar ("celý test"):** har bir fan va sinf uchun 10 seriya × 4 variant = **40 ta test**, har biri CERMAT formatida: 50 ball, matematika 70 daqiqa, chex tili 60 daqiqa.
-- **Mavzular ("skupiny úloh"):** TAU'dagi kategoriyalar (Číslo a početní operace, Převody jednotek, Geometrie v rovině, Osová souměrnost …) — har biri cheksiz yangi savollar beradi.
-- **Ikki rejim** (TAU kabi): *Simulace* — taymer, xatoni tuzatib bo'lmaydi; *Procvičování* — darhol tekshirish, xatoni tuzatish, yechim.
-- **Bugungi reja:** har kuni har bir fandan 3 tadan savol (eng zaif mavzular birinchi), kunlik eslatma bildirishnomasi (Android).
-- **Xatolar ustida ishlash**, XP / daraja, ketma-ket kunlar, nishonlar, statistika.
-- **Rasmiy CERMAT testlari (2015–2024)** — ular CERMAT'ga tegishli, shuning uchun ilova ularni nusxalamaydi, balki TAU'da ochadi.
-- **Test to'plamlarini import qilish** (JSON) — o'qituvchi testlari yoki ruxsat olingan materiallar uchun. Format: [CONTENT.md](CONTENT.md).
-- Eski "Logic Quest" jumboq o'yinlari "Hry / Games" bo'limida qoldi.
+- **🇨🇿 Chexiya:** gimnaziyaga qabul (5 / 7 / 9-sinf) — matematika + chex tili, qo'shimcha ingliz tili.
+- **🇩🇪 Germaniya:** Bundesland tanlanadi; 4-sinf (gimnaziyaga o'tish: Probeunterricht / Eignungstest / tavsiya) va 10-sinf (MSA, ZP10 …) — Mathe, Deutsch, Englisch.
+- **🌍 Boshqa davlatlar:** matematika + ingliz tili.
+- **Ingliz tili** CEFR darajasida: 5-sinf → A1, 7 → A2, 9–10 → B1 (grammatika, zamonlar, lug'at, muloqot, o'z matnlarimiz bilan o'qish).
+- **To'liq testlar:** har fan va sinf uchun 40 ta (4 daraja × 10), har biri 50 ball. **Mavzular:** har mavzuda 5 ta to'plam.
+- **Yashil progress:** yechilgan test/to'plam yashil bo'ladi; hammasi yashil bo'lgach yangi "kolo" yangi topshiriqlar bilan boshlanadi (ball va statistika saqlanadi).
+- **Ikki rejim:** *Simulyatsiya* (taymer, tuzatishsiz) va *Mashq* (darhol tekshirish, yechim).
+- **Bugungi reja:** har fandan 3 tadan savol, kunlik eslatma (Android). Xatolar ustida ishlash, XP, nishonlar, statistika.
+- **Test to'plamlarini import qilish** (JSON) — format: [CONTENT.md](CONTENT.md).
 
-Tillar: čeština, українська, English, русский — Chexiyada eng ko'p ishlatiladigan 4 ta til.
+Interfeys tillari: čeština, українська, English, русский, Deutsch.
 
 **Ma'lumotlar yangilanishda saqlanadi:** APK doim bitta kalit (`android/app/logicquest.keystore`) bilan imzolanadi, shuning uchun yangi versiya eskisining ustiga o'rnatiladi va bolaning ismi va natijalari o'chmaydi. Qo'shimcha himoya: Sozlamalar → Zaxira nusxa.
 
