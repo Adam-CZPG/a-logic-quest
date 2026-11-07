@@ -1,7 +1,7 @@
 // Learning progress: XP, streak, per-topic accuracy, test history, mistakes, badges.
 // Stored locally (works offline in the APK).
 import { dailyKey } from './engine';
-import { topicsFor, CURRICULA } from './taxonomy';
+import { topicsFor, CURRICULA, MOCK_COUNT, TOPIC_VARIANTS } from './taxonomy';
 
 const KEY = 'lq_stats_v1';
 const MAX_HISTORY = 200;
@@ -12,6 +12,9 @@ function fresh() {
     xp: 0, solved: 0, correct: 0, fixed: 0, dailyCount: 0,
     streak: { count: 0, last: null },
     topics: {}, mocks: {}, history: [], mistakes: [], dailyDone: {}, badges: {},
+    // green marks per subject+grade: { 'math:5': { cycle: 0, items: { 't:12': 41, 'v:zlomky:3': 10 } } }
+    // when every item is done the marks are cleared and a new round with fresh tasks starts
+    rounds: {},
     tried: {}, // every full test the child finished, even half-empty – shown green in the lists
     days: {}, // 'YYYY-MM-DD' → { a, c, m: { math: {a, c}, czech: {a, c} } } – progress over time
     firstAt: null,
@@ -25,6 +28,7 @@ export function getStats() {
     const s = { ...fresh(), ...JSON.parse(raw) };
     if (!s.days || typeof s.days !== 'object') s.days = {};
     if (!s.tried || typeof s.tried !== 'object') s.tried = {};
+    if (!s.rounds || typeof s.rounds !== 'object') s.rounds = {};
     // older versions had no day log: rebuild a rough one from the finished tests
     if (!Object.keys(s.days).length && s.history.length) {
       s.history.forEach((h) => {
@@ -126,6 +130,19 @@ export function recordFinish(set, { score, max, ms, grade, mode, answered = 0, c
   if (answered * 2 < count) {
     save(s);
     return [];
+  }
+  // green mark for this test / topic variant; a full round resets all marks
+  const item = roundItem(set);
+  if (item) {
+    const rk = `${set.subject}:${grade}`;
+    const round = (s.rounds[rk] ||= { cycle: 0, items: {} });
+    if ((set.cycle ?? 0) === round.cycle) {
+      round.items[item] = Math.max(round.items[item] ?? 0, score);
+      if (roundTotal(set.subject, grade) <= Object.keys(round.items).length) {
+        s.rounds[rk] = { cycle: round.cycle + 1, items: {}, lastDoneAt: Date.now() };
+        set.roundFinished = true;
+      }
+    }
   }
   const entry = { at: Date.now(), kind: set.kind, subject: set.subject, grade, score, max, ms, mode, series: set.series, variant: set.variant, topic: set.topic };
   s.history = [entry, ...s.history].slice(0, MAX_HISTORY);
@@ -250,4 +267,31 @@ export function journey(s) {
     tests,
     attempts,
   };
+}
+
+// ---------------------------------------------------------------- rounds (green marks)
+function roundItem(set) {
+  if (set.kind === 'mock' && set.number) return `t:${set.number}`;
+  if (set.kind === 'topic' && set.variant) return `v:${set.topic}:${set.variant}`;
+  return null;
+}
+
+// everything that must be green before a new round starts: all tests + all topic variants
+export function roundTotal(subject, grade) {
+  return MOCK_COUNT + topicsFor(subject, grade).length * TOPIC_VARIANTS;
+}
+
+export function getRound(s, subject, grade) {
+  const r = s.rounds?.[`${subject}:${grade}`] || { cycle: 0, items: {} };
+  const total = roundTotal(subject, grade);
+  return { cycle: r.cycle, items: r.items || {}, done: Object.keys(r.items || {}).length, total, lastDoneAt: r.lastDoneAt };
+}
+
+// the child (or a parent) can start a new round by hand too
+export function startNewRound(subject, grade) {
+  const s = getStats();
+  const rk = `${subject}:${grade}`;
+  const cur = s.rounds[rk] || { cycle: 0 };
+  s.rounds[rk] = { cycle: (cur.cycle || 0) + 1, items: {} };
+  save(s);
 }

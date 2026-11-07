@@ -78,38 +78,65 @@ for (const grade of tax.GRADES) {
   }
 }
 
-// 2) mock tests: every series/variant sums to 50 points and is deterministic
+// 2) mock tests: all 40 per subject/grade sum to 50 points, are deterministic, and change per round
 let mocks = 0;
 for (const grade of tax.GRADES) {
   for (const subject of ['math', 'czech']) {
-    for (let s = 1; s <= tax.MOCK_SERIES; s++) {
-      for (const v of tax.MOCK_VARIANTS_PER_SERIES) {
-        const t = engine.buildMockTest({ subject, grade, series: s, variant: v, lang: 'cs', curriculum: 'cz' });
-        const t2 = engine.buildMockTest({ subject, grade, series: s, variant: v, lang: 'cs', curriculum: 'cz' });
+    for (let n = 1; n <= tax.MOCK_COUNT; n++) {
+      for (const cycle of [0, 1]) {
+        const t = engine.buildMockTest({ subject, grade, number: n, cycle, lang: 'cs', curriculum: 'cz' });
+        const t2 = engine.buildMockTest({ subject, grade, number: n, cycle, lang: 'cs', curriculum: 'cz' });
         const pts = t.questions.reduce((a, q) => a + q.points, 0);
-        if (pts !== 50) fail(`mock ${subject}/${grade}/${s}${v}: ${pts} points`);
-        if (JSON.stringify(t.questions.map((q) => q.id)) !== JSON.stringify(t2.questions.map((q) => q.id))) fail(`mock ${subject}/${grade}/${s}${v}: not deterministic`);
-        if (new Set(t.questions.map((q) => q.id)).size !== t.questions.length) fail(`mock ${subject}/${grade}/${s}${v}: duplicate task`);
+        if (pts !== 50) fail(`mock ${subject}/${grade}/${n}/c${cycle}: ${pts} points`);
+        if (JSON.stringify(t.questions.map((q) => q.id)) !== JSON.stringify(t2.questions.map((q) => q.id))) fail(`mock ${subject}/${grade}/${n}: not deterministic`);
+        if (new Set(t.questions.map((q) => q.id)).size !== t.questions.length) fail(`mock ${subject}/${grade}/${n}: duplicate task`);
         t.questions.forEach((q) => validate(q, `mock ${subject}/${grade}`));
         mocks++;
+      }
+      const a = engine.buildMockTest({ subject, grade, number: n, cycle: 0, lang: 'cs', curriculum: 'cz' });
+      const b = engine.buildMockTest({ subject, grade, number: n, cycle: 1, lang: 'cs', curriculum: 'cz' });
+      const same = a.questions.filter((q, i) => b.questions[i] && q.id === b.questions[i].id).length;
+      if (same > a.questions.length * 0.6) fail(`mock ${subject}/${grade}/${n}: new round barely differs (${same} same)`);
+    }
+  }
+}
+
+// 2b) fixed topic variants: deterministic within a round, different between rounds
+for (const grade of tax.GRADES) {
+  for (const subject of ['math', 'czech']) {
+    for (const topic of tax.topicsFor(subject, grade)) {
+      for (let v = 1; v <= tax.TOPIC_VARIANTS; v++) {
+        const a = engine.buildTopicSet({ subject, grade, topic, lang: 'cs', curriculum: 'cz', variant: v, cycle: 0 });
+        const a2 = engine.buildTopicSet({ subject, grade, topic, lang: 'cs', curriculum: 'cz', variant: v, cycle: 0 });
+        if (JSON.stringify(a.questions.map((q) => q.id)) !== JSON.stringify(a2.questions.map((q) => q.id))) fail(`topic ${subject}/${grade}/${topic}/v${v}: not deterministic`);
+        a.questions.forEach((q) => validate(q, `topic-variant ${subject}/${grade}/${topic}`));
       }
     }
   }
 }
 
-// 2b) "in the style of a CERMAT year" tests: 50 points, deterministic
-for (const grade of tax.GRADES) {
-  for (const subject of ['math', 'czech']) {
-    for (const { year, terms } of tax.OFFICIAL_YEARS) {
-      for (let term = 1; term <= terms; term++) {
-        const t = engine.buildMockTest({ subject, grade, series: `${year}/${term}`, variant: '', lang: 'cs', curriculum: 'cz' });
-        const pts = t.questions.reduce((a, q) => a + q.points, 0);
-        if (pts !== 50) fail(`year ${subject}/${grade}/${year}/${term}: ${pts} points`);
-        t.questions.forEach((q) => validate(q, `year ${subject}/${grade}`));
-        mocks++;
-      }
-    }
+// 2c) grammar: verbs agree with the subject's gender (no "koupil(a)", no "David koupila")
+const FEM = new Set(['Anna', 'Ema', 'Lucie', 'Tereza', 'Klára', 'Petra']);
+for (let seed = 0; seed < 400; seed++) {
+  const set = engine.buildTopicSet({ subject: 'math', grade: 5, topic: 'slovni', lang: 'cs', curriculum: 'cz', count: 10, seed });
+  set.questions.forEach((q) => {
+    if (/\(a\)|\(la\)/.test(q.text)) fail('cs: unresolved (a) in text', q);
+    const m = q.text.match(/^(\S+) (koupil|koupila|utratil|utratila) /);
+    if (m && FEM.has(m[1]) !== m[2].endsWith('a')) fail(`cs: gender mismatch "${m[1]} ${m[2]}"`, q);
+  });
+}
+for (const lang of ['ru', 'uk']) {
+  for (let seed = 0; seed < 100; seed++) {
+    const set = engine.buildTopicSet({ subject: 'math', grade: 5, topic: 'slovni', lang, curriculum: 'cz', count: 10, seed });
+    set.questions.forEach((q) => { if (/\((а|ла)\)/.test(q.text)) fail(`${lang}: unresolved gender form`, q); });
   }
+}
+{
+  const { CZECH_WORD_LISTS: W } = await load('/src/exam/generators/czech.js');
+  W.SUBJECTS.forEach(([sub, end]) => {
+    const expect = /Kluci|Psi|Učitelé|Sousedé|Chlapci|Ptáci|Lvi|psi|Dědeček|tatínek/.test(sub) ? 'i' : /Kuřata$|Koťata$|Štěňata|Auta|Okna|Města$|^Koťata a/.test(sub) && !/Slepice|Vesnice/.test(sub) ? 'a' : 'y';
+    if (expect !== end) fail(`agreement rule: ${sub} → ${end}, expected ${expect}`);
+  });
 }
 
 // 3) daily plan = 3 per subject

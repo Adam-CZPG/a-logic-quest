@@ -1,44 +1,49 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ExternalLink, Timer, Dumbbell, Check, CircleHelp, Package, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Timer, Dumbbell, Check, CircleHelp, Package, RotateCcw } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
-import { getStats, topicAccuracy } from '@/exam/stats';
+import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
-import { CURRICULA, SUBJECTS, MOCK_SERIES, MOCK_VARIANTS_PER_SERIES, OFFICIAL_YEARS, topicsFor, tauUrl, CERMAT_ARCHIVE_URL, TOPIC_EMOJI, BLUEPRINTS } from '@/exam/taxonomy';
+import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, tauUrl, TOPIC_EMOJI, BLUEPRINTS } from '@/exam/taxonomy';
 import { openExternal } from '@/lib/native';
 import { cn } from '@/lib/utils';
 
-function Done({ best, max = 50 }) {
-  if (best === undefined) return null;
-  return <span className="text-[11px] font-bold text-ok tabular">{best}/{max}</span>;
-}
+const LEVEL_EMOJI = ['🌱', '🚲', '🚀', '🏔️'];
 
 export default function Subject() {
   const { subject } = useParams();
   const [params, setParams] = useSearchParams();
   const { settings, t } = useSettings();
   const navigate = useNavigate();
-  const [pick, setPick] = useState(null); // { href, title, timed, year }
+  const [pick, setPick] = useState(null); // { href, title, timed }
   const [help, setHelp] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [, bump] = useState(0);
   const { grade, curriculum } = settings;
   const isCz = curriculum === 'cz';
-  const tab = params.get('tab') || 'tests';
+  const tab = params.get('tab') === 'topics' ? 'topics' : 'tests';
   const setTab = (v) => setParams({ tab: v }, { replace: true });
 
   if (!SUBJECTS[subject] || !(CURRICULA[curriculum]?.subjects || []).includes(subject)) return <Navigate to="/" replace />;
 
   const s = getStats();
+  const round = getRound(s, subject, grade);
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = (BLUEPRINTS[subject][grade] || []).length;
   const topics = topicsFor(subject, grade);
   const packTests = getPackTests({ subject, grade });
-  const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')], ...(isCz ? [['years', t('tab.years')]] : [])];
+  const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')]];
 
   const start = (mode) => {
     const href = `${pick.href}${pick.href.includes('?') ? '&' : '?'}mode=${mode}`;
     setPick(null);
     navigate(href);
+  };
+  const resetRound = () => {
+    startNewRound(subject, grade);
+    setConfirmReset(false);
+    bump((n) => n + 1);
   };
 
   return (
@@ -84,29 +89,63 @@ export default function Subject() {
           </div>
         )}
 
+        {/* round progress: everything green → new round with fresh tasks */}
+        <section className="sheet p-3 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="font-heading font-bold">{t('round.title', { n: round.cycle + 1 })}</span>
+            <span className="ms-auto text-sm font-bold tabular">{round.done}/{round.total}</span>
+          </div>
+          <div className="h-2.5 rounded-full bg-line mt-2 overflow-hidden">
+            <div className="h-full rounded-full bg-ok transition-all" style={{ width: `${(round.done / round.total) * 100}%` }} />
+          </div>
+          <div className="mt-2 flex items-start gap-2">
+            <p className="text-xs text-ink-soft flex-1">{t('round.desc')}</p>
+            {round.done > 0 && (
+              confirmReset ? (
+                <span className="flex gap-1 shrink-0">
+                  <button onClick={resetRound} className="rounded-lg bg-redpen text-white px-2 py-1 text-xs font-bold">{t('round.resetYes')}</button>
+                  <button onClick={() => setConfirmReset(false)} className="rounded-lg border border-line px-2 py-1 text-xs font-bold">{t('common.cancel')}</button>
+                </span>
+              ) : (
+                <button onClick={() => setConfirmReset(true)} className="shrink-0 flex items-center gap-1 text-xs font-bold text-ink-soft hover:text-pen">
+                  <RotateCcw className="w-3.5 h-3.5" />{t('round.reset')}
+                </button>
+              )
+            )}
+          </div>
+        </section>
+
         {tab === 'tests' && (
           <>
             <p className="text-xs text-ink-soft mb-2 px-1">{t('tests.info', { n: nTasks, min: minutes })}</p>
-            <div className="sheet divide-y divide-line">
-              {Array.from({ length: MOCK_SERIES }, (_, i) => i + 1).map((series) => (
-                <div key={series} className="flex items-center gap-2 px-3 py-2">
-                  <span className="font-heading font-bold w-[4.5rem] shrink-0 text-sm">{t('tests.series', { n: series })}</span>
-                  <div className="flex-1 grid grid-cols-4 gap-1.5">
-                    {MOCK_VARIANTS_PER_SERIES.map((v) => {
-                      const key = `${subject}:${grade}:${series}${v}`;
-                      const best = s.mocks[key] ?? s.tried[key];
-                      return (
-                        <button key={v}
-                          onClick={() => setPick({ href: `/play/mock?subject=${subject}&series=${series}&variant=${v}`, title: t('tests.variantL', { v: `${series}${v}` }), timed: true })}
-                          className={cn('h-11 rounded-xl border-2 flex flex-col items-center justify-center font-bold leading-none', best !== undefined ? 'border-ok bg-ok-soft' : 'border-line hover:border-pen')}>
-                          <span>{v}</span>
-                          <Done best={best} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-3">
+              {Array.from({ length: MOCK_LEVELS }, (_, l) => l).map((l) => {
+                const nums = Array.from({ length: MOCK_PER_LEVEL }, (_, i) => l * MOCK_PER_LEVEL + i + 1);
+                const doneHere = nums.filter((n) => round.items[`t:${n}`] !== undefined).length;
+                return (
+                  <section key={l} className={cn('sheet p-3', doneHere === nums.length && 'border-ok')}>
+                    <h3 className="flex items-center gap-2 mb-2">
+                      <span aria-hidden="true">{LEVEL_EMOJI[l]}</span>
+                      <span className="font-heading font-bold">{t(`level.${l + 1}`)}</span>
+                      <span className="ms-auto text-xs font-bold text-ink-soft tabular">{doneHere}/{nums.length}</span>
+                    </h3>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {nums.map((n) => {
+                        const best = round.items[`t:${n}`];
+                        const done = best !== undefined;
+                        return (
+                          <button key={n} aria-label={t('tests.variant', { n })}
+                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true })}
+                            className={cn('h-12 rounded-full border-2 flex flex-col items-center justify-center font-bold leading-none tabular', done ? 'border-ok bg-ok text-white' : 'border-line bg-sheet hover:border-pen')}>
+                            <span>{done ? <Check className="w-4 h-4" /> : n}</span>
+                            {done && <span className="text-[10px] mt-0.5">{best}/50</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
             </div>
 
             {packTests.length > 0 && (
@@ -127,69 +166,47 @@ export default function Subject() {
         )}
 
         {tab === 'topics' && (
-          <ul className="sheet divide-y divide-line overflow-hidden">
+          <ul className="space-y-2">
             {topics.map((topic) => {
               const acc = topicAccuracy(s, subject, grade, topic);
+              const variants = Array.from({ length: TOPIC_VARIANTS }, (_, i) => i + 1);
+              const doneN = variants.filter((v) => round.items[`v:${topic}:${v}`] !== undefined).length;
+              const all = doneN === variants.length;
               return (
-                <li key={topic}>
-                  <button
-                    onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}`, title: t(`topic.${topic}`), timed: false })}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-start hover:bg-pen-soft/60"
-                  >
+                <li key={topic} className={cn('sheet p-3', all && 'border-ok bg-ok-soft')}>
+                  <div className="flex items-center gap-3">
                     <span className="text-xl w-7 text-center" aria-hidden="true">{TOPIC_EMOJI[topic]}</span>
                     <span className="flex-1 min-w-0">
                       <span className="block font-bold leading-snug text-[15px]">{t(`topic.${topic}`)}</span>
-                      <span className="flex items-center gap-2 mt-1">
-                        <span className="flex-1 h-1.5 rounded-full bg-line overflow-hidden max-w-[10rem]">
-                          <span className={cn('block h-full rounded-full', acc === null ? '' : acc >= 0.7 ? 'bg-ok' : acc >= 0.4 ? 'bg-marker' : 'bg-redpen')} style={{ width: `${(acc ?? 0) * 100}%` }} />
-                        </span>
-                        <span className="text-xs text-ink-soft">{acc === null ? t('topics.notYet') : t('topics.accuracy', { p: Math.round(acc * 100) })}</span>
-                      </span>
+                      <span className="text-xs text-ink-soft">{acc === null ? t('topics.notYet') : t('topics.accuracy', { p: Math.round(acc * 100) })}</span>
                     </span>
-                    <ChevronRight className="w-4 h-4 text-ink-soft" />
-                  </button>
+                    {all && <Check className="w-5 h-5 text-ok" aria-label={t('round.allDone')} />}
+                  </div>
+                  <div className="mt-2 flex gap-1.5">
+                    {variants.map((v) => {
+                      const done = round.items[`v:${topic}:${v}`] !== undefined;
+                      return (
+                        <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })}
+                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false })}
+                          className={cn('flex-1 h-9 rounded-lg border-2 font-bold text-sm tabular', done ? 'border-ok bg-ok text-white' : 'border-line bg-sheet hover:border-pen')}>
+                          {done ? '✓' : v}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </li>
               );
             })}
           </ul>
         )}
 
-        {tab === 'years' && isCz && (
-          <>
-            <p className="text-xs text-ink-soft mb-2 px-1">{t('official.pick')}</p>
-            <div className="sheet divide-y divide-line">
-              {OFFICIAL_YEARS.map(({ year, terms }) => (
-                <div key={year} className="flex items-center gap-2 px-3 py-2">
-                  <span className="font-heading font-bold w-12 shrink-0 tabular">{year}</span>
-                  <div className="flex-1 grid grid-cols-4 gap-1.5">
-                    {Array.from({ length: terms }, (_, i) => i + 1).map((term) => {
-                      const key = `${subject}:${grade}:${year}/${term}`;
-                      const best = s.mocks[key] ?? s.tried[key];
-                      return (
-                        <button key={term}
-                          onClick={() => setPick({ href: `/play/year?subject=${subject}&year=${year}&term=${term}`, title: t('official.yearTitle', { year, term }), timed: true, year })}
-                          className={cn('h-11 rounded-xl border-2 flex flex-col items-center justify-center font-bold text-sm leading-none', best !== undefined ? 'border-ok bg-ok-soft' : 'border-line hover:border-pen')}>
-                          <span>{t('official.term', { n: term })}</span>
-                          <Done best={best} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 p-3 rounded-2xl border-2 border-dashed border-line text-sm">
-              <p className="text-ink-soft">{t('official.desc')}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button onClick={() => openExternal(tauUrl(subject, grade))} className="rounded-xl border-2 border-line bg-sheet px-3 py-1.5 font-bold flex items-center gap-1.5">
-                  {t('official.open')}<ExternalLink className="w-4 h-4" />
-                </button>
-                <button onClick={() => openExternal(CERMAT_ARCHIVE_URL)} className="rounded-xl border-2 border-line bg-sheet px-3 py-1.5 font-bold flex items-center gap-1.5">
-                  {t('official.pdf')}<ExternalLink className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </>
+        {isCz && (
+          <div className="mt-4 p-3 rounded-2xl border-2 border-dashed border-line text-xs text-ink-soft">
+            <p>{t('official.desc')}</p>
+            <button onClick={() => openExternal(tauUrl(subject, grade))} className="mt-2 rounded-xl border-2 border-line bg-sheet px-3 py-1.5 font-bold flex items-center gap-1.5 text-ink">
+              {t('official.open')}<ExternalLink className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -200,7 +217,6 @@ export default function Subject() {
             <motion.div role="dialog" aria-modal="true" aria-label={t('mode.title')} className="sheet w-full max-w-md p-4" initial={{ y: 40 }} animate={{ y: 0 }} exit={{ y: 40 }} onClick={(e) => e.stopPropagation()} style={{ marginBottom: 'var(--safe-bottom)' }}>
               <p className="text-sm text-ink-soft">{t('mode.title')}</p>
               <h2 className="font-heading font-bold text-xl mb-1">{pick.title}</h2>
-              {pick.year && <p className="text-sm text-ink-soft mb-3">{t('official.practiceDesc')}</p>}
               <div className="space-y-2 mt-3">
                 {pick.timed && (
                   <button onClick={() => start('sim')} className="w-full flex items-start gap-3 rounded-2xl border-2 border-line p-3.5 text-start hover:border-pen">
@@ -212,11 +228,6 @@ export default function Subject() {
                   <Dumbbell className="w-6 h-6 text-pen shrink-0 mt-0.5" />
                   <span><span className="block font-bold">{t('mode.practice')}</span><span className="block text-sm text-ink-soft">{t('mode.practiceDesc')}</span></span>
                 </button>
-                {pick.year && (
-                  <button onClick={() => openExternal(tauUrl(subject, grade))} className="w-full flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-ink-soft hover:text-pen">
-                    <ExternalLink className="w-4 h-4" />{t('official.original', { year: pick.year })}
-                  </button>
-                )}
               </div>
             </motion.div>
           </motion.div>

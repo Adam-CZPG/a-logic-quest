@@ -1,4 +1,4 @@
-// Builds question sets: topic practice, full mock tests (TAU-style), daily plan, mistakes review.
+// Builds question sets: topic practice, full practice tests, daily plan, mistakes review.
 import { makeRng, hashString, randomSeed } from './rng';
 import { mathGeneratorsFor } from './generators/math';
 import { czechGeneratorsFor, readingGroups } from './generators/czech';
@@ -14,6 +14,13 @@ export function makeCtx({ lang, grade, curriculum }) {
     t: (key, vars) => translate(lang, key, vars),
     f: (n) => fmt(n, lang),
     names: translate(lang, 'm.names'),
+    // 'm' | 'f' for every name, so verbs agree with the subject (David koupil / Petra koupila)
+    genderOf: (name) => {
+      const list = translate(lang, 'm.names');
+      const g = String(translate(lang, 'm.namesG') || '');
+      const i = Array.isArray(list) ? list.indexOf(name) : -1;
+      return g[i] === 'f' ? 'f' : 'm';
+    },
     cur: currencyFor(lang, curriculum),
     exclude: new Set(),
   };
@@ -55,8 +62,9 @@ export function generateQuestion(subject, topic, r, ctx, points) {
 }
 
 // ---------------------------------------------------------------- topic practice (skupiny úloh)
-export function buildTopicSet({ subject, grade, topic, lang, curriculum, count = 12, seed = randomSeed() }) {
-  const r = makeRng(`topic:${subject}:${grade}:${topic}:${seed}`);
+export function buildTopicSet({ subject, grade, topic, lang, curriculum, count = 12, variant = null, cycle = 0, seed = randomSeed() }) {
+  // a fixed variant (1…5) always gives the same tasks within a round; a new round gives new ones
+  const r = makeRng(variant ? `topic:${subject}:${grade}:${topic}:v${variant}:c${cycle}` : `topic:${subject}:${grade}:${topic}:${seed}`);
   const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set() };
   const qs = [];
   for (let i = 0; qs.length < count && i < count * 3; i++) {
@@ -64,14 +72,17 @@ export function buildTopicSet({ subject, grade, topic, lang, curriculum, count =
     if (q) qs.push(q);
   }
   return {
-    kind: 'topic', subject, grade, topic, seed, questions: groupSort(qs),
-    title: { key: `topic.${topic}` },
+    kind: 'topic', subject, grade, topic, seed, variant, cycle, questions: groupSort(qs),
+    title: variant ? { key: 'topics.variantTitle', vars: { topic: `topic.${topic}`, n: variant } } : { key: `topic.${topic}` },
   };
 }
 
 // ---------------------------------------------------------------- full mock tests (celý test)
-export function buildMockTest({ subject, grade, series, variant, lang, curriculum }) {
-  const r = makeRng(`mock:${subject}:${grade}:${series}:${variant}`);
+// number: 1…40 (our own numbering). Each round (cycle) produces different tasks.
+export function buildMockTest({ subject, grade, number, lang, curriculum, cycle = 0 }) {
+  const series = Math.ceil(number / 4);
+  const variant = 'ABCD'[(number - 1) % 4];
+  const r = makeRng(cycle ? `mock:${subject}:${grade}:${series}:${variant}:c${cycle}` : `mock:${subject}:${grade}:${series}:${variant}`);
   const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set(), usedGens: new Set() };
   const blueprint = BLUEPRINTS[subject][grade] || BLUEPRINTS[subject][5];
   const qs = [];
@@ -82,7 +93,7 @@ export function buildMockTest({ subject, grade, series, variant, lang, curriculu
     const groups = readingGroups(grade);
     const comprSlots = bp.filter(([t]) => t === 'porozumeni');
     if (groups.length && comprSlots.length) {
-      const g = groups[hashString(`${series}${variant}`) % groups.length];
+      const g = groups[hashString(`${series}${variant}${cycle || ''}`) % groups.length];
       const items = g.items.slice(0, comprSlots.length);
       items.forEach((it, i) => {
         qs.push(finalize({ ...it, context: g.context, source: g.source, group: g.group, groupIndex: i, curated: true }, { subject, topic: 'porozumeni', points: comprSlots[i][1] }));
@@ -100,10 +111,10 @@ export function buildMockTest({ subject, grade, series, variant, lang, curriculu
   // top up to exactly 50 points if a generator was skipped
   if (total < 50 && qs.length) qs[qs.length - 1].points += 50 - total;
   return {
-    kind: 'mock', subject, grade, series, variant,
+    kind: 'mock', subject, grade, number, series, variant, cycle,
     minutes: SUBJECTS[subject].minutes,
     questions: groupSort(qs),
-    title: { key: 'tests.variantL', vars: { v: `${series}${variant}` } },
+    title: { key: 'tests.variant', vars: { n: number } },
   };
 }
 
@@ -163,7 +174,7 @@ function groupSort(qs) {
   return out;
 }
 
-// TAU-style labels: 1, 2, 3.1, 3.2, 4 …
+// task labels: 1, 2, 3.1, 3.2, 4 … (tasks sharing one text are numbered together)
 export function taskLabels(questions) {
   const labels = [];
   let n = 0;

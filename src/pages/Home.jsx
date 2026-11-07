@@ -22,7 +22,7 @@ export function useStats() {
   return s;
 }
 
-// Days to the next CERMAT entrance exam (mid April; 4-year schools a few days earlier).
+// Days to the next entrance exam (mid April; 4-year schools a few days earlier).
 function daysToExam(grade) {
   const now = new Date();
   let d = new Date(now.getFullYear(), 3, grade === 9 ? 12 : 14);

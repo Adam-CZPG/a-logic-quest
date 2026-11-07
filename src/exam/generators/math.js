@@ -180,6 +180,12 @@ const cislo = {
   },
 };
 
+// a random name together with its grammatical gender: { name, nameG }
+function person(r, ctx, key = 'name') {
+  const name = r.pick(ctx.names);
+  return { [key]: name, [`${key}G`]: ctx.genderOf ? ctx.genderOf(name) : 'm' };
+}
+
 // ---------------------------------------------------------------- slovní úlohy
 const slovni = {
   shopping(r, ctx) {
@@ -187,7 +193,7 @@ const slovni = {
     const ans = bill - n * p;
     return {
       type: 'number', unit: ctx.cur, answer: ans,
-      text: ctx.t('m.w_shop', { name: r.pick(ctx.names), n, p, bill, cur: ctx.cur }),
+      text: ctx.t('m.w_shop', { ...person(r, ctx), n, p, bill, cur: ctx.cur }),
       explain: `${n} × ${p} = ${n * p}; ${bill} ${MINUS} ${n * p} = ${ans}`,
     };
   },
@@ -222,7 +228,7 @@ const slovni = {
     const left = r.int(4, 30);
     const start = left * 3;
     return {
-      type: 'number', unit: ctx.cur, answer: start, text: ctx.t('m.w_parts', { name: r.pick(ctx.names), left, cur: ctx.cur }),
+      type: 'number', unit: ctx.cur, answer: start, text: ctx.t('m.w_parts', { ...person(r, ctx), left, cur: ctx.cur }),
       explain: `${left} × 2 = ${left * 2}; ${left * 2} : 2 × 3 = ${start}`,
     };
   },
@@ -351,7 +357,7 @@ const grafy = {
     const [hi, lo] = values[i] >= values[j] ? [i, j] : [j, i];
     if (values[hi] === values[lo]) return grafy.bars(r, ctx);
     return {
-      type: 'number', text: `${intro} ${ctx.t('m.g_more', { a: labels[hi], b: labels[lo] })}`, figure,
+      type: 'number', text: `${intro} ${ctx.t('m.g_more', { a: labels[hi], aG: ctx.genderOf ? ctx.genderOf(labels[hi]) : 'm', b: labels[lo] })}`, figure,
       answer: values[hi] - values[lo], explain: `${values[hi]} ${MINUS} ${values[lo]} = ${values[hi] - values[lo]}`,
     };
   },

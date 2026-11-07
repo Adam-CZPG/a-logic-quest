@@ -6,7 +6,7 @@ import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeI
 import { useSettings } from '@/lib/settings';
 import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels } from '@/exam/engine';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
-import { recordAnswer, recordFinish, getStats, weakTopics } from '@/exam/stats';
+import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
 import { hashString } from '@/exam/rng';
 import { TOPIC_EMOJI } from '@/exam/taxonomy';
@@ -19,18 +19,16 @@ import { cn } from '@/lib/utils';
 function buildSet(kind, params, settings) {
   const { lang, grade, curriculum } = settings;
   const subject = params.get('subject') || 'math';
-  if (kind === 'year') {
-    // "in the style of" an official CERMAT year/term: same structure and difficulty, our own tasks
-    const year = Number(params.get('year'));
-    const term = Number(params.get('term') || 1);
-    const set = buildMockTest({ subject, grade, series: `${year}/${term}`, variant: '', lang, curriculum });
-    return { ...set, year, term, title: { key: 'official.yearTitle', vars: { year, term } } };
-  }
+  const cycle = getRound(getStats(), subject, grade).cycle;
   if (kind === 'mock') {
-    return buildMockTest({ subject, grade, series: Number(params.get('series') || 1), variant: params.get('variant') || 'A', lang, curriculum });
+    // number 1…40; old links with series+variant still work
+    let number = Number(params.get('n'));
+    if (!number && params.get('series')) number = (Number(params.get('series')) - 1) * 4 + Math.max(0, 'ABCD'.indexOf(params.get('variant') || 'A')) + 1;
+    return buildMockTest({ subject, grade, number: Math.min(Math.max(number || 1, 1), 40), lang, curriculum, cycle });
   }
   if (kind === 'topic') {
-    return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12 });
+    const variant = Number(params.get('v')) || null;
+    return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12, variant, cycle });
   }
   if (kind === 'daily') {
     return buildDailyPlan({ grade, lang, curriculum, weakTopics: weakTopics(getStats(), grade, curriculum) });
@@ -141,7 +139,7 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     const answered = final.filter((c) => !c.empty).length;
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
     setChecks(final);
-    setResult({ score: total, ms, badges, counted: answered * 2 >= qs.length });
+    setResult({ score: total, ms, badges, counted: answered * 2 >= qs.length, roundFinished: !!set.roundFinished });
     if (total / maxPoints >= 0.8) {
       playWin();
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#1f3fbf', '#ffd84d', '#1f9d6b', '#e0313b'] });
@@ -228,7 +226,9 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     return <Results set={set} qs={qs} labels={labels} answers={answers} checks={checks} result={result} maxPoints={maxPoints} t={t} lang={settings.lang} onRestart={onRestart} />;
   }
 
-  const titleText = set.title?.text || (set.title?.key ? t(set.title.key, set.title.vars) : '');
+  // title vars may themselves be keys (e.g. a topic name)
+  const titleVars = Object.fromEntries(Object.entries(set.title?.vars || {}).map(([k, v]) => [k, typeof v === 'string' && v.startsWith('topic.') ? t(v) : v]));
+  const titleText = set.title?.text || (set.title?.key ? t(set.title.key, titleVars) : '');
   const subjectName = set.subject ? t(`subject.${set.subject}`) : '';
 
   return (
@@ -431,6 +431,19 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
           </div>
           {set.kind === 'mock' && <p className="mt-4 text-sm text-ink-soft">{t('res.pass')}</p>}
         </section>
+
+        {result.roundFinished && (
+          <section className="sheet p-4 flex items-center gap-3 border-ok bg-ok-soft">
+            <span className="text-3xl" aria-hidden="true">🎉</span>
+            <div>
+              <p className="font-bold">{t('round.finishedTitle')}</p>
+              <p className="text-ink-soft text-sm">{t('round.finishedDesc')}</p>
+            </div>
+          </section>
+        )}
+        {!result.counted && (set.kind === 'mock' || set.kind === 'topic') && (
+          <p className="text-sm text-ink-soft text-center px-2">{t('round.notCounted')}</p>
+        )}
 
         {result.badges?.length > 0 && (
           <section className="sheet p-4 flex items-center gap-3 border-marker">

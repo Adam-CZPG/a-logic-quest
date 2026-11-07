@@ -4,7 +4,7 @@
 export const GRADES = [5, 7, 9];
 
 export const CURRICULA = {
-  // Czech Republic – CERMAT jednotná přijímací zkouška: maths + Czech language
+  // Czech Republic – entrance exam to gymnasium: maths + Czech language
   cz: { id: 'cz', flag: '🇨🇿', subjects: ['math', 'czech'] },
   // Everyone else – maths is universal, so it works in every language
   intl: { id: 'intl', flag: '🌍', subjects: ['math'] },
@@ -15,7 +15,7 @@ export const SUBJECTS = {
   czech: { id: 'czech', emoji: '📖', minutes: 60, gradient: 'from-rose-500 to-orange-500', glow: 'shadow-rose-600/30' },
 };
 
-// Same category names TAU (tau.cermat.cz) uses for the 5th-grade maths test, extended for 7 and 9.
+// Topic areas follow the Czech curriculum (RVP ZV) for the entrance exams.
 const MATH_TOPICS = {
   5: ['cislo', 'slovni', 'jednotky', 'grafy', 'rovina', 'prostor', 'konstrukce', 'aplikace', 'soumernost'],
   7: ['cislo', 'zlomky', 'jednotky', 'slovni', 'grafy', 'umernost', 'procenta', 'rovina', 'prostor', 'konstrukce', 'aplikace', 'soumernost'],
@@ -87,18 +87,13 @@ export const BLUEPRINTS = {
   },
 };
 
-// Our own tests: 10 series × 4 variants = 40 full tests per subject and grade
-// (laid out like CERMAT's year/term grid, but clearly labelled as our own).
-export const MOCK_SERIES = 10;
-export const MOCK_VARIANTS_PER_SERIES = ['A', 'B', 'C', 'D'];
-
-// Official CERMAT archive (opened in TAU – the tests themselves belong to CERMAT).
-export const OFFICIAL_YEARS = [
-  { year: 2026, terms: 4 }, { year: 2025, terms: 4 },
-  { year: 2024, terms: 4 }, { year: 2023, terms: 4 }, { year: 2022, terms: 4 }, { year: 2021, terms: 4 },
-  { year: 2020, terms: 1 }, { year: 2019, terms: 2 }, { year: 2018, terms: 2 }, { year: 2017, terms: 2 },
-  { year: 2016, terms: 1 }, { year: 2015, terms: 1 },
-];
+// Our own practice tests: 40 full tests per subject and grade, in 4 levels of 10.
+// (Own structure – not the official year/term layout.)
+export const MOCK_LEVELS = 4;
+export const MOCK_PER_LEVEL = 10;
+export const MOCK_COUNT = MOCK_LEVELS * MOCK_PER_LEVEL;
+// every topic has fixed practice variants so the child can see what is done (green)
+export const TOPIC_VARIANTS = 5;
 
 export function tauUrl(subject, grade) {
   const predmet = subject === 'czech' ? 'cj' : 'ma';

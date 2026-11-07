@@ -36,6 +36,8 @@ export function translate(lang, key, vars) {
   if (s === undefined) return key;
   if (Array.isArray(s)) return s;
   if (vars) {
+    // gender agreement: {name?koupil|koupila} – picks the form by vars.nameG ('m' | 'f')
+    s = s.replace(/\{(\w+)\?([^|{}]*)\|([^{}]*)\}/g, (m, k, masc, fem) => (vars[`${k}G`] === 'f' ? fem : masc));
     s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? String(vars[k]) : m));
   }
   return s;
