@@ -14,7 +14,7 @@ Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barc
 
 Interfeys tillari: čeština, українська, English, русский, Deutsch.
 
-**Ma'lumotlar yangilanishda saqlanadi:** APK doim bitta kalit (`android/app/logicquest.keystore`) bilan imzolanadi, shuning uchun yangi versiya eskisining ustiga o'rnatiladi va bolaning ismi va natijalari o'chmaydi. Qo'shimcha himoya: Sozlamalar → Zaxira nusxa.
+**Ma'lumotlar yangilanishda saqlanadi:** APK doim bitta kalit (`android/app/logicquest.keystore`) bilan imzolanadi, shuning uchun yangi versiya eskisining ustiga o'rnatiladi va bolaning ismi va natijalari o'chmaydi.
 
 ## Savollar qayerdan keladi va nega doim to'g'ri
 

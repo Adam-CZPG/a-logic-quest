@@ -8,11 +8,10 @@ import { resetStats } from '@/exam/stats';
 import { getPacks, addPack, removePack, parsePack } from '@/exam/packs';
 import { isSoundOn, toggleSound } from '@/lib/sfx';
 import { syncReminder, isNative } from '@/lib/native';
-import { exportBackup, importBackup } from '@/lib/backup';
 import { cn } from '@/lib/utils';
 import {
   Upload, Trash2, Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
-  Volume2, Bell, Save, FolderOpen, Package, RotateCcw, Info,
+  Volume2, Bell, Package, RotateCcw, Info,
 } from 'lucide-react';
 
 function Group({ title, children }) {
@@ -70,7 +69,6 @@ export default function Settings() {
   const [editing, setEditing] = useState(!settings.name);
   const [draftName, setDraftName] = useState(settings.name || '');
   const packRef = useRef(null);
-  const backupRef = useRef(null);
 
   const since = settings.startedAt ? new Date(settings.startedAt).toLocaleDateString(settings.lang) : null;
 
@@ -90,19 +88,6 @@ export default function Settings() {
       setMsg({ ok: true, text: t('set.imported', { n: pack.count }) });
     } catch {
       setMsg({ ok: false, text: t('set.importError') });
-    }
-  }
-
-  async function onBackup(e) {
-    const f = e.target.files?.[0];
-    e.target.value = '';
-    if (!f) return;
-    try {
-      importBackup(await f.text());
-      setMsg({ ok: true, text: t('set.restored') });
-      setTimeout(() => window.location.reload(), 700);
-    } catch {
-      setMsg({ ok: false, text: t('set.restoreError') });
     }
   }
 
@@ -188,8 +173,6 @@ export default function Settings() {
       </Group>
 
       <Group title={t('set.data')}>
-        <Row icon={Save} label={t('set.backup')} hint={t('set.backupDesc')} onClick={() => exportBackup(settings.name).catch(() => setMsg({ ok: false, text: '✗' }))} />
-        <Row icon={FolderOpen} label={t('set.restore')} onClick={() => backupRef.current?.click()} />
         <Row icon={Package} label={t('set.packs')} hint={t('set.packsDesc')} onClick={() => packRef.current?.click()}>
           <Upload className="w-4 h-4 text-ink-soft" />
         </Row>
@@ -204,7 +187,6 @@ export default function Settings() {
         <Row icon={RotateCcw} label={t('set.reset')} danger onClick={() => { if (window.confirm(t('set.resetConfirm'))) { resetStats(); setMsg({ ok: true, text: '✓' }); } }} />
       </Group>
       <input ref={packRef} type="file" accept="application/json,.json" className="hidden" onChange={onPack} />
-      <input ref={backupRef} type="file" accept="application/json,.json" className="hidden" onChange={onBackup} />
       {msg && <p className={cn('mt-2 px-1 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
 
       <Group title={t('set.about')}>
