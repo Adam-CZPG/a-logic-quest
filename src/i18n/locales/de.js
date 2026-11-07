@@ -73,9 +73,6 @@ export default {
   'tests.best': 'beste {s}/50',
   'tests.new': 'neu',
   'tests.info': '{n} Aufgaben · 50 Punkte · {min} min',
-  'official.title': 'Offizielle Tests (Tschechien)',
-  'official.desc': 'Die offiziellen Tests früherer Jahre gibt es kostenlos in der App TAU ihres Herausgebers (Cermat). Diese App hat damit nichts zu tun – alle Aufgaben hier sind eigene.',
-  'official.open': 'Offizielle Tests (TAU)',
   'topics.accuracy': '{p} % richtig',
   'topics.notYet': 'noch nicht geübt',
   'topics.practise': 'Üben',
@@ -154,7 +151,7 @@ export default {
   'set.reset': 'Fortschritt zurücksetzen',
   'set.resetConfirm': 'Wirklich den ganzen Fortschritt löschen?',
   'set.about': 'Über die App',
-  'set.disclaimer': 'Alle Aufgaben in dieser App sind eigene oder werden von der App erzeugt. Die App steht in keiner Verbindung zu Prüfungsbehörden oder Verlagen. Die genauen Prüfungsregeln erfährst du bei deiner Schule.',
+  'set.disclaimer': 'Alle Aufgaben in der App sind eigene oder werden von der App selbst erstellt.',
   'set.version': 'Version',
 
   'b.first_test': 'Erster Test',
@@ -379,4 +376,5 @@ export default {
   'de.g4.default': 'In {state} entscheiden die Empfehlung der Schule und deine Noten – mit diesen Aufgaben bist du gut vorbereitet.',
   'de.g10': 'Abschlussprüfung Klasse 10 in {state}: {exam}. Genaue Aufgaben und Termine legt dein Bundesland fest – frag an deiner Schule.',
   'de.exam10': 'Mittlerer Schulabschluss',
+  'cz.standard': 'Übungstests nach dem Cermat-Standard für die tschechische Aufnahmeprüfung.',
 };

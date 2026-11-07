@@ -72,9 +72,6 @@ export default {
   'tests.best': 'nejlépe {s}/50',
   'tests.new': 'nový',
   'tests.info': '{n} úloh · 50 bodů · {min} min',
-  'official.title': 'Oficiální testy CERMAT',
-  'official.desc': 'Oficiální testy z minulých let najdeš zdarma v aplikaci TAU jejich autora (Cermat). Naše aplikace s ním nijak nesouvisí — všechny úlohy jsou vlastní.',
-  'official.open': 'Oficiální testy (TAU)',
   'topics.accuracy': 'správně {p} %',
   'topics.notYet': 'zatím neprocvičeno',
   'topics.practise': 'Procvičovat',
@@ -153,7 +150,7 @@ export default {
   'set.reset': 'Smazat postup',
   'set.resetConfirm': 'Opravdu smazat veškerý postup?',
   'set.about': 'O aplikaci',
-  'set.disclaimer': 'Všechny úlohy v aplikaci jsou původní nebo je aplikace sama generuje. Aplikace nemá žádnou vazbu na CERMAT. Oficiální testy jsou zdarma na tau.cermat.cz.',
+  'set.disclaimer': 'Všechny úlohy v aplikaci jsou původní nebo je aplikace sama vytváří.',
   'set.version': 'Verze',
 
   'b.first_test': 'První test',
@@ -377,4 +374,5 @@ export default {
   'de.g4.default': 'V zemi {state} rozhoduje doporučení školy a známky – s těmito úlohami budeš dobře připraven/a.',
   'de.g10': 'Závěrečná zkouška 10. třídy v zemi {state}: {exam}. Přesné úlohy a termíny určuje spolková země – zeptej se ve škole.',
   'de.exam10': 'Mittlerer Schulabschluss',
+  'cz.standard': 'Vzorové testy podle standardu Cermat pro jednotnou přijímací zkoušku.',
 };

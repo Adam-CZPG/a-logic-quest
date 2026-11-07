@@ -208,7 +208,7 @@ export default function Settings() {
       {msg && <p className={cn('mt-2 px-1 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
 
       <Group title={t('set.about')}>
-        <Row icon={Info} label={`${t('app.name')} ${t('set.version')} ${import.meta.env.APP_VERSION} · © GBLine Technology`} hint={t('set.disclaimer')} />
+        <Row icon={Info} label={`${t('app.name')} ${t('set.version')} ${import.meta.env.APP_VERSION} · © GBLine Technology`} hint={settings.curriculum === 'cz' ? `${t('set.disclaimer')} ${t('cz.standard')}` : t('set.disclaimer')} />
       </Group>
     </AppShell>
   );

@@ -62,4 +62,4 @@ npm run android:open   # Android Studio'da ochadi → Run ▶
 
 ## Huquqiy eslatma
 
-Ilova CERMAT bilan bog'liq emas. Rasmiy testlar CERMAT'ning mualliflik huquqi bilan himoyalangan va [tau.cermat.cz](https://tau.cermat.cz) da bepul. Ularni ilovaga import qilish uchun CERMAT'dan ruxsat oling.
+Chexiya bo'limidagi testlar CERMAT standarti bo'yicha namunaviy testlar: format bir xil, topshiriqlar esa to'liq o'zimizniki. CERMAT'ning asl testlarini ilovaga (masalan, test to'plami sifatida) qo'shish kerak bo'lsa, avval ulardan ruxsat oling.

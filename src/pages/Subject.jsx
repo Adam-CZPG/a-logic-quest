@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ExternalLink, Timer, Dumbbell, Check, CircleHelp, Package, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, Package, RotateCcw } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { getPackTests } from '@/exam/packs';
-import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, tauUrl, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
-import { openExternal } from '@/lib/native';
+import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 
 const LEVEL_EMOJI = ['🌱', '🚲', '🚀', '🏔️'];
@@ -200,13 +199,8 @@ export default function Subject() {
           </ul>
         )}
 
-        {isCz && (
-          <div className="mt-4 p-3 rounded-2xl border-2 border-dashed border-line text-xs text-ink-soft">
-            <p>{t('official.desc')}</p>
-            <button onClick={() => openExternal(tauUrl(subject, grade))} className="mt-2 rounded-xl border-2 border-line bg-sheet px-3 py-1.5 font-bold flex items-center gap-1.5 text-ink">
-              {t('official.open')}<ExternalLink className="w-4 h-4" />
-            </button>
-          </div>
+        {isCz && (subject === 'math' || subject === 'czech') && (
+          <p className="mt-4 px-1 text-xs text-ink-soft">{t('cz.standard')}</p>
         )}
       </div>
 

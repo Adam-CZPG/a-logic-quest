@@ -192,9 +192,4 @@ export const MOCK_COUNT = MOCK_LEVELS * MOCK_PER_LEVEL;
 // every topic has fixed practice variants so the child can see what is done (green)
 export const TOPIC_VARIANTS = 5;
 
-export function tauUrl(subject, grade) {
-  const predmet = subject === 'czech' ? 'cj' : 'ma';
-  return `https://tau.cermat.cz/vyber.php?trida=${grade}&predmet=${predmet}`;
-}
 
-export const CERMAT_ARCHIVE_URL = 'https://prijimacky.cermat.cz';
