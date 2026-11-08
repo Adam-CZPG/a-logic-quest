@@ -1,7 +1,7 @@
 // Duels without a server: the whole duel travels inside the link a child sends through a messenger.
 // A link carries: which tasks (subject, grade, country, seed) and the results of the players so far.
 import { randomSeed } from '@/exam/rng';
-import { CURRICULA } from '@/exam/taxonomy';
+import { CURRICULA, allSubjects } from '@/exam/taxonomy';
 
 const KEY = 'lq_duels_v1';
 const PENDING = 'lq_duel_pending';
@@ -40,7 +40,7 @@ export function decodeDuel(code) {
   try {
     const o = JSON.parse(unb64url(String(code)));
     if (!o || typeof o !== 'object' || !o.i || !o.s || !o.a || !CURRICULA[o.c]) return null;
-    if (!CURRICULA[o.c].subjects.includes(o.s) || !CURRICULA[o.c].grades.includes(Number(o.g))) return null;
+    if (!allSubjects(o.c).includes(o.s) || !CURRICULA[o.c].grades.includes(Number(o.g))) return null;
     return { id: String(o.i).slice(0, 24), subject: o.s, grade: Number(o.g), curriculum: o.c, seed: String(o.e).slice(0, 24), a: clean(o.a), b: clean(o.b) || null };
   } catch {
     return null;

@@ -4,19 +4,41 @@
 export const GRADES = [5, 7, 9];
 
 // A country = which grades exist there and which subjects are practised.
-// English is offered everywhere so the app is not tied to one national exam.
+// `optional` subjects are not part of that country's exam: the child switches them on in Settings.
 export const CURRICULA = {
-  // Czech Republic – entrance exam to gymnasium (maths + Czech) + English practice
-  cz: { id: 'cz', flag: '🇨🇿', grades: [5, 7, 9], subjects: ['math', 'czech', 'english'] },
+  // Czech Republic – entrance exam to gymnasium is maths + Czech only; English is an optional extra
+  cz: { id: 'cz', flag: '🇨🇿', grades: [5, 7, 9], subjects: ['math', 'czech'], optional: ['english'] },
   // Germany – grade 4: move to Gymnasium (Übertritt / Probeunterricht / Eignungstest),
   // grade 10: final exams of lower secondary (MSA, ZP10 …) in maths, German, English
   de: { id: 'de', flag: '🇩🇪', grades: [4, 10], subjects: ['math', 'german', 'english'], states: true },
   // Slovakia – grade 5: entrance exams to 8-year gymnasium (maths + Slovak, set by each school),
   // grade 9: Testovanie 9 (maths + Slovak) and entrance exams to secondary schools
-  sk: { id: 'sk', flag: '🇸🇰', grades: [5, 9], subjects: ['math', 'slovak', 'english'] },
+  // (no English in either), so English is an optional extra here too
+  sk: { id: 'sk', flag: '🇸🇰', grades: [5, 9], subjects: ['math', 'slovak'], optional: ['english'] },
   // Everyone else – maths and English work in every country
   intl: { id: 'intl', flag: '🌍', grades: [5, 7, 9], subjects: ['math', 'english'] },
 };
+
+// every subject a country knows, optional ones included (e.g. to accept a friend's duel)
+export function allSubjects(curriculum) {
+  const c = CURRICULA[curriculum];
+  return c ? [...c.subjects, ...(c.optional || [])] : ['math'];
+}
+
+function storedEnglish() {
+  try {
+    return !!JSON.parse(localStorage.getItem('lq_settings_v1') || '{}').english;
+  } catch {
+    return false;
+  }
+}
+
+// the subjects the child practises: the exam subjects + optional English when switched on
+export function subjectsFor(curriculum, english = storedEnglish()) {
+  const c = CURRICULA[curriculum];
+  if (!c) return ['math'];
+  return english ? allSubjects(curriculum) : c.subjects;
+}
 
 export function gradesFor(curriculum) {
   return CURRICULA[curriculum]?.grades || GRADES;

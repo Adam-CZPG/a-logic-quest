@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
 import { getStats, levelFromXp, currentStreak, topicAccuracy } from '@/exam/stats';
 import { dailyKey } from '@/exam/engine';
-import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
+import { CURRICULA, subjectsFor, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 import { usePendingDuel } from '@/pages/Duel';
@@ -43,12 +43,12 @@ export function Avatar({ name, className }) {
 }
 
 export default function Home() {
-  const { settings, t } = useSettings();
+  const { settings, t, update } = useSettings();
   const s = useStats();
   const { grade, curriculum, name } = settings;
   const lvl = levelFromXp(s.xp);
   const streak = currentStreak(s);
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum, settings.english);
   const doneToday = !!s.dailyDone[dailyKey()];
   const [dailyRun, setDailyRun] = useState(null);
   usePendingDuel();
@@ -147,6 +147,7 @@ export default function Home() {
               <span className="w-9 h-9 rounded-xl bg-pen-soft grid place-items-center text-xl shrink-0" aria-hidden="true">{SUBJECTS[sub].emoji}</span>
               <h3 className="font-heading font-bold text-[15px] leading-tight flex-1 min-w-0 line-clamp-2 break-words">
                 {t(`subject.${sub}`)}
+                {CURRICULA[curriculum]?.optional?.includes(sub) && <span className="ms-1 inline-block align-middle whitespace-nowrap text-[10px] font-bold rounded-md bg-line text-ink-soft px-1.5 py-0.5">{t('home.optional')}</span>}
                 {subjectLevel(sub, grade) && <span className="ms-1 align-middle text-[11px] font-bold rounded-md bg-pen-soft text-pen px-1.5 py-0.5">{subjectLevel(sub, grade)}</span>}
               </h3>
             </div>
@@ -160,7 +161,17 @@ export default function Home() {
           </Link>
         ))}
       </div>
-
+      {/* English is an optional extra where it is not an exam subject */}
+      {CURRICULA[curriculum]?.optional?.includes('english') && !settings.english && (
+        <button onClick={() => update({ english: true })} className="mt-2.5 w-full flex items-center gap-3 rounded-2xl border-2 border-dashed border-line p-3 text-start hover:border-pen">
+          <span className="w-9 h-9 rounded-xl bg-pen-soft grid place-items-center text-xl shrink-0" aria-hidden="true">🇬🇧</span>
+          <span className="flex-1 min-w-0">
+            <span className="block font-bold leading-tight">{t('home.addEnglish')}</span>
+            <span className="block text-xs text-ink-soft">{t('home.addEnglishDesc')}</span>
+          </span>
+          <span className="rounded-lg bg-pen text-on-pen text-xs font-bold px-2.5 py-1.5 shrink-0">+ {t('home.add')}</span>
+        </button>
+      )}
 
       {s.mistakes.length > 0 && (
         <Link to="/play/mistakes?mode=practice" className="sheet mt-3 flex items-center gap-3 p-3 hover:border-redpen transition-colors">

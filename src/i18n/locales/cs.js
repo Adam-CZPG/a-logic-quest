@@ -560,4 +560,10 @@ export default {
   'fr.followsYou': "Sledují tě",
   'fr.followBack': "Sledovat zpět",
   'fr.cheersNew': "{n} nové",
+  'set.english': "Angličtina (volitelná)",
+  'set.englishHint': "U přijímaček se nezkouší – procvičuj ji navíc jako bonus.",
+  'home.addEnglish': "Angličtina – volitelná",
+  'home.addEnglishDesc': "U přijímaček není. Přidej si ji jako bonusový předmět.",
+  'home.add': "Přidat",
+  'home.optional': "volitelné",
 };

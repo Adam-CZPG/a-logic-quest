@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
-import { CURRICULA, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
+import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 
@@ -24,7 +24,7 @@ export default function Subject() {
   const tab = params.get('tab') === 'topics' ? 'topics' : 'tests';
   const setTab = (v) => setParams({ tab: v }, { replace: true });
 
-  if (!SUBJECTS[subject] || !(CURRICULA[curriculum]?.subjects || []).includes(subject)) return <Navigate to="/" replace />;
+  if (!SUBJECTS[subject] || !subjectsFor(curriculum, settings.english).includes(subject)) return <Navigate to="/" replace />;
 
   const s = getStats();
   const round = getRound(s, subject, grade);
