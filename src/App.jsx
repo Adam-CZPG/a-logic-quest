@@ -16,6 +16,7 @@ import Game from '@/pages/Game';
 import LogicGame from '@/pages/LogicGame';
 import Achievements from '@/pages/Achievements';
 import { DuelHub, DuelView, DuelOpen, WebHome, WEB_ONLY } from '@/pages/Duel';
+import League, { FollowOpen } from '@/pages/League';
 
 function NativeBridge() {
   const location = useLocation();
@@ -45,7 +46,9 @@ function NativeBridge() {
     let off = () => {};
     onAppUrl((url) => {
       const m = String(url).match(/[?&]d=([A-Za-z0-9_-]+)/);
-      if (m) navigate(`/d?d=${m[1]}`);
+      if (m) return navigate(`/d?d=${m[1]}`);
+      const f = String(url).match(/[?&]c=([A-Z0-9]{6})/i);
+      if (f) navigate(`/f?c=${f[1]}`);
     }).then((fn) => { off = fn; });
     return () => off();
   }, [navigate]);
@@ -69,6 +72,7 @@ export default function App() {
           <Routes>
             <Route path="/welcome" element={<Onboarding />} />
             <Route path="/d" element={<DuelOpen />} />
+            <Route path="/f" element={<FollowOpen />} />
             <Route path="/duel/:id" element={<Guard><DuelView /></Guard>} />
             <Route path="/play/:kind" element={<Guard><Player /></Guard>} />
             <Route path="/" element={<Guard><WebHome /></Guard>} />
@@ -79,6 +83,8 @@ export default function App() {
             <Route path="/welcome" element={<Onboarding />} />
             <Route path="/d" element={<DuelOpen />} />
             <Route path="/duel" element={<Guard><DuelHub /></Guard>} />
+            <Route path="/league" element={<Guard><League /></Guard>} />
+            <Route path="/f" element={<FollowOpen />} />
             <Route path="/duel/:id" element={<Guard><DuelView /></Guard>} />
             <Route path="/" element={<Guard><Home /></Guard>} />
             <Route path="/subject/:subject" element={<Guard><Subject /></Guard>} />

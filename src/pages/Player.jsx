@@ -6,6 +6,7 @@ import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeI
 import { useSettings } from '@/lib/settings';
 import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, buildDuelSet, taskLabels, dailyKey } from '@/exam/engine';
 import { getDuel, saveDuel } from '@/lib/duel';
+import { syncXp } from '@/lib/league';
 import { useMe, WEB_ONLY } from '@/pages/Duel';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
 import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
@@ -178,6 +179,8 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     finished.current = true;
     clearResume(rKey);
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
+    // league: send the new XP in the background (does nothing if the child did not join)
+    syncXp().catch(() => {});
     if (set.duelId) {
       // a duel ends on the VS screen, not on the normal results
       const d = getDuel(set.duelId);

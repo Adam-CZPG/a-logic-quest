@@ -12,6 +12,7 @@ Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barc
 - **Ikki rejim:** *Simulyatsiya* (taymer, tuzatishsiz) va *Mashq* (darhol tekshirish, yechim).
 - **Bugungi reja:** har fandan 3 tadan savol, kunlik eslatma (Android). Xatolar ustida ishlash, XP, nishonlar, statistika.
 - **⚔️ Duel (serversiz):** bola 10 ta savolni yechadi va havolani WhatsApp/Telegram/SMS orqali yuboradi; do'sti xuddi shu savollarni yechadi (ilovasiz, brauzerda ham), natija havola orqali qaytadi. G'olibga 👑 toj, har bir o'yinchida o'z davlati va tili bayrog'i.
+- **🏆 Haftalik liga va do'stlar (Supabase):** ixtiyoriy. 30 kishilik guruhlar, XP bo'yicha reyting, eng yaxshi 7 tasi yuqori ligaga (Bronza → Kumush → Oltin → Safir → Olmos), oxirgi 5 tasi pastga. Do'stlarni 6 belgili kod orqali kuzatish. Ism, matn, chat yo'q – faqat hayvon + raqam (masalan «Liška 427»), davlat va til bayrog'i. «Meni ligadan o'chirish» – serverdagi hamma narsa o'chadi.
 - **Do'stni taklif qilish:** WhatsApp, Telegram, Viber, SMS yoki telefonning ulashish menyusi orqali.
 
 Interfeys tillari: čeština, slovenčina, українська, English, русский, Deutsch.
@@ -71,3 +72,12 @@ Chexiya bo'limidagi testlar CERMAT standarti bo'yicha namunaviy testlar: format 
 Duel havolasi `https://adam-czpg.github.io/a-logic-quest/#/d?d=…` ko'rinishida bo'ladi. Bu sahifa faqat duel uchun (`VITE_WEB_DUEL=1`) – qolgan imkoniyatlar faqat ilovada.
 Bir martalik sozlash: GitHub → repo → **Settings → Pages → Source: GitHub Actions**. Shundan keyin `main` ga har bir push sahifani avtomatik yangilaydi (`.github/workflows/pages.yml`).
 Ilova o'rnatilgan telefonda `gbexam://d?d=…` havolasi to'g'ridan-to'g'ri ilovani ochadi.
+
+
+## Liga serveri (Supabase)
+
+Loyiha: `kids-language-game` (tashkilot `gbline-ai`), alohida `gbexam` sxemasi – boshqa ilovaning ma'lumotlariga tegilmaydi.
+- Jadvallar: `gbexam.players`, `gbexam.weekly`, `gbexam.follows` – ilovadan to'g'ridan-to'g'ri o'qib/yozib bo'lmaydi (RLS, ruxsat yo'q).
+- Ilova faqat `public.gbexam_*` funksiyalarini chaqiradi; har biri telefonning maxfiy kalitini tekshiradi.
+- Himoyalar: bir chaqiruvda ≤ 600 XP, kuniga ≤ 3000 XP; daqiqasiga ≤ 60 yangi o'yinchi; 100 tadan ortiq follow yo'q.
+- Ilova kodidagi kalit (`sb_publishable_…`) ochiq bo'lishi mumkin – u faqat shu funksiyalarni chaqira oladi.

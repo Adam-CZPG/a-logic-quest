@@ -9,9 +9,10 @@ import { isSoundOn, toggleSound } from '@/lib/sfx';
 import { syncReminder, isNative } from '@/lib/native';
 import { cn } from '@/lib/utils';
 import InviteSheet from '@/components/InviteSheet';
+import { isJoined, leave as leaveLeague } from '@/lib/league';
 import {
   Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
-  Volume2, Bell, RotateCcw, Info, UserPlus,
+  Volume2, Bell, RotateCcw, Info, UserPlus, Trophy,
 } from 'lucide-react';
 
 function Group({ title, children }) {
@@ -162,6 +163,20 @@ export default function Settings() {
         <Row icon={RotateCcw} label={t('set.reset')} danger onClick={() => { if (window.confirm(t('set.resetConfirm'))) { resetStats(); setMsg({ ok: true, text: '✓' }); } }} />
       </Group>
       {msg && <p className={cn('mt-2 px-1 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
+
+      {isJoined() && (
+        <Group title={t('league.title')}>
+          <Row icon={Trophy} label={t('league.leave')} hint={t('league.leaveDesc')} onClick={async () => {
+            if (!window.confirm(t('league.leaveConfirm'))) return;
+            try {
+              await leaveLeague();
+              setMsg({ ok: true, text: t('league.left') });
+            } catch {
+              setMsg({ ok: false, text: t('league.offline') });
+            }
+          }} />
+        </Group>
+      )}
 
       <Group title={t('invite.title')}>
         <Row icon={UserPlus} label={t('invite.title')} hint={t('invite.desc')} onClick={() => setInvite(true)} />
