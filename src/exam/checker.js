@@ -1,6 +1,6 @@
 // Answer checking for every task type. Pure functions, unit-tested in scripts/selftest.mjs.
 //
-// Task types (see CONTENT.md):
+// Task types:
 //   choice  – one correct option, answer = index
 //   number  – numeric answer, answer = number (accepts "2,5", "2.5", "5/2", "1 250")
 //   text    – short written answer, answer = [accepted strings]
@@ -95,7 +95,7 @@ export function checkAnswer(q, response) {
   }
 }
 
-const COMMA_LANGS = new Set(['cs', 'uk', 'ru']);
+const COMMA_LANGS = new Set(['cs', 'uk', 'ru', 'de', 'sk']);
 
 export function decimalSep(lang) {
   return COMMA_LANGS.has(lang) ? ',' : '.';

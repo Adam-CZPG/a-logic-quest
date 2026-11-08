@@ -38,6 +38,13 @@ function validate(q, where) {
     fail(`${where}: untranslated ${m && m[0]}`, q);
   }
   if (!q.text) fail(`${where}: no text`, q);
+  // a shown number answer never looks like 880,0000000000001
+  if (q.type === 'number' && !q.answerDisplay) {
+    for (const a of [].concat(q.answer)) if (Math.abs(a * 1000 - Math.round(a * 1000)) > 1e-6) fail(`${where}: answer not rounded ${a}`, q);
+  }
+  // no two options with the same text (that would make two answers right)
+  if (q.type === 'choice' && q.options.every((o) => typeof o === 'string') && new Set(q.options).size !== q.options.length) fail(`${where}: duplicate options`, q);
+  if (/\(a\)|\(la\)|\(а\)|\(ла\)/.test(q.text)) fail(`${where}: unresolved gender form`, q);
   if (q.type === 'choice') {
     if (!Array.isArray(q.options) || q.options.length < 2) fail(`${where}: options`, q);
     if (!(q.answer >= 0 && q.answer < q.options.length)) fail(`${where}: answer index`, q);
@@ -72,7 +79,7 @@ for (const c of Object.values(tax.CURRICULA)) for (const grade of c.grades) for 
 for (const { grade, subject } of COMBOS) {
   {
     for (const topic of tax.topicsFor(subject, grade)) {
-      for (const lang of subject === 'math' ? langs : ['cs', 'en', 'de']) {
+      for (const lang of subject === 'math' ? langs : ['cs', 'en', 'de', 'sk']) {
         for (let seed = 0; seed < (lang === 'cs' || lang === 'en' ? 12 : 3); seed++) {
           const set = engine.buildTopicSet({ subject, grade, topic, lang, curriculum: 'cz', count: 10, seed });
           if (set.questions.length < 8) fail(`${subject}/${grade}/${topic}/${lang}: only ${set.questions.length} questions`);
@@ -158,10 +165,73 @@ for (const lang of ['ru', 'uk']) {
   delete globalThis.localStorage;
 }
 
+// 2e) a test stopped in the middle continues where it stopped; finished or old runs disappear
+{
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i], get length() { return Object.keys(store).length; } };
+  globalThis.window = globalThis.window || { dispatchEvent() {} };
+  const rs = await load('/src/lib/resume.js');
+  const set = engine.buildDailyPlan({ grade: 5, lang: 'cs', curriculum: 'cz' });
+  const set2 = engine.buildDailyPlan({ grade: 5, lang: 'cs', curriculum: 'cz' });
+  const k = rs.resumeKey(set, 'practice', 5);
+  if (k !== rs.resumeKey(set2, 'practice', 5)) fail('resume: same daily plan gives a different key');
+  if (k === rs.resumeKey(set, 'sim', 5)) fail('resume: sim and practice share a key');
+  const answers = set.questions.map((q, i) => (i < 4 ? 0 : null));
+  rs.saveResume(k, { meta: rs.metaFor(set, 5, 'practice'), idx: 4, answers, checks: answers.map(() => null), reveal: answers.map(() => false), mistakes: 1, ms: 90000, answered: 4 });
+  const back = rs.loadResume(k, set.questions.length);
+  if (!back || back.idx !== 4 || back.answered !== 4 || back.ms !== 90000) fail('resume: saved run not restored');
+  if (rs.listResume((m) => m.kind === 'daily').length !== 1) fail('resume: daily run not listed');
+  rs.clearResume(k);
+  if (rs.loadResume(k, set.questions.length)) fail('resume: finished run still there');
+  delete globalThis.localStorage;
+}
+
+// 2f) Slovak: the verb agrees with the subject (Petra kúpila, Peter kúpil, dieťa kúpilo, deti kúpili)
+{
+  const { SLOVAK_LISTS: L } = await load('/src/exam/generators/slovak.js');
+  for (let seed = 0; seed < 300; seed++) {
+    for (const grade of [5, 9]) {
+      const set = engine.buildTopicSet({ subject: 'slovak', grade, topic: 'sk_skladba', lang: 'sk', curriculum: 'sk', count: 10, seed });
+      set.questions.filter((q) => q.type === 'choice' && /zhoda/.test(q.text)).forEach((q) => {
+        const subj = L.SG_SUBJ.find(([n]) => q.expr.startsWith(`${n} `));
+        const right = q.options[q.answer];
+        if (subj) {
+          const v = L.VERBS.find((x) => x.includes(right));
+          if (!v || v[{ m: 0, f: 1, n: 2 }[subj[1]]] !== right) fail(`sk agreement: ${q.expr} → ${right}`, q);
+        } else if (!/li$/.test(right)) fail(`sk plural agreement: ${q.expr} → ${right}`, q);
+      });
+    }
+  }
+}
+
+// 2g) duel: both phones get the same tasks (whatever the interface language); links survive the trip
+{
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; }, key: (i) => Object.keys(store)[i], get length() { return Object.keys(store).length; } };
+  const duel = await load('/src/lib/duel.js');
+  for (const c of Object.values(tax.CURRICULA)) for (const grade of c.grades) for (const subject of c.subjects) {
+    for (const seed of ['abc', 'k9x2', '77']) {
+      const sets = ['cs', 'en', 'de', 'sk', 'uk'].map((lang) => engine.buildDuelSet({ subject, grade, curriculum: c.id, lang, seed }));
+      if (sets[0].questions.length !== engine.DUEL_SIZE) fail(`duel ${c.id}/${subject}/${grade}: ${sets[0].questions.length} tasks`);
+      const key = (st) => JSON.stringify(st.questions.map((q) => [q.type, q.answer, q.topic]));
+      sets.forEach((st) => { if (key(st) !== key(sets[0])) fail(`duel ${c.id}/${subject}/${grade}/${seed}: tasks differ between languages`); st.questions.forEach((q) => validate(q, `duel ${c.id}/${subject}`)); });
+    }
+  }
+  const d = { id: 'x1', subject: 'math', grade: 5, curriculum: 'cz', seed: 'abc', a: { n: 'Petra', v: '🦊', l: 'cs', p: 8, t: 192000 } };
+  const back = duel.decodeDuel(duel.encodeDuel(d));
+  if (!back || back.a.n !== 'Petra' || back.a.v !== '🦊' || back.seed !== 'abc' || back.b) fail('duel: link round trip');
+  if (duel.decodeDuel('garbage') !== null || duel.decodeDuel(duel.encodeDuel({ ...d, subject: 'czech', curriculum: 'de' })) !== null) fail('duel: bad link accepted');
+  const done = { ...d, role: 'a', b: { n: 'Tomáš', v: '🐼', l: 'sk', p: 8, t: 150000 } };
+  if (duel.outcome(done) !== 'them') fail('duel: same points, faster should win');
+  if (duel.outcome({ ...done, role: 'b' }) !== 'me') fail('duel: winner seen from the other side');
+  if (!/^https:\/\/.+#\/d\?d=[A-Za-z0-9_-]+$/.test(duel.duelLink(d))) fail('duel: link format');
+  delete globalThis.localStorage;
+}
+
 // 3) daily plan = 3 per subject
 for (const c of Object.values(tax.CURRICULA)) {
   for (const grade of c.grades) {
-    const p = engine.buildDailyPlan({ grade, lang: c.id === 'de' ? 'de' : 'uk', curriculum: c.id });
+    const p = engine.buildDailyPlan({ grade, lang: { de: 'de', sk: 'sk' }[c.id] || 'uk', curriculum: c.id });
     if (p.questions.length !== 3 * c.subjects.length) fail(`daily ${c.id}/${grade}: ${p.questions.length} questions`);
     p.questions.forEach((q) => validate(q, `daily ${c.id}/${grade}`));
   }
@@ -198,16 +268,9 @@ for (const [code, d] of Object.entries(i18n.ALL_DICTS)) {
     }
   }
   if (d['m.weekdays_full'] && d['m.weekdays_full'].length !== 7) fail(`locale ${code} weekdays`);
+  // same number of names everywhere → duels give the same tasks in every language
+  if (d['m.names'].length !== en['m.names'].length || d['m.namesG'].length !== d['m.names'].length) fail(`locale ${code} names`);
 }
-
-// 6) the example content pack is valid and its answers pass the checker
-const packs = await load('/src/exam/packs.js');
-const fs = await import('node:fs');
-const pack = packs.parsePack(fs.readFileSync('content-packs/example-pack.json', 'utf8'));
-[...pack.questions, ...pack.tests.flatMap((t) => t.questions)].forEach((q) => validate({ points: 1, ...q }, 'example pack'));
-let bad = false;
-try { packs.parsePack({ name: 'x', questions: [{ subject: 'math', type: 'choice', text: 'a', options: ['a', 'b'], answer: 5 }] }); } catch { bad = true; }
-if (!bad) fail('invalid pack accepted');
 
 // 7) rng sanity
 const r = makeRng(1);

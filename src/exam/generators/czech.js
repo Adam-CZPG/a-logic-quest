@@ -466,9 +466,9 @@ const CURATED = [
   { topic: 'slovni_zasoba', grades: [5, 9], type: 'choice', text: 'Co znamená rčení „mít máslo na hlavě“?', options: ['být velmi chytrý', 'mít něco provedeného a mít proto špatné svědomí', 'být velmi hladový', 'mít dobrou náladu'], answer: 1 },
   { topic: 'slovni_zasoba', grades: [5, 9], type: 'choice', text: 'Co znamená rčení „chodit kolem horké kaše“?', options: ['bát se jídla', 'nemluvit přímo k věci', 'rychle utíkat', 'vařit oběd'], answer: 1 },
   { topic: 'slovni_zasoba', grades: [5, 9], type: 'choice', text: 'Co znamená rčení „házet hrách na zeď“?', options: ['dělat něco zbytečně', 'pracovat na zahradě', 'mít velkou radost', 'zlobit se'], answer: 0 },
-  { topic: 'slovni_zasoba', grades: [7, 9], type: 'choice', text: 'Které slovo je nadřazené slovům „jedle, smrk, borovice“?', options: ['les', 'jehličnan', 'strom', 'listnáč'], answer: 1, explain: 'Nejbližší nadřazený pojem je „jehličnan“.' },
+  { topic: 'slovni_zasoba', grades: [7, 9], type: 'choice', text: 'Které slovo je nejbližší nadřazené (nejbližší obecnější) slovo ke slovům „jedle, smrk, borovice“?', options: ['les', 'jehličnan', 'rostlina', 'listnáč'], answer: 1, explain: 'Jedle, smrk i borovice jsou jehličnany.' },
   { topic: 'slovni_zasoba', grades: [7, 9], type: 'choice', text: 'Které slovo je zdrobnělinou?', options: ['domeček', 'dominance', 'domov', 'domácí'], answer: 0 },
-  { topic: 'slovni_zasoba', grades: [9, 9], type: 'choice', text: 'Které slovo je přejaté z cizího jazyka?', options: ['víkend', 'chléb', 'sešit', 'pole'], answer: 0, explain: 'víkend – z angličtiny (weekend).' },
+  { topic: 'slovni_zasoba', grades: [9, 9], type: 'choice', text: 'Které slovo je přejaté z cizího jazyka?', options: ['víkend', 'voda', 'sešit', 'pole'], answer: 0, explain: 'víkend – z angličtiny (weekend).' },
 
   // ----- tvarosloví
   { topic: 'tvaroslovi', grades: [5, 9], type: 'choice', text: 'Ve kterém pádě je podstatné jméno ve spojení „bez kamaráda“?', options: ['1. pád', '2. pád', '3. pád', '4. pád'], answer: 1, explain: 'bez koho, čeho → 2. pád' },

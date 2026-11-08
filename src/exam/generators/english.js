@@ -31,7 +31,7 @@ function articleAAn(r, ctx) {
 
 const PLURALS = [
   ['child', 'children', 'childs'], ['mouse', 'mice', 'mouses'], ['tooth', 'teeth', 'tooths'], ['foot', 'feet', 'foots'],
-  ['man', 'men', 'mans'], ['woman', 'women', 'womans'], ['person', 'people', 'persons'], ['box', 'boxes', 'boxs'],
+  ['man', 'men', 'mans'], ['woman', 'women', 'womans'], ['goose', 'geese', 'gooses'], ['box', 'boxes', 'boxs'],
   ['baby', 'babies', 'babys'], ['knife', 'knives', 'knifes'], ['leaf', 'leaves', 'leafs'], ['sheep', 'sheep', 'sheeps'],
   ['bus', 'buses', 'bus'], ['city', 'cities', 'citys'], ['potato', 'potatoes', 'potatos'], ['wife', 'wives', 'wifes'],
 ];
@@ -263,7 +263,7 @@ function makeDo(r) {
 }
 const SYN_B1 = [
   ['begin', 'start'], ['big', 'large'], ['quick', 'fast'], ['angry', 'cross'], ['shut', 'close'], ['choose', 'pick'],
-  ['correct', 'right'], ['enormous', 'huge'], ['frightened', 'scared'], ['rich', 'wealthy'],
+  ['correct', 'right'], ['frightened', 'scared'], ['rich', 'wealthy'],
 ];
 function synonym(r) {
   const [a, b] = r.pick(SYN_B1);

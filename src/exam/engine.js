@@ -4,10 +4,10 @@ import { mathGeneratorsFor } from './generators/math';
 import { czechGeneratorsFor, readingGroups as czechReading } from './generators/czech';
 import { englishGeneratorsFor, readingGroups as englishReading } from './generators/english';
 import { germanGeneratorsFor, readingGroups as germanReading } from './generators/german';
+import { slovakGeneratorsFor, readingGroups as slovakReading } from './generators/slovak';
 import { SUBJECTS, topicsFor, CURRICULA, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
-import { getPackQuestions } from './packs';
 
 export function makeCtx({ lang, grade, curriculum }) {
   return {
@@ -37,6 +37,7 @@ function generatorsFor(subject, topic, grade) {
   if (subject === 'czech') return czechGeneratorsFor(topic);
   if (subject === 'english') return englishGeneratorsFor(topic);
   if (subject === 'german') return germanGeneratorsFor(topic);
+  if (subject === 'slovak') return slovakGeneratorsFor(topic);
   return mathGeneratorsFor(topic, contentGrade('math', grade));
 }
 
@@ -45,6 +46,7 @@ function readingFor(subject, grade) {
   if (subject === 'czech') return czechReading(contentGrade('czech', grade));
   if (subject === 'english') return englishReading(englishLevel(grade));
   if (subject === 'german') return germanReading(grade);
+  if (subject === 'slovak') return slovakReading(grade);
   return [];
 }
 
@@ -52,13 +54,7 @@ export function generateQuestion(subject, topic, r, ctx0, points) {
   // generators see the grade their task bank is written for (+ English level / real grade)
   const ctx = { ...ctx0, grade: contentGrade(subject, ctx0.grade), realGrade: ctx0.grade, level: englishLevel(ctx0.grade) };
   const gens = generatorsFor(subject, topic, ctx0.grade);
-  const packs = getPackQuestions({ subject, grade: ctx0.grade, topic });
   for (let attempt = 0; attempt < 12; attempt++) {
-    // imported packs get a fair share of the pool
-    if (packs.length && r.chance(packs.length / (packs.length + gens.length * 3))) {
-      const p = r.pick(packs);
-      return finalize({ ...p }, { subject, topic, points: points ?? p.points });
-    }
     if (!gens.length) break;
     // prefer a generator not yet used in this set, so one test never repeats the same kind of task
     const used = ctx.usedGens || new Set();
@@ -165,6 +161,28 @@ export function buildDailyPlan({ grade, lang, curriculum, weakTopics = {}, date 
     }
   });
   return { kind: 'daily', day, grade, questions: qs, title: { key: 'p.daily' } };
+}
+
+// ---------------------------------------------------------------- duel
+// 10 short tasks of one subject. The same seed + subject + grade + country give exactly the same
+// tasks on every phone (in every interface language), so two children can compete without a server.
+export const DUEL_SIZE = 10;
+export function buildDuelSet({ subject, grade, curriculum, lang, seed }) {
+  const r = makeRng(`duel:${subject}:${grade}:${curriculum}:${seed}`);
+  const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set() };
+  ctx.usedGens = new Set();
+  // the money must not depend on the interface language, or the two players would get different numbers
+  if (curriculum === 'intl') ctx.cur = '€';
+  // no long reading texts in a duel – it should be quick
+  const topics = topicsFor(subject, grade).filter((t) => t !== READING_TOPIC[subject]);
+  const start = hashString(String(seed)) % topics.length;
+  const qs = [];
+  for (let i = 0; qs.length < DUEL_SIZE && i < DUEL_SIZE * 3; i++) {
+    const topic = topics[(start + i) % topics.length];
+    const q = generateQuestion(subject, topic, r.fork(`d${i}`), ctx, 1);
+    if (q && !q.context) qs.push(q);
+  }
+  return { kind: 'duel', subject, grade, seed, curriculum, minutes: 12, questions: qs, title: { key: 'duel.title' } };
 }
 
 // ---------------------------------------------------------------- mistakes review

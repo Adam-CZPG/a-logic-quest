@@ -1,6 +1,6 @@
 {
   "appId": "com.adamczpg.logicquest",
-  "appName": "Examigo",
+  "appName": "GB Exam",
   "webDir": "dist",
   "android": {
     "backgroundColor": "#f7f8fc"

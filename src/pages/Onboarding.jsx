@@ -49,7 +49,7 @@ export default function Onboarding() {
                   {LANGS.map((l) => (
                     <button
                       key={l.code}
-                      onClick={() => choose({ lang: l.code, curriculum: l.code === 'de' ? 'de' : 'cz', grade: fitGrade(l.code === 'de' ? 'de' : 'cz', settings.grade) }, 1)}
+                      onClick={() => { const c = { de: 'de', sk: 'sk' }[l.code] || 'cz'; choose({ lang: l.code, curriculum: c, grade: fitGrade(c, settings.grade) }, 1); }}
                       className={cn('sheet flex items-center gap-2.5 px-3 py-3 text-start font-bold text-[15px] hover:border-pen', settings.lang === l.code && 'border-pen bg-pen-soft')}
                     >
                       <span className="text-2xl" aria-hidden="true">{l.flag}</span>

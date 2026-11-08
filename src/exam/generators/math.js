@@ -168,7 +168,7 @@ const cislo = {
   integers(r, ctx) {
     const a = r.int(-15, 15) || 4, b = r.int(-9, 9) || -3, c = r.int(-6, 6) || 2;
     const v = a - b * c;
-    return { type: 'number', text: ctx.t('m.calc'), expr: neg(`${a} ${MINUS} ${sgn(b)} × ${sgn(c)}`), answer: v, explain: neg(`${b} × ${c} = ${b * c}; ${a} - (${b * c}) = ${v}`) };
+    return { type: 'number', text: ctx.t('m.calc'), expr: neg(`${a} ${MINUS} ${sgn(b)} × ${sgn(c)}`), answer: v, explain: neg(`${sgn(b)} × ${sgn(c)} = ${b * c}; ${a} - ${sgn(b * c)} = ${v}`) };
   },
 
   powers(r, ctx) {
@@ -189,7 +189,10 @@ function person(r, ctx, key = 'name') {
 // ---------------------------------------------------------------- slovní úlohy
 const slovni = {
   shopping(r, ctx) {
-    const n = r.int(5, 9), p = r.int(8, 45), bill = n * p < 100 ? 100 : n * p < 200 ? 200 : n * p < 500 ? 500 : 1000;
+    // euro prices are about 25× smaller than crowns, so the numbers stay realistic
+    const euro = ctx.cur === '€';
+    const n = r.int(5, 9), p = euro ? r.int(2, 9) : r.int(8, 45);
+    const bill = euro ? (n * p < 20 ? 20 : n * p < 50 ? 50 : 100) : n * p < 100 ? 100 : n * p < 200 ? 200 : n * p < 500 ? 500 : 1000;
     const ans = bill - n * p;
     return {
       type: 'number', unit: ctx.cur, answer: ans,
@@ -198,7 +201,7 @@ const slovni = {
     };
   },
   unitPrice(r, ctx) {
-    const unit = r.int(3, 15), n = r.int(5, 9), m = r.int(5, 14);
+    const unit = ctx.cur === '€' ? r.int(1, 4) : r.int(3, 15), n = r.int(5, 9), m = r.int(5, 14);
     if (m === n) return slovni.unitPrice(r, ctx);
     return {
       type: 'number', unit: ctx.cur, answer: unit * m,
@@ -215,7 +218,8 @@ const slovni = {
     };
   },
   moreLess(r, ctx) {
-    const b = r.int(8, 40), diff = r.int(3, 20);
+    // diff ≥ 5 keeps the noun in the same grammatical form in every language (o 5 samolepek, на 5 наклеек)
+    const b = r.int(8, 40), diff = r.int(5, 20);
     const total = 2 * b + diff;
     const [n1, n2] = r.sample(ctx.names, 2);
     return {
@@ -233,7 +237,8 @@ const slovni = {
     };
   },
   speed(r, ctx) {
-    const v = r.pick([12, 15, 18, 24, 30, 36, 45, 60, 72, 90]);
+    // realistic cycling speeds
+    const v = r.pick([12, 15, 18, 24, 30]);
     const t = r.pick([10, 20, 30, 40, 50]);
     const d = (v * t) / 60;
     return {
@@ -369,7 +374,7 @@ const grafy = {
     return {
       type: 'number', unit: '°C', text: ctx.t('m.g_temps'),
       figure: { kind: 'table', headers: days, rows: [temps.map((x) => `${neg(x)} °C`)] },
-      answer: max - min, explain: neg(`${max} - (${min}) = ${max - min}`),
+      answer: max - min, explain: neg(`${max} - ${sgn(min)} = ${max - min}`),
     };
   },
 };
@@ -454,7 +459,7 @@ const prostor = {
     return { type: 'number', text: ctx.t(`m.p_painted${k}`, { n }), answer: ans, explain: { 3: '8', 2: `12 × ${n - 2} = ${ans}`, 1: `6 × ${n - 2}² = ${ans}`, 0: `${n - 2}³ = ${ans}` }[k] };
   },
   staircase(r, ctx) {
-    const n = r.int(4, 12);
+    const n = r.int(5, 12); // ≥ 5: "5 schodů / 5 schodov / 5 ступенек" is correct in every language
     return { type: 'number', text: ctx.t('m.p_stairs', { n }), answer: (n * (n + 1)) / 2, explain: `1 + 2 + … + ${n} = ${(n * (n + 1)) / 2}` };
   },
   cylinder(r, ctx) {
@@ -525,7 +530,7 @@ const aplikace = {
     return { type: 'number', text: ctx.t('m.a_seq'), expr: `${shown.join(', ')}, ?`, answer: seq[5], explain: `${shown.join(', ')}, ${seq[5]}` };
   },
   clock(r, ctx) {
-    const h = r.int(6, 15), m = r.int(5, 59), dh = r.int(0, 3), dm = r.int(10, 55);
+    const h = r.int(6, 15), m = r.int(5, 59), dh = r.int(1, 3), dm = r.int(10, 55);
     let total = h * 60 + m + dh * 60 + dm;
     const H = Math.floor(total / 60) % 24, M = total % 60;
     const pad = (x) => String(x).padStart(2, '0');
@@ -536,7 +541,7 @@ const aplikace = {
     };
   },
   handshakes(r, ctx) {
-    const n = r.int(4, 12);
+    const n = r.int(5, 12);
     return { type: 'number', text: ctx.t('m.a_hands', { n }), answer: (n * (n - 1)) / 2, explain: `${n} × ${n - 1} : 2 = ${(n * (n - 1)) / 2}` };
   },
   matches(r, ctx) {
@@ -625,9 +630,10 @@ const procenta = {
     return { type: 'number', text: ctx.t('m.pc_of', { p, n: base }), answer: (p * base) / 100, explain: `${base} × ${p} : 100 = ${ctx.f((p * base) / 100)}` };
   },
   priceChange(r, ctx) {
-    const price = r.int(4, 40) * 50, p = r.pick([10, 20, 25, 30, 40]);
+    // a bike costs thousands of crowns or hundreds of euros
+    const price = r.int(4, 40) * (ctx.cur === 'Kč' || ctx.cur === '₴' ? 500 : 50), p = r.pick([10, 20, 25, 30, 40]);
     const up = r.chance(0.5);
-    const v = up ? price * (1 + p / 100) : price * (1 - p / 100);
+    const v = Math.round(price * (up ? 100 + p : 100 - p)) / 100;
     return { type: 'number', unit: ctx.cur, text: ctx.t(up ? 'm.pc_up' : 'm.pc_down', { price, p, cur: ctx.cur }), answer: v, explain: `${price} × ${up ? 100 + p : 100 - p} % = ${ctx.f(v)}` };
   },
   whatPercent(r, ctx) {

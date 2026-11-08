@@ -142,3 +142,14 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { scrollbar-width: none; }
 }
+
+/* An app, not a web page: no pinch / double-tap zoom, no text inflation, no zoom when an input gets focus
+   (mobile browsers zoom into inputs whose text is smaller than 16px). */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+input, select, textarea {
+  font-size: max(16px, 1em);
+}

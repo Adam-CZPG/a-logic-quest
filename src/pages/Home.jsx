@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Flame, ChevronRight, CalendarCheck, RotateCcw, Check, Target } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
@@ -7,6 +7,11 @@ import { getStats, levelFromXp, currentStreak, topicAccuracy } from '@/exam/stat
 import { dailyKey } from '@/exam/engine';
 import { CURRICULA, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
+import { listResume } from '@/lib/resume';
+import InviteSheet from '@/components/InviteSheet';
+import { usePendingDuel } from '@/pages/Duel';
+import { isJoined, cached as leagueCached, hasPendingFollow, LEAGUES } from '@/lib/league';
+import { record as duelRecord, listDuels } from '@/lib/duel';
 
 export function useStats() {
   const [s, setS] = useState(getStats);
@@ -47,6 +52,29 @@ export default function Home() {
   const streak = currentStreak(s);
   const subjects = CURRICULA[curriculum]?.subjects || ['math'];
   const doneToday = !!s.dailyDone[dailyKey()];
+  const [dailyRun, setDailyRun] = useState(null);
+  const [invite, setInvite] = useState(false);
+  usePendingDuel();
+  const navigate = useNavigate();
+  // a friend's link waited for the first-run setup: go and follow them
+  useEffect(() => {
+    if (hasPendingFollow()) navigate('/league?tab=friends');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const leagueRows = leagueCached().league?.rows || [];
+  const myRow = leagueRows.find((r) => r.me);
+  const duels = duelRecord();
+  const duelTurn = listDuels().filter((d) => d.role === 'b' && !d.b).length;
+  useEffect(() => {
+    const r = () => setDailyRun(listResume((m) => m.kind === 'daily' && m.day === dailyKey() && m.grade === grade)[0] || null);
+    r();
+    window.addEventListener('lq-resume', r);
+    window.addEventListener('focus', r);
+    return () => {
+      window.removeEventListener('lq-resume', r);
+      window.removeEventListener('focus', r);
+    };
+  }, [grade]);
+  const dailyLeft = !doneToday && dailyRun;
   const accuracy = s.solved ? Math.round((s.correct / s.solved) * 100) : null;
 
   const subjectStats = useMemo(() => subjects.map((sub) => {
@@ -94,16 +122,16 @@ export default function Home() {
         </Link>
       )}
       {/* today's plan – the daily discipline */}
-      <Link to="/play/daily?mode=practice" className={cn('flex items-center gap-3 rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.99]', doneToday ? 'bg-ok-soft border-ok/50' : 'bg-pen text-on-pen border-pen shadow-[0_8px_24px_-12px_hsl(var(--pen)/0.7)]')}>
+      <Link to={`/play/daily?mode=${dailyLeft ? dailyLeft.meta.mode : 'practice'}`} className={cn('flex items-center gap-3 rounded-2xl p-3.5 border-2 transition-transform active:scale-[0.99]', doneToday ? 'bg-ok-soft border-ok/50' : 'bg-pen text-on-pen border-pen shadow-[0_8px_24px_-12px_hsl(var(--pen)/0.7)]')}>
         <span className={cn('w-10 h-10 rounded-xl grid place-items-center shrink-0', doneToday ? 'bg-ok text-white' : 'bg-on-pen/15')}>
           {doneToday ? <Check className="w-5 h-5" /> : <CalendarCheck className="w-5 h-5" />}
         </span>
         <div className="flex-1 min-w-0">
           <h2 className="font-heading font-bold leading-tight">{t('home.daily')}</h2>
-          <p className={cn('text-sm leading-snug truncate', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : t('home.dailyDesc')}</p>
+          <p className={cn('text-sm leading-snug truncate', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : dailyLeft ? `↺ ${t('resume.daily', { a: dailyLeft.answered, b: dailyLeft.meta.total })}` : t('home.dailyDesc')}</p>
           <div className="mt-1.5 flex gap-1">
-            {subjects.flatMap((sub) => [0, 1, 2].map((i) => (
-              <span key={`${sub}${i}`} className={cn('h-1.5 flex-1 rounded-full', doneToday ? 'bg-ok' : 'bg-on-pen/30')} />
+            {subjects.flatMap((sub, si) => [0, 1, 2].map((i) => (
+              <span key={`${sub}${i}`} className={cn('h-1.5 flex-1 rounded-full', doneToday || (dailyLeft && si * 3 + i < dailyLeft.answered) ? 'bg-ok' : 'bg-on-pen/30')} />
             )))}
           </div>
         </div>
@@ -139,6 +167,34 @@ export default function Home() {
           </Link>
         ))}
       </div>
+
+      {/* duel – the playful one: a sticker card in marker yellow */}
+      <Link to="/duel" className="mt-3 flex items-center gap-3 rounded-2xl border-[3px] border-[#1B2340] bg-marker text-[#1B2340] p-3 shadow-[4px_4px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-transform" style={{ transform: 'rotate(-0.8deg)' }}>
+        <span className="text-3xl" aria-hidden="true">⚔️</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-heading font-extrabold text-lg leading-tight">{t('duel.title')}</span>
+          <span className="block text-xs font-bold opacity-80">{duelTurn ? t('duel.turns', { n: duelTurn }) : t('duel.homeHint')}</span>
+        </span>
+        <span className="font-heading font-extrabold text-xl tabular">{duels.win}:{duels.loss}</span>
+      </Link>
+
+      <Link to="/league" className="sheet mt-2.5 flex items-center gap-3 p-3 hover:border-pen transition-colors">
+        <span className="w-10 h-10 rounded-xl grid place-items-center text-xl" style={{ background: LEAGUES[myRow?.league || 1].soft }} aria-hidden="true">{myRow ? LEAGUES[myRow.league].emoji : '🏆'}</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-bold leading-tight">{t('league.title')}</span>
+          <span className="block text-xs text-ink-soft">{isJoined() && myRow ? t('league.homeRank', { r: myRow.rank, xp: myRow.xp }) : t('league.homeHint')}</span>
+        </span>
+        <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
+      </Link>
+      <button onClick={() => setInvite(true)} className="sheet mt-2.5 w-full flex items-center gap-3 p-3 text-start hover:border-pen transition-colors">
+        <span className="w-10 h-10 rounded-xl bg-marker/30 grid place-items-center text-xl" aria-hidden="true">🤝</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-bold leading-tight">{t('invite.title')}</span>
+          <span className="block text-xs text-ink-soft">{t('invite.short')}</span>
+        </span>
+        <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
+      </button>
+      <InviteSheet open={invite} onClose={() => setInvite(false)} />
 
       {s.mistakes.length > 0 && (
         <Link to="/play/mistakes?mode=practice" className="sheet mt-2.5 flex items-center gap-3 p-3 hover:border-redpen transition-colors">

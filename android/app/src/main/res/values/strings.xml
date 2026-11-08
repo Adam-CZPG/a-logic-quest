@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Examigo</string>
-    <string name="title_activity_main">Examigo</string>
+    <string name="app_name">GB Exam</string>
+    <string name="title_activity_main">GB Exam</string>
     <string name="package_name">com.adamczpg.logicquest</string>
     <string name="custom_url_scheme">com.adamczpg.logicquest</string>
 </resources>

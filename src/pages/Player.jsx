@@ -4,20 +4,43 @@ import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
-import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, taskLabels } from '@/exam/engine';
+import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, buildDuelSet, taskLabels, dailyKey } from '@/exam/engine';
+import { getDuel, saveDuel } from '@/lib/duel';
+import { syncXp } from '@/lib/league';
+import { useMe, WEB_ONLY } from '@/pages/Duel';
 import { checkAnswer, answerToString, optionLabel, unitSuffix } from '@/exam/checker';
 import { recordAnswer, recordFinish, getStats, weakTopics, getRound } from '@/exam/stats';
-import { getPackTests } from '@/exam/packs';
-import { hashString } from '@/exam/rng';
 import { TOPIC_EMOJI } from '@/exam/taxonomy';
 import QuestionView, { PenMark } from '@/components/exam/QuestionView';
 import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
+import { resumeKey, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
+
+const DAILY_KEY = 'lq_daily_plan_v1';
+function dailyWeak(grade, curriculum) {
+  const day = dailyKey();
+  const id = `${day}:${grade}:${curriculum}`;
+  try {
+    const c = JSON.parse(localStorage.getItem(DAILY_KEY) || 'null');
+    if (c && c.id === id && c.weak) return c.weak;
+  } catch {}
+  const weak = weakTopics(getStats(), grade, curriculum);
+  try {
+    localStorage.setItem(DAILY_KEY, JSON.stringify({ id, weak }));
+  } catch {}
+  return weak;
+}
 
 function buildSet(kind, params, settings) {
   const { lang, grade, curriculum } = settings;
+  if (kind === 'duel') {
+    // the duel's own subject, grade and country – so both players get the very same tasks
+    const d = getDuel(params.get('id'));
+    if (!d) return null;
+    return { ...buildDuelSet({ subject: d.subject, grade: d.grade, curriculum: d.curriculum, lang, seed: d.seed }), duelId: d.id };
+  }
   const subject = params.get('subject') || 'math';
   const cycle = getRound(getStats(), subject, grade).cycle;
   if (kind === 'mock') {
@@ -31,19 +54,11 @@ function buildSet(kind, params, settings) {
     return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12, variant, cycle });
   }
   if (kind === 'daily') {
-    return buildDailyPlan({ grade, lang, curriculum, weakTopics: weakTopics(getStats(), grade, curriculum) });
+    // the plan is fixed for the whole day (weak topics taken in the morning), so a break never changes it
+    return buildDailyPlan({ grade, lang, curriculum, weakTopics: dailyWeak(grade, curriculum) });
   }
   if (kind === 'mistakes') {
     return buildMistakesSet(getStats().mistakes);
-  }
-  if (kind === 'pack') {
-    const test = getPackTests({ subject, grade }).find((x) => x.packId === params.get('pack') && String(x.index) === params.get('i'));
-    if (!test) return null;
-    const qs = test.questions.map((q, i) => ({
-      topic: 'pack', points: 1, ...q, subject: test.subject,
-      id: `pack:${test.packId}:${test.index}:${i}:${hashString(q.text)}`,
-    }));
-    return { kind: 'pack', subject, grade, minutes: test.minutes, questions: qs, title: { text: test.title } };
   }
   return null;
 }
@@ -76,7 +91,7 @@ export default function Player() {
   const navigate = useNavigate();
   const [nonce, setNonce] = useState(0);
 
-  const set = useMemo(() => buildSet(kind, params, settings), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
+  const set = useMemo(() => (WEB_ONLY && kind !== 'duel' ? null : buildSet(kind, params, settings)), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
   const mode = params.get('mode') === 'sim' ? 'sim' : 'practice';
 
   if (!set || !set.questions.length) {
@@ -87,27 +102,51 @@ export default function Player() {
       </div>
     );
   }
-  return <Session key={`${nonce}-${set.questions[0].id}`} set={set} mode={mode} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} />;
+  return <Session key={`${nonce}-${set.questions[0].id}`} set={set} mode={mode} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} onDuelDone={(id) => navigate(`/duel/${id}`, { replace: true })} />;
 }
 
-function Session({ set, mode, t, settings, onRestart, onExit }) {
+function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
+  const { me } = useMe();
   const qs = set.questions;
   const labels = useMemo(() => taskLabels(qs), [qs]);
   const maxPoints = qs.reduce((a, q) => a + (q.points || 1), 0);
   const timed = mode === 'sim' && !!set.minutes;
 
-  const [idx, setIdx] = useState(0);
-  const [answers, setAnswers] = useState(() => qs.map(() => null));
-  const [checks, setChecks] = useState(() => qs.map(() => null)); // {correct, score, max, n, first}
-  const [reveal, setReveal] = useState(() => qs.map(() => false));
-  const [mistakes, setMistakes] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  // an unfinished run of exactly this set (same tasks, same mode) continues where it stopped
+  const rKey = useMemo(() => resumeKey(set, mode, settings.grade), [set, mode, settings.grade]);
+  const saved = useMemo(() => loadResume(rKey, qs.length), [rKey, qs.length]);
+
+  const [idx, setIdx] = useState(() => Math.min(saved?.idx ?? 0, qs.length - 1));
+  const [answers, setAnswers] = useState(() => saved?.answers ?? qs.map(() => null));
+  const [checks, setChecks] = useState(() => saved?.checks ?? qs.map(() => null)); // {correct, score, max, n, first}
+  const [reveal, setReveal] = useState(() => saved?.reveal ?? qs.map(() => false));
+  const [mistakes, setMistakes] = useState(() => saved?.mistakes ?? 0);
+  const [elapsed, setElapsed] = useState(() => (saved?.ms ?? 0) / 1000);
+  const [resumed, setResumed] = useState(!!saved);
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState(null);
   const [overview, setOverview] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);
   const [drafts, setDrafts] = useState(() => qs.map(() => []));
-  const started = useRef(Date.now());
+  // time spent before a break counts, the break itself does not
+  const started = useRef(Date.now() - (saved?.ms ?? 0));
+
+  // keep the run on the device after every change (and every few seconds for the clock)
+  const finished = useRef(false);
+  useEffect(() => {
+    if (finished.current) return;
+    const touched = answers.some((a) => a !== null && a !== '') || checks.some(Boolean);
+    if (!touched) return;
+    saveResume(rKey, {
+      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes,
+      ms: Date.now() - started.current, answered: answers.filter((a) => a !== null && a !== '').length,
+    });
+  }, [rKey, set, settings.grade, mode, idx, answers, checks, reveal, mistakes, Math.floor(elapsed / 5)]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!resumed) return;
+    const id = setTimeout(() => setResumed(false), 3500);
+    return () => clearTimeout(id);
+  }, [resumed]);
 
   const q = qs[idx];
   const check = checks[idx];
@@ -137,14 +176,28 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
     });
     const total = score + extra;
     const answered = final.filter((c) => !c.empty).length;
+    finished.current = true;
+    clearResume(rKey);
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
+    // league: send the new XP in the background (does nothing if the child did not join)
+    syncXp().catch(() => {});
+    if (set.duelId) {
+      // a duel ends on the VS screen, not on the normal results
+      const d = getDuel(set.duelId);
+      if (d) {
+        const res = me(total, Math.max(ms, 1000));
+        saveDuel(d.role === 'a' ? { ...d, a: res } : { ...d, b: res });
+        onDuelDone(d.id);
+        return;
+      }
+    }
     setChecks(final);
     setResult({ score: total, ms, badges, counted: answered * 2 >= qs.length, roundFinished: !!set.roundFinished });
     if (total / maxPoints >= 0.8) {
       playWin();
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#1f3fbf', '#ffd84d', '#1f9d6b', '#e0313b'] });
     }
-  }, [checks, answers, qs, set, maxPoints, settings.grade, mode]);
+  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey, me, onDuelDone]);
 
   useEffect(() => {
     if (timed && !result && elapsed >= set.minutes * 60) {
@@ -269,6 +322,11 @@ function Session({ set, mode, t, settings, onRestart, onExit }) {
             <div className="h-full bg-pen transition-all" style={{ width: `${(answeredCount / qs.length) * 100}%` }} />
           </div>
         </div>
+        {resumed && (
+          <div className="max-w-3xl mx-auto px-3 pb-2">
+            <p className="rounded-xl bg-ok-soft border border-ok/40 px-3 py-1.5 text-sm font-bold text-ok">↺ {t('resume.continued', { a: answers.filter((a) => a !== null && a !== '').length, b: qs.length })}</p>
+          </div>
+        )}
       </header>
 
       {/* task */}
