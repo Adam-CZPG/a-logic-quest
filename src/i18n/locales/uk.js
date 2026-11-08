@@ -137,7 +137,8 @@ export default {
 
   'set.title': 'Налаштування',
   'set.lang': 'Мова',
-  'set.country': 'Навчальна програма',
+  'set.country': "Обери країну",
+  'set.countryHint': "Тести, предмети й класи за стандартом обраної країни",
   'set.grade': 'Клас',
   'set.sound': 'Звук і вібрація',
   'set.reset': 'Скинути прогрес',
