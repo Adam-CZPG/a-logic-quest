@@ -14,6 +14,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_UPLOAD_KEY: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v5
 
@@ -53,6 +55,29 @@ jobs:
         with:
           name: GB-Exam-apk
           path: GB-Exam-*.apk
+          retention-days: 30
+
+      # Google Play bundle (.aab), signed with the private upload key from GitHub Secrets.
+      # Runs for version tags (v*) and manual runs, only when the secret is set.
+      - name: Build Play bundle (tags only)
+        if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') && env.HAS_UPLOAD_KEY == 'true'
+        working-directory: android
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+          UPLOAD_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks" ./gradlew bundleRelease --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../GB-Exam-${{ github.ref_name }}.aab
+          rm -f "$RUNNER_TEMP/upload.jks"
+
+      - uses: actions/upload-artifact@v5
+        if: (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') && env.HAS_UPLOAD_KEY == 'true'
+        with:
+          name: GB-Exam-play-bundle
+          path: GB-Exam-*.aab
           retention-days: 30
 
       - name: Publish release (tags only)

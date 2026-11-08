@@ -1,4 +1,4 @@
-package com.adamczpg.logicquest;
+package com.gbline.gbexam;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;

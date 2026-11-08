@@ -11,10 +11,6 @@ import Subject from '@/pages/Subject';
 import Player from '@/pages/Player';
 import Stats from '@/pages/Stats';
 import Settings from '@/pages/Settings';
-import GamesHome from '@/pages/GamesHome';
-import Game from '@/pages/Game';
-import LogicGame from '@/pages/LogicGame';
-import Achievements from '@/pages/Achievements';
 import { DuelHub, DuelView, DuelOpen, WebHome, WEB_ONLY } from '@/pages/Duel';
 import League, { FollowOpen } from '@/pages/League';
 import Friends from '@/pages/Friends';
@@ -97,10 +93,8 @@ export default function App() {
             <Route path="/play/:kind" element={<Guard><Player /></Guard>} />
             <Route path="/stats" element={<Guard><Stats /></Guard>} />
             <Route path="/settings" element={<Guard><Settings /></Guard>} />
-            <Route path="/games" element={<GamesHome />} />
-            <Route path="/game/:level" element={<Game />} />
-            <Route path="/logic" element={<LogicGame />} />
-            <Route path="/achievements" element={<Achievements />} />
+            {/* the old puzzle games (Logic Quest) move to the MAT MATSTERFA app; old links land on Home */}
+            {['/games', '/game/:level', '/logic', '/achievements'].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         )}

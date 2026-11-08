@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { House, BarChart3, Gamepad2, Settings, Users } from 'lucide-react';
+import { House, BarChart3, Settings, Users } from 'lucide-react';
 import { useT } from '@/lib/settings';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,6 @@ const TABS = [
   { to: '/', icon: House, key: 'nav.home', end: true },
   { to: '/stats', icon: BarChart3, key: 'nav.stats' },
   { to: '/friends', icon: Users, key: 'nav.friends', also: ['/duel', '/league', '/class', '/cheers'], dot: true },
-  { to: '/games', icon: Gamepad2, key: 'nav.games' },
   { to: '/settings', icon: Settings, key: 'nav.settings' },
 ];
 
@@ -45,7 +44,7 @@ export default function AppShell({ header, children }) {
         {children}
       </div>
       <nav className="fixed bottom-0 inset-x-0 z-30 bg-sheet/95 backdrop-blur border-t border-line" style={{ paddingBottom: 'var(--safe-bottom)' }}>
-        <div className="max-w-2xl mx-auto grid grid-cols-5">
+        <div className="max-w-2xl mx-auto grid grid-cols-4">
           {TABS.map(({ to, icon: Icon, key, end, also, dot }) => {
             const extra = also?.some((p) => pathname.startsWith(p));
             return (

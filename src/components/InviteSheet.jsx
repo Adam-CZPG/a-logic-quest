@@ -5,7 +5,7 @@ import { useSettings } from '@/lib/settings';
 import { openExternal, shareNative, canShareNative } from '@/lib/native';
 
 // Where an invited friend gets the app. The Play Store page works as soon as the app is published.
-export const INVITE_URL = 'https://play.google.com/store/apps/details?id=com.adamczpg.logicquest';
+export const INVITE_URL = 'https://play.google.com/store/apps/details?id=com.gbline.gbexam';
 
 // Invite a friend: WhatsApp, Telegram, Viber, SMS, the phone's own share menu, or copy the link.
 // Also used to send a duel challenge: pass title/desc/text/url.
