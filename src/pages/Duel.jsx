@@ -262,7 +262,7 @@ export function DuelOpen() {
     saveDuel({ ...incoming, role: 'b', b: null });
     navigate(`/play/duel?id=${incoming.id}&mode=sim`);
   };
-  const intent = `intent://d?d=${encodeDuel(incoming)}#Intent;scheme=gbexam;package=com.adamczpg.logicquest;end`;
+  const intent = `intent://d?d=${encodeDuel(incoming)}#Intent;scheme=gbexam;package=com.gbline.gbexam;end`;
   const android = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
 
   return (

@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.adamczpg.logicquest"
+    namespace = "com.gbline.gbexam"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.adamczpg.logicquest"
+        applicationId "com.gbline.gbexam"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI passes its run number, so every new APK installs over the previous one
@@ -17,8 +17,11 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    // One fixed signing key, stored in the repo. Android only lets an update install over the
-    // old app (keeping the child's name and results) when both APKs carry the same signature.
+    // Two keys:
+    // - "shared" (public, in the repo) signs only the test APKs built on GitHub, so a new test APK
+    //   installs over the previous one and keeps the child's data.
+    // - "upload" signs the Google Play bundle. It is private: CI reads it from GitHub Secrets
+    //   (UPLOAD_KEYSTORE_FILE / _PASSWORD / UPLOAD_KEY_ALIAS / UPLOAD_KEY_PASSWORD), never from the repo.
     signingConfigs {
         shared {
             storeFile file('logicquest.keystore')
@@ -26,13 +29,22 @@ android {
             keyAlias 'logicquest'
             keyPassword 'logicquest'
         }
+        if (System.getenv("UPLOAD_KEYSTORE_FILE")) {
+            upload {
+                storeFile file(System.getenv("UPLOAD_KEYSTORE_FILE"))
+                storePassword System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("UPLOAD_KEY_ALIAS")
+                keyPassword System.getenv("UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.shared
         }
         release {
-            signingConfig signingConfigs.shared
+            // without the private upload key the release bundle stays unsigned (never the public key)
+            signingConfig System.getenv("UPLOAD_KEYSTORE_FILE") ? signingConfigs.upload : null
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

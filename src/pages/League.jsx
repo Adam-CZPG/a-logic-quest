@@ -324,7 +324,7 @@ function FollowWeb({ code }) {
         <p className="mt-2 text-ink-soft">{t('league.friendInviteHint')}</p>
         <p className="mt-4 inline-block rounded-xl bg-marker text-[#1B2340] font-heading font-extrabold text-3xl tracking-[0.2em] px-4 py-2 border-2 border-[#1B2340]">{code}</p>
         {android && (
-          <button onClick={() => { window.location.href = `intent://f?c=${code}#Intent;scheme=gbexam;package=com.adamczpg.logicquest;end`; }}
+          <button onClick={() => { window.location.href = `intent://f?c=${code}#Intent;scheme=gbexam;package=com.gbline.gbexam;end`; }}
             className="mt-6 w-full rounded-2xl bg-pen text-on-pen py-4 font-heading font-extrabold text-lg">{t('duel.openInApp')}</button>
         )}
         <button onClick={() => openExternal(INVITE_URL)} className="mt-3 w-full rounded-2xl bg-ok text-white py-4 font-heading font-extrabold text-lg">{t('duel.install')}</button>
