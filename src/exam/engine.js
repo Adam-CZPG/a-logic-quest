@@ -5,7 +5,7 @@ import { czechGeneratorsFor, readingGroups as czechReading } from './generators/
 import { englishGeneratorsFor, readingGroups as englishReading } from './generators/english';
 import { germanGeneratorsFor, readingGroups as germanReading } from './generators/german';
 import { slovakGeneratorsFor, readingGroups as slovakReading } from './generators/slovak';
-import { SUBJECTS, topicsFor, CURRICULA, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
+import { SUBJECTS, topicsFor, subjectsFor, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
 
@@ -145,7 +145,7 @@ export function buildDailyPlan({ grade, lang, curriculum, weakTopics = {}, date 
   const r = makeRng(`daily:${day}:${grade}:${curriculum}`);
   const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set() };
   ctx.usedGens = new Set();
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum);
   const qs = [];
   subjects.forEach((subject) => {
     const topics = topicsFor(subject, grade);

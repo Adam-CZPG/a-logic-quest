@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { ArrowLeft, Swords, Send, Download, Smartphone } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
-import { CURRICULA, SUBJECTS } from '@/exam/taxonomy';
+import { CURRICULA, subjectsFor, SUBJECTS } from '@/exam/taxonomy';
 import { DUEL_SIZE } from '@/exam/engine';
 import {
   AVATARS, listDuels, getDuel, saveDuel, newDuel, decodeDuel, duelLink, outcome, record, setPendingDuel, takePendingDuel, fmtTime, encodeDuel,
@@ -69,7 +69,7 @@ export function DuelHub() {
   const [picking, setPicking] = useState(false);
   const duels = listDuels();
   const rec = record();
-  const subjects = CURRICULA[settings.curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(settings.curriculum, settings.english);
 
   const start = (subject) => {
     const d = newDuel({ subject, grade: settings.grade, curriculum: settings.curriculum });

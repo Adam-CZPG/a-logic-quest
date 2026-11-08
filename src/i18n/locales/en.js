@@ -562,4 +562,10 @@ export default {
   'fr.followsYou': "Follow you",
   'fr.followBack': "Follow back",
   'fr.cheersNew': "{n} new",
+  'set.english': "English (optional)",
+  'set.englishHint': "The entrance exams don’t test it – practise it as a bonus.",
+  'home.addEnglish': "English – optional",
+  'home.addEnglishDesc': "Not in the entrance exams. Add it as a bonus subject.",
+  'home.add': "Add",
+  'home.optional': "optional",
 };

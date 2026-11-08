@@ -1,7 +1,7 @@
 // Learning progress: XP, streak, per-topic accuracy, test history, mistakes, badges.
 // Stored locally (works offline in the APK).
 import { dailyKey } from './engine';
-import { topicsFor, CURRICULA, MOCK_COUNT, TOPIC_VARIANTS } from './taxonomy';
+import { topicsFor, subjectsFor, MOCK_COUNT, TOPIC_VARIANTS } from './taxonomy';
 
 const KEY = 'lq_stats_v1';
 const MAX_HISTORY = 200;
@@ -190,7 +190,7 @@ export const BADGES = [
 ];
 
 function allTopicsTried(s, grade, curriculum = 'cz') {
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum);
   return subjects.every((sub) => topicsFor(sub, grade).every((t) => s.topics[`${sub}:${grade}:${t}`]));
 }
 
@@ -217,7 +217,7 @@ export function topicAccuracy(s, subject, grade, topic) {
 
 export function weakTopics(s, grade, curriculum) {
   const out = {};
-  (CURRICULA[curriculum]?.subjects || ['math']).forEach((sub) => {
+  subjectsFor(curriculum).forEach((sub) => {
     const list = topicsFor(sub, grade).map((t) => ({ t, acc: topicAccuracy(s, sub, grade, t) }));
     // untried topics count as weak too, so everything gets covered
     out[sub] = list.sort((a, b) => (a.acc ?? -1) - (b.acc ?? -1)).map((x) => x.t);
@@ -317,7 +317,7 @@ const MIN_WEAK = 3;
 export function badgeProgress(s, grade, curriculum = 'cz') {
   const mocks = s.history.filter((h) => h.kind === 'mock');
   const best = mocks.reduce((m, h) => Math.max(m, h.score), 0);
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum);
   const allTopics = subjects.flatMap((sub) => topicsFor(sub, grade).map((t) => `${sub}:${grade}:${t}`));
   const tried = allTopics.filter((k) => s.topics[k]).length;
   const val = {
@@ -334,7 +334,7 @@ export function badgeProgress(s, grade, curriculum = 'cz') {
 
 // Per subject: what the child already knows, what to practise and what was never tried.
 export function insights(s, grade, curriculum = 'cz') {
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum);
   return subjects.map((sub) => {
     const topics = topicsFor(sub, grade);
     const misses = {};

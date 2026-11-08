@@ -561,4 +561,10 @@ export default {
   'fr.followsYou': "Sledujú ťa",
   'fr.followBack': "Sledovať späť",
   'fr.cheersNew': "{n} nové",
+  'set.english': "Angličtina (voliteľná)",
+  'set.englishHint': "Na prijímačkách sa neskúša – precvičuj ju navyše ako bonus.",
+  'home.addEnglish': "Angličtina – voliteľná",
+  'home.addEnglishDesc': "Na prijímačkách nie je. Pridaj si ju ako bonusový predmet.",
+  'home.add': "Pridať",
+  'home.optional': "voliteľné",
 };

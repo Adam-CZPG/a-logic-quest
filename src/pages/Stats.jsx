@@ -4,7 +4,7 @@ import AppShell, { PageTitle } from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, weeklyTrend, journey, badgeProgress, insights, levelFromXp, currentStreak } from '@/exam/stats';
 import { TrendingUp, TrendingDown, CalendarDays, Repeat, Sprout, Trophy, Target, Flame, RotateCcw, ChevronRight } from 'lucide-react';
-import { CURRICULA, topicsFor, TOPIC_EMOJI, SUBJECTS } from '@/exam/taxonomy';
+import { subjectsFor, topicsFor, TOPIC_EMOJI, SUBJECTS } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 
 function ScoreChart({ points }) {
@@ -229,7 +229,7 @@ export default function Stats() {
   const mocks = s.history.filter((h) => h.kind === 'mock' && h.grade === grade).slice(0, 20).reverse();
   const avg = mocks.length ? Math.round(mocks.reduce((a, h) => a + h.score, 0) / mocks.length) : null;
   const best = mocks.length ? Math.max(...mocks.map((h) => h.score)) : null;
-  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const subjects = subjectsFor(curriculum, settings.english);
   const weeks = weeklyTrend(s, 8);
   const j = journey(s);
   const since = settings.startedAt || j.firstAt;

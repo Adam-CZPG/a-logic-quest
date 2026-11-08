@@ -562,4 +562,10 @@ export default {
   'fr.followsYou': "Folgen dir",
   'fr.followBack': "Zurückfolgen",
   'fr.cheersNew': "{n} neu",
+  'set.english': "Englisch (freiwillig)",
+  'set.englishHint': "Wird in der Aufnahmeprüfung nicht geprüft – übe es als Bonus.",
+  'home.addEnglish': "Englisch – freiwillig",
+  'home.addEnglishDesc': "Nicht Teil der Aufnahmeprüfung. Füge es als Bonusfach hinzu.",
+  'home.add': "Hinzufügen",
+  'home.optional': "freiwillig",
 };

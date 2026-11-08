@@ -16,7 +16,18 @@ const DEFAULTS = {
   theme: 'system',
   reminder: { on: false, time: '17:00' },
   avatar: null, // animal sticker shown in duels
+  english: false, // optional English where it is not an exam subject (Czechia, Slovakia)
 };
+
+// before 2.4 English was always on: children who already practised it keep it
+function hadEnglish() {
+  try {
+    const topics = JSON.parse(localStorage.getItem('lq_stats_v1') || '{}').topics || {};
+    return Object.keys(topics).some((k) => k.startsWith('english:'));
+  } catch {
+    return false;
+  }
+}
 
 function load() {
   try {
@@ -25,7 +36,8 @@ function load() {
     const lang = raw.lang && ALL_DICTS[raw.lang] ? raw.lang : detectLang();
     const curriculum = CURRICULA[raw.curriculum] ? raw.curriculum : DEFAULTS.curriculum;
     const grade = fitGrade(curriculum, Number(raw.grade) || DEFAULTS.grade);
-    return { ...DEFAULTS, ...raw, lang, curriculum, grade, startedAt: raw.startedAt || (raw.onboarded ? Date.now() : null), startGrade: raw.startGrade || raw.grade || null };
+    const english = typeof raw.english === 'boolean' ? raw.english : hadEnglish();
+    return { ...DEFAULTS, ...raw, english, lang, curriculum, grade, startedAt: raw.startedAt || (raw.onboarded ? Date.now() : null), startGrade: raw.startGrade || raw.grade || null };
   } catch {
     return { ...DEFAULTS, lang: detectLang() };
   }

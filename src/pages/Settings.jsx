@@ -10,7 +10,7 @@ import { syncReminder, isNative } from '@/lib/native';
 import { cn } from '@/lib/utils';
 import {
   Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
-  Volume2, Bell, RotateCcw, Info,
+  Volume2, Bell, RotateCcw, Info, BookOpen,
 } from 'lucide-react';
 
 function Group({ title, children }) {
@@ -135,6 +135,11 @@ export default function Settings() {
         <Row icon={GraduationCap} label={t('set.grade')}>
           <Seg value={settings.grade} onChange={(v) => update({ grade: v })} options={gradesFor(settings.curriculum).map((g) => ({ v: g, label: `${g}.` }))} />
         </Row>
+        {CURRICULA[settings.curriculum]?.optional?.includes('english') && (
+          <Row icon={BookOpen} label={`🇬🇧 ${t('set.english')}`} hint={t('set.englishHint')}>
+            <Switch on={!!settings.english} label={t('set.english')} onClick={() => update({ english: !settings.english })} />
+          </Row>
+        )}
       </Group>
 
       <Group title={t('set.app')}>
