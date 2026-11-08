@@ -568,4 +568,8 @@ export default {
   'home.optional': "по желанию",
   'p.draftNums': "Числа из задачи – нажми:",
   'p.draftDone': "Готово",
+  'subj.tests': "Полные тесты",
+  'subj.sets': "Наборы по темам",
+  'subj.tasks': "заданий: {n}",
+  'subj.fresh': "В каждом новом круге появляются новые задания.",
 };

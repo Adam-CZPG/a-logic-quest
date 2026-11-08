@@ -570,4 +570,8 @@ export default {
   'home.optional': "optional",
   'p.draftNums': "Task numbers – tap:",
   'p.draftDone': "Done",
+  'subj.tests': "Full tests",
+  'subj.sets': "Topic sets",
+  'subj.tasks': "{n} tasks",
+  'subj.fresh': "Every new round brings new tasks.",
 };
