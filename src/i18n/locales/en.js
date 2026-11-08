@@ -138,7 +138,8 @@ export default {
 
   'set.title': 'Settings',
   'set.lang': 'Language',
-  'set.country': 'Curriculum',
+  'set.country': "Choose country",
+  'set.countryHint': "Tests, subjects and grades follow this country's standard",
   'set.grade': 'Grade',
   'set.sound': 'Sound and vibration',
   'set.reset': 'Reset progress',

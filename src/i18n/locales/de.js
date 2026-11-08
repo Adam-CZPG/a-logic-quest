@@ -138,7 +138,8 @@ export default {
 
   'set.title': 'Einstellungen',
   'set.lang': 'Sprache',
-  'set.country': 'Land',
+  'set.country': "Land wählen",
+  'set.countryHint': "Tests, Fächer und Klassen nach dem Standard dieses Landes",
   'set.grade': 'Klasse',
   'set.sound': 'Ton und Vibration',
   'set.reset': 'Fortschritt zurücksetzen',

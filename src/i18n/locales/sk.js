@@ -138,7 +138,8 @@ export default {
 
   'set.title': 'Nastavenia',
   'set.lang': 'Jazyk',
-  'set.country': 'Krajina',
+  'set.country': "Vyber krajinu",
+  'set.countryHint': "Testy, predmety a ročníky podľa štandardu zvolenej krajiny",
   'set.grade': 'Ročník',
   'set.sound': 'Zvuk a vibrácie',
   'set.reset': 'Vymazať postup',

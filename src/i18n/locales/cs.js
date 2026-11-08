@@ -137,7 +137,8 @@ export default {
 
   'set.title': 'Nastavení',
   'set.lang': 'Jazyk',
-  'set.country': 'Kurikulum',
+  'set.country': "Vyber zemi",
+  'set.countryHint': "Testy, předměty a ročníky podle standardu zvolené země",
   'set.grade': 'Ročník',
   'set.sound': 'Zvuk a vibrace',
   'set.reset': 'Smazat postup',

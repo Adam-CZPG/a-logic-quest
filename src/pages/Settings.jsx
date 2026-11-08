@@ -107,13 +107,25 @@ export default function Settings() {
       </section>
 
       <Group title={t('set.learning')}>
-        <Row icon={GraduationCap} label={t('set.grade')}>
-          <Seg value={settings.grade} onChange={(v) => update({ grade: v })} options={gradesFor(settings.curriculum).map((g) => ({ v: g, label: `${g}.` }))} />
-        </Row>
-        <Row icon={Globe2} label={t('set.country')}>
-          <Seg value={settings.curriculum} onChange={(v) => update({ curriculum: v, grade: fitGrade(v, settings.grade) })}
-            options={Object.values(CURRICULA).map((c) => ({ v: c.id, label: c.flag, aria: t(`ob.${c.id}`) }))} />
-        </Row>
+        {/* country picks the exam standard (tests, subjects, grades) */}
+        <div className="px-3.5 py-2.5">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="w-8 h-8 rounded-lg grid place-items-center bg-pen-soft text-pen shrink-0"><Globe2 className="w-4 h-4" /></span>
+            <span className="min-w-0">
+              <span className="block font-bold leading-tight">{t('set.country')}</span>
+              <span className="block text-xs text-ink-soft leading-snug mt-0.5">{t('set.countryHint')}</span>
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label={t('set.country')}>
+            {Object.values(CURRICULA).map((c) => (
+              <button key={c.id} role="radio" aria-checked={settings.curriculum === c.id}
+                onClick={() => update({ curriculum: c.id, grade: fitGrade(c.id, settings.grade) })}
+                className={cn('flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-sm font-bold text-start', settings.curriculum === c.id ? 'border-pen bg-pen-soft' : 'border-line')}>
+                <span className="text-lg" aria-hidden="true">{c.flag}</span>{t(`ob.${c.id}`)}
+              </button>
+            ))}
+          </div>
+        </div>
         {CURRICULA[settings.curriculum]?.states && (
           <Row icon={Globe2} label={t('set.state')}>
             <select value={settings.state || ''} onChange={(e) => update({ state: e.target.value || null })} aria-label={t('set.state')}
@@ -123,6 +135,9 @@ export default function Settings() {
             </select>
           </Row>
         )}
+        <Row icon={GraduationCap} label={t('set.grade')}>
+          <Seg value={settings.grade} onChange={(v) => update({ grade: v })} options={gradesFor(settings.curriculum).map((g) => ({ v: g, label: `${g}.` }))} />
+        </Row>
       </Group>
 
       <Group title={t('set.app')}>
