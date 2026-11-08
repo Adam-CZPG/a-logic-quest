@@ -568,4 +568,6 @@ export default {
   'home.addEnglishDesc': "Not in the entrance exams. Add it as a bonus subject.",
   'home.add': "Add",
   'home.optional': "optional",
+  'p.draftNums': "Task numbers – tap:",
+  'p.draftDone': "Done",
 };

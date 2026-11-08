@@ -568,4 +568,6 @@ export default {
   'home.addEnglishDesc': "Nicht Teil der Aufnahmeprüfung. Füge es als Bonusfach hinzu.",
   'home.add': "Hinzufügen",
   'home.optional': "freiwillig",
+  'p.draftNums': "Zahlen aus der Aufgabe – tippen:",
+  'p.draftDone': "Fertig",
 };

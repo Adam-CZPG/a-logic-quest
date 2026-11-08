@@ -330,7 +330,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
       </header>
 
       {/* task */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4" style={{ paddingBottom: draftOpen ? 'calc(46vh + 24px)' : 160 }}>
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4" style={{ paddingBottom: 160 }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={idx} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.16 }}>
             <div className="mb-2 flex justify-end">
@@ -365,6 +365,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
 
       {draftOpen && (
         <Scratchpad
+          q={q}
           strokes={drafts[idx]}
           onChange={(st) => setDrafts((d) => d.map((x, i) => (i === idx ? st : x)))}
           onClose={() => setDraftOpen(false)}
