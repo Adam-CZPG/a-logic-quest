@@ -252,7 +252,7 @@ export default function League() {
   return (
     <Page>
       <header className="flex items-center gap-2 py-3">
-        <Link to="/" className="w-10 h-10 grid place-items-center rounded-xl hover:bg-pen-soft" aria-label="←"><ArrowLeft className="w-5 h-5 rtl:rotate-180" /></Link>
+        <Link to="/friends" className="w-10 h-10 grid place-items-center rounded-xl hover:bg-pen-soft" aria-label="←"><ArrowLeft className="w-5 h-5 rtl:rotate-180" /></Link>
         <h1 className="font-heading font-extrabold text-2xl flex items-center gap-2"><Trophy className="w-6 h-6 text-[#D9A400]" />{t('league.title')}</h1>
       </header>
       {!joined ? (

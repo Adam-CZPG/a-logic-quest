@@ -307,3 +307,49 @@ export function startNewRound(subject, grade) {
   s.rounds[rk] = { cycle: (cur.cycle || 0) + 1, items: {} };
   save(s);
 }
+
+// ---------------------------------------------------------------- wins & gaps (motivation)
+// a topic counts as known / weak only after enough answers, so one bad guess is not a "gap"
+const MIN_KNOWN = 5;
+const MIN_WEAK = 3;
+
+// How close the child is to every badge: { id, got, value, goal } – the nearest one is a goal to aim at.
+export function badgeProgress(s, grade, curriculum = 'cz') {
+  const mocks = s.history.filter((h) => h.kind === 'mock');
+  const best = mocks.reduce((m, h) => Math.max(m, h.score), 0);
+  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  const allTopics = subjects.flatMap((sub) => topicsFor(sub, grade).map((t) => `${sub}:${grade}:${t}`));
+  const tried = allTopics.filter((k) => s.topics[k]).length;
+  const val = {
+    first_test: [mocks.length, 1], score40: [best, 40], perfect: [best, 50],
+    streak3: [currentStreak(s), 3], streak7: [currentStreak(s), 7],
+    solved100: [s.solved, 100], solved500: [s.solved, 500],
+    explorer: [tried, allTopics.length || 1], daily5: [s.dailyCount, 5], fixer: [s.fixed, 20],
+  };
+  return BADGES.map((b) => {
+    const [value, goal] = val[b.id] || [0, 1];
+    return { ...b, got: !!s.badges[b.id], gotAt: s.badges[b.id] || null, value: Math.min(value, goal), goal };
+  });
+}
+
+// Per subject: what the child already knows, what to practise and what was never tried.
+export function insights(s, grade, curriculum = 'cz') {
+  const subjects = CURRICULA[curriculum]?.subjects || ['math'];
+  return subjects.map((sub) => {
+    const topics = topicsFor(sub, grade);
+    const misses = {};
+    s.mistakes.forEach((m) => {
+      if (m.q?.subject === sub && topics.includes(m.q.topic)) misses[m.q.topic] = (misses[m.q.topic] || 0) + 1;
+    });
+    const rows = topics.map((tp) => {
+      const r = s.topics[`${sub}:${grade}:${tp}`] || { a: 0, c: 0 };
+      return { sub, tp, a: r.a, c: r.c, acc: r.a ? r.c / r.a : null, miss: misses[tp] || 0 };
+    });
+    const strong = rows.filter((r) => r.a >= MIN_KNOWN && r.acc >= 0.8).sort((x, y) => y.acc - x.acc);
+    // weak first by accuracy, then by how many mistakes wait in the mistake folder
+    const weak = rows.filter((r) => r.a >= MIN_WEAK && r.acc < 0.7).sort((x, y) => x.acc - y.acc || y.miss - x.miss);
+    const untried = rows.filter((r) => !r.a);
+    const fewData = rows.filter((r) => r.a > 0 && r.a < MIN_WEAK);
+    return { sub, rows, strong, weak, untried, fewData, total: topics.length };
+  });
+}

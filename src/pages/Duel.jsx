@@ -79,7 +79,7 @@ export function DuelHub() {
 
   return (
     <Page>
-      <Header title={t('duel.title')} />
+      <Header title={t('duel.title')} back={WEB_ONLY ? '/' : '/friends'} />
 
       {/* me: sticker + avatar picker */}
       <section className="flex items-center gap-4 mt-1">
