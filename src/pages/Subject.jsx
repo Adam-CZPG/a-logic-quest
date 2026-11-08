@@ -65,11 +65,12 @@ export default function Subject() {
               <CircleHelp className="w-5 h-5" />
             </button>
           </div>
-          <div className="mt-2 flex rounded-xl border border-line p-0.5 bg-sheet" role="tablist">
-            {tabs.map(([id, label]) => (
+          <div className="mt-2 grid grid-cols-2 gap-2" role="tablist">
+            {tabs.map(([id, label], i) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={cn('flex-1 rounded-lg py-1.5 text-sm font-bold', tab === id ? 'bg-pen text-on-pen' : 'text-ink-soft')}>
-                {label}
+                className={cn('rounded-full py-2 text-sm font-extrabold flex items-center justify-center gap-1.5 border-2 transition-colors',
+                  tab === id ? 'border-[#1B2340] bg-marker text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]' : 'border-line bg-sheet text-ink-soft')}>
+                <span aria-hidden="true">{i === 0 ? '📝' : '🧩'}</span>{label}
               </button>
             ))}
           </div>
@@ -130,7 +131,8 @@ export default function Subject() {
                       <span className="font-heading font-bold">{t(`level.${l + 1}`)}</span>
                       <span className="ms-auto text-xs font-bold text-ink-soft tabular">{doneHere}/{nums.length}</span>
                     </h3>
-                    <div className="grid grid-cols-5 gap-1.5">
+                    {/* each test is a small "worksheet" card: number, and the best score once done */}
+                    <div className="grid grid-cols-5 gap-2">
                       {nums.map((n) => {
                         const best = round.items[`t:${n}`];
                         const done = best !== undefined;
@@ -138,9 +140,14 @@ export default function Subject() {
                         return (
                           <button key={n} aria-label={t('tests.variant', { n })}
                             onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n) })}
-                            className={cn('h-12 rounded-full border-2 flex flex-col items-center justify-center font-bold leading-none tabular', done ? 'border-ok bg-ok text-white' : going ? 'border-marker bg-marker/25' : 'border-line bg-sheet hover:border-pen')}>
-                            <span>{done ? <Check className="w-4 h-4" /> : n}</span>
-                            {done && <span className="text-[10px] mt-0.5">{best}/50</span>}
+                            className={cn('relative aspect-[4/5] rounded-lg border-2 flex flex-col items-center justify-center leading-none tabular overflow-hidden transition-transform active:scale-95',
+                              done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
+                                : going ? 'border-[#1B2340] bg-marker/60 text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
+                                  : 'border-line bg-sheet hover:border-pen')}>
+                            {/* folded corner = a sheet of paper */}
+                            <span className={cn('absolute top-0 end-0 w-3 h-3 rounded-bl-md', done || going ? 'bg-[#1B2340]/20' : 'bg-line')} aria-hidden="true" />
+                            <span className="font-heading font-extrabold text-lg">{n}</span>
+                            <span className="mt-1 text-[10px] font-bold">{done ? `${best}/50` : going ? '↺' : <span className="opacity-0">·</span>}</span>
                           </button>
                         );
                       })}
@@ -170,15 +177,18 @@ export default function Subject() {
                     </span>
                     {all && <Check className="w-5 h-5 text-ok" aria-label={t('round.allDone')} />}
                   </div>
-                  <div className="mt-2 flex gap-1.5">
+                  {/* the 5 sets are stepping stones on a path */}
+                  <div className="mt-2.5 relative flex justify-between px-1">
+                    <span className="absolute inset-x-5 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-line" aria-hidden="true" />
                     {variants.map((v) => {
                       const done = round.items[`v:${topic}:${v}`] !== undefined;
                       const going = !done && runsFor('topic', topic, v).length > 0;
                       return (
                         <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })}
                           onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v) })}
-                          className={cn('flex-1 h-9 rounded-lg border-2 font-bold text-sm tabular', done ? 'border-ok bg-ok text-white' : going ? 'border-marker bg-marker/25' : 'border-line bg-sheet hover:border-pen')}>
-                          {done ? '✓' : v}
+                          className={cn('relative w-10 h-10 rounded-full border-2 font-heading font-extrabold text-sm tabular grid place-items-center transition-transform active:scale-90',
+                            done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340]' : going ? 'border-[#1B2340] bg-marker text-[#1B2340]' : 'border-line bg-sheet hover:border-pen')}>
+                          {done ? <Check className="w-4 h-4" /> : v}
                         </button>
                       );
                     })}

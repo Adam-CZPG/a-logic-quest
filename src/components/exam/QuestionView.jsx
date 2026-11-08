@@ -184,8 +184,9 @@ export default function QuestionView({ q, label, value, onChange, locked, feedba
             placeholder={q.placeholder || t('p.answer')}
             aria-label={t('p.answer')}
             className={cn(
-              'flex-1 min-w-[9rem] max-w-xs rounded-2xl border-2 bg-sheet px-4 py-3 text-xl font-bold tabular outline-none transition-colors',
-              feedback ? (feedback.correct ? 'border-ok' : 'border-redpen') : 'border-line focus:border-pen',
+              // a dashed "write it here" answer slip – our own look, not the exam app's field
+              'flex-1 min-w-[9rem] max-w-xs rounded-xl border-2 border-dashed bg-marker/10 px-4 py-3 text-xl font-bold tabular outline-none transition-colors placeholder:font-semibold placeholder:text-ink-soft/70',
+              feedback ? (feedback.correct ? 'border-solid border-ok bg-ok-soft' : 'border-solid border-redpen bg-redpen-soft') : 'border-ink-soft/50 focus:border-solid focus:border-pen focus:bg-sheet',
             )}
           />
           {q.unit && <span className="font-bold text-lg">{unitSuffix(q.unit).trim()}</span>}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Timer, XCircle, ChevronLeft, ChevronRight, Check, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine } from 'lucide-react';
+import { Timer, XCircle, ChevronLeft, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine, Flag, ArrowRight, CheckCheck } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { buildMockTest, buildTopicSet, buildDailyPlan, buildMistakesSet, buildDuelSet, taskLabels, dailyKey } from '@/exam/engine';
 import { getDuel, saveDuel } from '@/lib/duel';
@@ -297,8 +297,8 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
               <p className="text-xs text-ink-soft truncate">{subjectName}{set.subject && settings.grade ? ` · ${t('grade.n', { g: settings.grade })}` : ''}</p>
               <h1 className="font-heading font-bold text-[17px] leading-tight truncate">{titleText}</h1>
             </div>
-            <button onClick={() => setConfirm(true)} className="rounded-xl border-2 border-line px-3 py-1.5 text-sm font-bold hover:border-redpen hover:text-redpen">
-              {t('p.finish')}
+            <button onClick={() => setConfirm(true)} className="flex items-center gap-1.5 rounded-full border-2 border-[#1B2340] bg-sheet px-3 py-1.5 text-sm font-bold text-[#1B2340] dark:text-ink dark:border-ink hover:bg-marker/40">
+              <Flag className="w-4 h-4" />{t('p.finish')}
             </button>
           </div>
           <div className="mt-1.5 flex items-center gap-3 text-sm text-ink-soft tabular">
@@ -333,6 +333,9 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4" style={{ paddingBottom: draftOpen ? 'calc(46vh + 24px)' : 160 }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={idx} initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -18 }} transition={{ duration: 0.16 }}>
+            <div className="mb-2 flex justify-end">
+              <span className="rounded-full bg-marker/40 px-2.5 py-0.5 text-xs font-extrabold tabular">⭐ {t('p.pts', { n: q.points || 1 })}</span>
+            </div>
             <QuestionView
               q={q}
               label={labels[idx]}
@@ -360,7 +363,6 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
         </AnimatePresence>
       </main>
 
-      {/* answer band – the blue strip from the official app, in fountain-pen ink */}
       {draftOpen && (
         <Scratchpad
           strokes={drafts[idx]}
@@ -370,37 +372,41 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
         />
       )}
 
-      <footer className="fixed bottom-0 inset-x-0 z-30" style={{ paddingBottom: 'var(--safe-bottom)' }}>
-        <div className="max-w-3xl mx-auto px-3 pb-3">
-          <div className="rounded-2xl bg-pen text-on-pen shadow-[0_8px_24px_-8px_hsl(var(--pen)/0.6)] flex items-center gap-2 p-2">
-            <button
-              onClick={doCheck}
-              disabled={!canCheck}
-              className="flex items-center gap-2 rounded-xl bg-on-pen/15 hover:bg-on-pen/25 disabled:opacity-40 px-4 py-2.5 font-bold"
-            >
-              <Check className="w-5 h-5" />{t('p.check')}
+      {/* GB Exam's own control row: sticker buttons on the notebook page */}
+      <footer className="fixed bottom-0 inset-x-0 z-30 bg-gradient-to-t from-paper via-paper/95 to-paper/0 pt-6" style={{ paddingBottom: 'var(--safe-bottom)' }}>
+        <div className="max-w-3xl mx-auto px-3 pb-3 flex items-center gap-2">
+          <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label={t('common.back')}
+            className="w-12 h-12 shrink-0 rounded-full border-2 border-line bg-sheet grid place-items-center disabled:opacity-30 hover:border-pen">
+            <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
+          </button>
+          <button onClick={() => setDraftOpen((o) => !o)} aria-pressed={draftOpen} aria-label={t('p.draft')}
+            className={cn('relative w-12 h-12 shrink-0 rounded-full border-2 grid place-items-center', draftOpen ? 'border-pen bg-pen text-on-pen' : 'border-line bg-sheet hover:border-pen')}>
+            <PencilLine className="w-5 h-5" />
+            {!draftOpen && drafts[idx]?.length > 0 && <span className="absolute top-1 end-1 w-2.5 h-2.5 rounded-full bg-marker border-2 border-sheet" />}
+          </button>
+          {mode === 'practice' && check?.correct && !check.stale && idx < qs.length - 1 ? (
+            // after a right answer the big button moves on
+            <button onClick={() => go(idx + 1)}
+              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] font-heading font-extrabold text-[17px] flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+              {t('p.next')}<ArrowRight className="w-5 h-5 rtl:rotate-180" />
             </button>
-            <button onClick={() => setDraftOpen((o) => !o)} aria-pressed={draftOpen} aria-label={t('p.draft')}
-              className={cn('relative w-11 h-11 rounded-xl grid place-items-center', draftOpen ? 'bg-on-pen text-pen' : 'bg-on-pen/15 hover:bg-on-pen/25')}>
-              <PencilLine className="w-5 h-5" />
-              {!draftOpen && drafts[idx]?.length > 0 && <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-marker" />}
+          ) : (
+            <button onClick={doCheck} disabled={!canCheck}
+              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-marker text-[#1B2340] font-heading font-extrabold text-[17px] flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-45 disabled:shadow-none">
+              <CheckCheck className="w-5 h-5" />{t('p.check')}
             </button>
-            <span className="text-sm font-bold opacity-90 px-0.5 tabular whitespace-nowrap">{t('p.pts', { n: q.points || 1 })}</span>
-            <div className="ms-auto flex items-center gap-1.5">
-              <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label={t('common.back')} className="w-11 h-11 rounded-xl bg-on-pen/15 hover:bg-on-pen/25 disabled:opacity-30 grid place-items-center">
-                <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
-              </button>
-              {idx < qs.length - 1 ? (
-                <button onClick={() => go(idx + 1)} className="h-11 rounded-xl bg-on-pen text-pen hover:bg-on-pen/90 px-4 font-bold flex items-center gap-1">
-                  {t('p.next')}<ChevronRight className="w-5 h-5 rtl:rotate-180" />
-                </button>
-              ) : (
-                <button onClick={() => setConfirm(true)} className="h-11 rounded-xl bg-marker text-ink px-4 font-bold">
-                  {t('p.finish')}
-                </button>
-              )}
-            </div>
-          </div>
+          )}
+          {idx < qs.length - 1 ? (
+            <button onClick={() => go(idx + 1)} aria-label={t('p.next')}
+              className="w-12 h-12 shrink-0 rounded-full bg-[#1B2340] text-white grid place-items-center hover:opacity-90 dark:bg-ink dark:text-paper">
+              <ArrowRight className="w-5 h-5 rtl:rotate-180" />
+            </button>
+          ) : (
+            <button onClick={() => setConfirm(true)} aria-label={t('p.finish')}
+              className="h-12 shrink-0 rounded-full bg-[#1B2340] text-white px-4 font-bold flex items-center gap-1.5 dark:bg-ink dark:text-paper">
+              <Flag className="w-4 h-4" />{t('p.finish')}
+            </button>
+          )}
         </div>
       </footer>
 
