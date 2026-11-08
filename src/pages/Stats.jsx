@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell, { PageTitle } from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
-import { getStats, topicAccuracy, BADGES, weeklyTrend, journey } from '@/exam/stats';
-import { TrendingUp, TrendingDown, CalendarDays, Repeat, Sprout } from 'lucide-react';
-import { CURRICULA, topicsFor, TOPIC_EMOJI } from '@/exam/taxonomy';
+import { getStats, topicAccuracy, weeklyTrend, journey, badgeProgress, insights, levelFromXp, currentStreak } from '@/exam/stats';
+import { TrendingUp, TrendingDown, CalendarDays, Repeat, Sprout, Trophy, Target, Flame, RotateCcw, ChevronRight } from 'lucide-react';
+import { CURRICULA, topicsFor, TOPIC_EMOJI, SUBJECTS } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 
 function ScoreChart({ points }) {
@@ -61,6 +61,167 @@ function TrendChart({ weeks, t, lang }) {
   );
 }
 
+const topicLink = (sub, tp) => `/play/topic?subject=${sub}&topic=${tp}&mode=practice`;
+
+function Bar({ value, className }) {
+  return (
+    <span className="block h-2 rounded-full bg-line overflow-hidden">
+      <span className={cn('block h-full rounded-full', className)} style={{ width: `${Math.max(3, value * 100)}%` }} />
+    </span>
+  );
+}
+
+// What the child has already achieved – always on top, so every visit starts with a win.
+function Wins({ s, badges, info, t }) {
+  const lvl = levelFromXp(s.xp);
+  const streak = currentStreak(s);
+  const got = badges.filter((b) => b.got).sort((a, b) => b.gotAt - a.gotAt);
+  const next = badges.filter((b) => !b.got).sort((a, b) => b.value / b.goal - a.value / a.goal)[0];
+  const strong = info.flatMap((x) => x.strong);
+  const best = s.history.filter((h) => h.kind === 'mock').reduce((m, h) => Math.max(m, h.score), null);
+  const tiles = [
+    [<span key="l" className="text-lg leading-none">⭐</span>, lvl.level, t('st.levelLbl')],
+    [<Flame key="f" className={cn('w-4 h-4', streak && 'text-redpen')} />, streak, t('st.streak')],
+    [<span key="b" className="text-lg leading-none">🏅</span>, `${got.length}/${badges.length}`, t('st.badges')],
+    [<span key="m" className="text-lg leading-none">✅</span>, strong.length, t('st.mastered')],
+  ];
+  return (
+    <section className="rounded-2xl border-2 border-ok/40 bg-ok-soft p-3.5">
+      <div className="flex items-center gap-2">
+        <Trophy className="w-5 h-5 text-[#D9A400]" />
+        <h2 className="font-heading font-extrabold text-lg flex-1">{t('st.wins')}</h2>
+        {best !== null && <span className="text-xs font-bold text-ink-soft">{t('st.bestTest', { n: best })}</span>}
+      </div>
+      <div className="mt-2.5 grid grid-cols-4 gap-1.5 text-center">
+        {tiles.map(([icon, v, label]) => (
+          <div key={label} className="rounded-xl bg-sheet border border-line py-2 px-0.5">
+            <span className="flex justify-center h-4 items-center">{icon}</span>
+            <p className="font-heading font-bold text-lg tabular leading-tight mt-0.5">{v}</p>
+            <p className="text-[10.5px] text-ink-soft leading-tight">{label}</p>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="mt-3 text-sm font-bold">{t('st.strong')}</h3>
+      {strong.length ? (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {strong.slice(0, 10).map((r) => (
+            <span key={r.sub + r.tp} className="inline-flex items-center gap-1 rounded-full bg-sheet border border-ok/40 px-2.5 py-1 text-xs font-bold">
+              <span aria-hidden="true">{TOPIC_EMOJI[r.tp]}</span>{t(`topic.${r.tp}`)}<span className="text-ok tabular">{Math.round(r.acc * 100)}%</span>
+            </span>
+          ))}
+        </div>
+      ) : <p className="mt-1 text-xs text-ink-soft">{t('st.strongEmpty')}</p>}
+
+      {(got[0] || next) && (
+        <div className="mt-3 grid grid-cols-1 gap-1.5">
+          {got[0] && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-sheet border border-line px-2.5 py-2">
+              <span className="text-2xl" aria-hidden="true">{got[0].emoji}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-bold text-ink-soft">{t('st.lastBadge')}</span>
+                <span className="block font-bold text-sm leading-tight">{t(`b.${got[0].id}`)}</span>
+              </span>
+            </div>
+          )}
+          {next && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-sheet border border-dashed border-line px-2.5 py-2">
+              <span className="text-2xl grayscale opacity-70" aria-hidden="true">{next.emoji}</span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-bold text-ink-soft">{t('st.nextBadge')} · {t(`b.${next.id}`)}</span>
+                <span className="block text-xs leading-tight">{t(`b.${next.id}_d`)}</span>
+                <span className="mt-1 flex items-center gap-2"><span className="flex-1"><Bar value={next.value / next.goal} className="bg-marker" /></span><span className="text-[11px] tabular text-ink-soft">{next.value}/{next.goal}</span></span>
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// What to learn next: weakest task groups first, then the ones never tried.
+function Learn({ info, mistakes, t }) {
+  const weakAll = info.flatMap((x) => x.weak).sort((a, b) => a.acc - b.acc);
+  const focus = weakAll[0];
+  const anyData = info.some((x) => x.rows.some((r) => r.a));
+  return (
+    <section className="sheet mt-3 p-3.5">
+      <div className="flex items-center gap-2">
+        <Target className="w-5 h-5 text-redpen" />
+        <h2 className="font-heading font-extrabold text-lg flex-1">{t('st.learn')}</h2>
+      </div>
+      <p className="text-xs text-ink-soft mt-0.5">{t('st.learnDesc')}</p>
+
+      {focus && (
+        <Link to={topicLink(focus.sub, focus.tp)} className="mt-2.5 flex items-center gap-3 rounded-xl bg-redpen-soft border border-redpen/30 p-3">
+          <span className="text-2xl" aria-hidden="true">{TOPIC_EMOJI[focus.tp]}</span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-[11px] font-bold text-redpen uppercase tracking-wide">{t('st.focus')}</span>
+            <span className="block font-bold leading-tight">{t(`topic.${focus.tp}`)}</span>
+            <span className="block text-xs text-ink-soft">{t(`subject.${focus.sub}`)} · {Math.round(focus.acc * 100)}% · {t('st.answers', { n: focus.a })}</span>
+          </span>
+          <span className="rounded-lg bg-redpen text-white text-xs font-bold px-2.5 py-1.5 shrink-0">{t('st.practise')}</span>
+        </Link>
+      )}
+      {!anyData && <p className="mt-2.5 text-sm text-ink-soft">{t('st.needMore')}</p>}
+
+      {anyData && info.map(({ sub, strong, weak, untried, total }) => (
+        <div key={sub} className="mt-3.5">
+          <div className="flex items-center gap-1.5">
+            <span aria-hidden="true">{SUBJECTS[sub].emoji}</span>
+            <h3 className="font-bold text-sm flex-1">{t(`subject.${sub}`)}</h3>
+          </div>
+          {/* one bar: known / to practise / not tried */}
+          <div className="mt-1.5 flex h-2.5 rounded-full overflow-hidden bg-line">
+            <span className="bg-ok" style={{ width: `${(strong.length / total) * 100}%` }} />
+            <span className="bg-redpen" style={{ width: `${(weak.length / total) * 100}%` }} />
+          </div>
+          <p className="mt-1 text-[11px] text-ink-soft">{t('st.sumLine', { s: strong.length, w: weak.length, u: untried.length })}</p>
+
+          {weak.length === 0 && untried.length === 0 && <p className="mt-1.5 text-xs font-bold text-ok">{t('st.allGood')}</p>}
+          <div className="mt-1.5 space-y-1.5">
+            {weak.slice(0, 4).map((r) => (
+              <Link key={r.tp} to={topicLink(sub, r.tp)} className="flex items-center gap-2.5 rounded-xl border border-line px-2.5 py-2 hover:border-pen">
+                <span className="w-6 text-center" aria-hidden="true">{TOPIC_EMOJI[r.tp]}</span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-bold leading-tight truncate">{t(`topic.${r.tp}`)}</span>
+                  <span className="mt-1 flex items-center gap-2">
+                    <span className="flex-1"><Bar value={r.acc} className={r.acc >= 0.4 ? 'bg-marker' : 'bg-redpen'} /></span>
+                    <span className="text-[11px] tabular font-bold text-redpen">{Math.round(r.acc * 100)}%</span>
+                  </span>
+                  {r.miss > 0 && <span className="block text-[11px] text-ink-soft">{t('st.mistakesN', { n: r.miss })}</span>}
+                </span>
+                <ChevronRight className="w-4 h-4 text-ink-soft rtl:rotate-180" />
+              </Link>
+            ))}
+            {untried.length > 0 && (
+              <div className="pt-0.5">
+                <p className="text-[11px] font-bold text-ink-soft mb-1">{t('st.untried')}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {untried.slice(0, 6).map((r) => (
+                    <Link key={r.tp} to={topicLink(sub, r.tp)} className="inline-flex items-center gap-1 rounded-full border border-dashed border-pen/50 px-2.5 py-1 text-xs font-bold text-pen">
+                      <span aria-hidden="true">{TOPIC_EMOJI[r.tp]}</span>{t(`topic.${r.tp}`)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {mistakes > 0 && (
+        <Link to="/play/mistakes?mode=practice" className="mt-3.5 flex items-center gap-2.5 rounded-xl bg-paper border border-line px-3 py-2.5 hover:border-redpen">
+          <RotateCcw className="w-4 h-4 text-redpen" />
+          <span className="flex-1 text-sm font-bold">{t('home.mistakes')}</span>
+          <span className="text-xs text-ink-soft">{t('home.mistakesDesc', { n: mistakes })}</span>
+        </Link>
+      )}
+    </section>
+  );
+}
+
 export default function Stats() {
   const { settings, t } = useSettings();
   const s = getStats();
@@ -74,12 +235,16 @@ export default function Stats() {
   const since = settings.startedAt || j.firstAt;
 
   const topicRows = useMemo(() => subjects.flatMap((sub) => topicsFor(sub, grade).map((tp) => ({ sub, tp, acc: topicAccuracy(s, sub, grade, tp) }))), [s, grade, subjects.join()]);
-  const weak = topicRows.filter((r) => r.acc !== null).sort((a, b) => a.acc - b.acc).slice(0, 3);
+  const badges = badgeProgress(s, grade, curriculum);
+  const info = insights(s, grade, curriculum);
 
   return (
     <AppShell header={<PageTitle>{t('st.title')}</PageTitle>}>
+      <Wins s={s} badges={badges} info={info} t={t} />
+      <Learn info={info} mistakes={s.mistakes.length} t={t} />
+
       {/* the child's journey since the first day */}
-      <section className="sheet p-3.5">
+      <section className="sheet mt-3 p-3.5">
         <div className="flex items-center gap-2">
           <Sprout className="w-5 h-5 text-ok" />
           <h2 className="font-heading font-bold flex-1">{t('st.journey')}</h2>
@@ -115,21 +280,6 @@ export default function Stats() {
         {mocks.length ? <ScoreChart points={mocks} /> : <p className="text-ink-soft">{t('st.empty')}</p>}
       </section>
 
-      {weak.length > 0 && (
-        <section className="mt-4">
-          <h2 className="font-heading font-bold mb-2">{t('st.weak')}</h2>
-          <div className="space-y-2">
-            {weak.map(({ sub, tp, acc }) => (
-              <Link key={sub + tp} to={`/play/topic?subject=${sub}&topic=${tp}&mode=practice`} className="sheet flex items-center gap-3 p-3 hover:border-pen">
-                <span className="text-2xl">{TOPIC_EMOJI[tp]}</span>
-                <span className="flex-1 font-bold leading-snug">{t(`topic.${tp}`)}</span>
-                <span className="text-redpen font-bold tabular">{Math.round(acc * 100)}%</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className="sheet mt-4 p-4">
         <h2 className="font-heading font-bold mb-3">{t('st.topics')}</h2>
         {subjects.map((sub) => (
@@ -154,14 +304,15 @@ export default function Stats() {
       <section className="mt-4">
         <h2 className="font-heading font-bold mb-2">{t('st.badges')}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {BADGES.map((b) => {
-            const got = !!s.badges[b.id];
+          {[...badges].sort((a, b) => b.got - a.got).map((b) => {
+            const got = b.got;
             return (
-              <div key={b.id} className={cn('sheet p-2.5 flex items-center gap-2.5 min-w-0', !got && 'opacity-55')}>
+              <div key={b.id} className={cn('sheet p-2.5 flex items-center gap-2.5 min-w-0', !got && 'opacity-70')}>
                 <span className={cn('text-2xl shrink-0', !got && 'grayscale')}>{b.emoji}</span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-bold text-sm leading-tight break-words hyphens-auto">{t(`b.${b.id}`)}</p>
                   <p className="text-xs text-ink-soft leading-tight">{t(`b.${b.id}_d`)}</p>
+                  {!got && <span className="mt-1 block w-full"><Bar value={b.value / b.goal} className="bg-marker" /></span>}
                 </div>
               </div>
             );

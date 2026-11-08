@@ -1,0 +1,1 @@
+-- Applied to Supabase project kids-language-game as migrations gbexam_classes_friends_cheers_v1, gbexam_classes_owner_handover, gbexam_cheers_fix_seen (2026-11-08).

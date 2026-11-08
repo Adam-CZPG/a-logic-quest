@@ -17,6 +17,8 @@ import LogicGame from '@/pages/LogicGame';
 import Achievements from '@/pages/Achievements';
 import { DuelHub, DuelView, DuelOpen, WebHome, WEB_ONLY } from '@/pages/Duel';
 import League, { FollowOpen } from '@/pages/League';
+import Friends from '@/pages/Friends';
+import { ClassesHome, ClassView, CheersInbox } from '@/pages/Classes';
 
 function NativeBridge() {
   const location = useLocation();
@@ -84,6 +86,10 @@ export default function App() {
             <Route path="/d" element={<DuelOpen />} />
             <Route path="/duel" element={<Guard><DuelHub /></Guard>} />
             <Route path="/league" element={<Guard><League /></Guard>} />
+            <Route path="/friends" element={<Guard><Friends /></Guard>} />
+            <Route path="/classes" element={<Guard><ClassesHome /></Guard>} />
+            <Route path="/class/:code" element={<Guard><ClassView /></Guard>} />
+            <Route path="/cheers" element={<Guard><CheersInbox /></Guard>} />
             <Route path="/f" element={<FollowOpen />} />
             <Route path="/duel/:id" element={<Guard><DuelView /></Guard>} />
             <Route path="/" element={<Guard><Home /></Guard>} />
