@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import AppShell, { PageTitle } from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
 import InviteSheet from '@/components/InviteSheet';
-import { isJoined, cached as leagueCached, LEAGUES, leave as leaveLeague } from '@/lib/league';
+import { isJoined, cached as leagueCached, LEAGUES, leave as leaveLeague, MASCOTS, className, refreshUnseen, unseenCheers } from '@/lib/league';
 import { record as duelRecord, listDuels } from '@/lib/duel';
 
 // how many duels wait for the child's answer (also shown as a dot on the bottom tab)
@@ -25,6 +25,11 @@ export default function Friends() {
   const myRow = (leagueCached().league?.rows || []).find((r) => r.me);
   const duels = duelRecord();
   const turns = duelTurns();
+  const classes = leagueCached().classes?.rows || [];
+  const [unseen, setUnseen] = useState(unseenCheers);
+  useEffect(() => {
+    if (joined) refreshUnseen().then(setUnseen).catch(() => {});
+  }, [joined]);
 
   return (
     <AppShell header={<PageTitle>{t('fr.title')}</PageTitle>}>
@@ -40,7 +45,17 @@ export default function Friends() {
         <span className="font-heading font-extrabold text-xl tabular">{duels.win}:{duels.loss}</span>
       </Link>
 
-      <Link to="/league" className="sheet mt-3.5 flex items-center gap-3 p-3.5 hover:border-pen transition-colors">
+      {/* my class: ranking, shared goal, class vs class */}
+      <Link to={classes.length === 1 ? `/class/${classes[0].code}` : '/classes'} className="mt-3.5 flex items-center gap-3 rounded-2xl border-2 border-ok/50 bg-ok-soft p-3.5 hover:border-ok transition-colors">
+        <span className="w-12 h-12 rounded-xl bg-sheet grid place-items-center text-2xl" aria-hidden="true">{classes[0] ? MASCOTS[classes[0].mascot] : '🏫'}</span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-heading font-bold text-lg leading-tight">{classes[0] ? t('cl.name', { name: classes.map(className).join(', ') }) : t('cl.title')}</span>
+          <span className="block text-xs text-ink-soft">{classes[0] ? t('cl.goalShort', { a: classes[0].week_xp, b: classes[0].goal }) : t('cl.homeHint')}</span>
+        </span>
+        <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
+      </Link>
+
+      <Link to="/league" className="sheet mt-2.5 flex items-center gap-3 p-3.5 hover:border-pen transition-colors">
         <span className="w-12 h-12 rounded-xl grid place-items-center text-2xl" style={{ background: LEAGUES[myRow?.league || 1].soft }} aria-hidden="true">{myRow ? LEAGUES[myRow.league].emoji : '🏆'}</span>
         <span className="flex-1 min-w-0">
           <span className="block font-heading font-bold text-lg leading-tight">{t('league.title')}</span>
@@ -54,6 +69,17 @@ export default function Friends() {
         <span className="flex-1 min-w-0">
           <span className="block font-heading font-bold text-lg leading-tight">{t('fr.follow')}</span>
           <span className="block text-xs text-ink-soft">{t('fr.followDesc')}</span>
+        </span>
+        <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
+      </Link>
+
+      <Link to="/cheers" className="sheet mt-2.5 flex items-center gap-3 p-3.5 hover:border-pen transition-colors">
+        <span className="relative w-12 h-12 rounded-xl bg-marker/30 grid place-items-center text-2xl" aria-hidden="true">👏
+          {unseen > 0 && <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 rounded-full bg-redpen text-white text-[11px] font-bold grid place-items-center">{unseen}</span>}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-heading font-bold text-lg leading-tight">{t('ch.title')}</span>
+          <span className="block text-xs text-ink-soft">{unseen > 0 ? t('fr.cheersNew', { n: unseen }) : t('ch.desc')}</span>
         </span>
         <ChevronRight className="w-5 h-5 text-ink-soft rtl:rotate-180" />
       </Link>

@@ -8,8 +8,9 @@ import { CURRICULA } from '@/exam/taxonomy';
 import { AVATARS } from '@/lib/duel';
 import {
   LEAGUES, getMe, isJoined, join, loadLeague, loadFriends, cached, follow, unfollow, friendLink, VALID_CODE,
-  setPendingFollow, takePendingFollow, updateProfile,
+  setPendingFollow, takePendingFollow, updateProfile, loadFollowers,
 } from '@/lib/league';
+import CheerSheet from '@/components/CheerSheet';
 import { useMe } from '@/pages/Duel';
 import InviteSheet, { INVITE_URL } from '@/components/InviteSheet';
 import { WEB_ONLY } from '@/pages/Duel';
@@ -25,13 +26,13 @@ export function useNick() {
   return (avatar, num) => `${Array.isArray(animals) ? animals[avatar] || '' : ''} ${num}`;
 }
 
-function Flags({ country, lang }) {
+export function Flags({ country, lang }) {
   const c = CURRICULA[country]?.flag;
   const l = langFlag(lang);
   return <span className="text-base leading-none whitespace-nowrap">{c}{l && l !== c && <span className="ms-0.5 text-xs align-middle">{l}</span>}</span>;
 }
 
-function Page({ children }) {
+export function Page({ children }) {
   return <div className="paper min-h-screen"><div className="max-w-md mx-auto px-4 pb-24" style={{ paddingTop: 'var(--safe-top)' }}>{children}</div></div>;
 }
 
@@ -42,7 +43,7 @@ function daysLeft(weekEnd) {
 }
 
 // ---------------------------------------------------------------- opt-in
-function JoinCard({ onJoined }) {
+export function JoinCard({ onJoined }) {
   const { settings, t } = useSettings();
   const { avatar } = useMe();
   const [busy, setBusy] = useState(false);
@@ -151,9 +152,12 @@ function FriendsTab() {
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState(null);
   const [share, setShare] = useState(false);
+  const [back, setBack] = useState([]);
+  const [cheerTo, setCheerTo] = useState(null);
   const refresh = useCallback(async () => {
     try {
       setData(await loadFriends());
+      setBack(await loadFollowers());
     } catch {
       setMsg({ ok: false, text: t('league.offline') });
     }
@@ -202,6 +206,22 @@ function FriendsTab() {
       </form>
       {msg && <p className={cn('mt-2 text-sm font-bold', msg.ok ? 'text-ok' : 'text-redpen')}>{msg.text}</p>}
 
+      {back.length > 0 && (
+        <>
+          <h3 className="mt-6 mb-2 font-heading font-extrabold text-lg">{t('fr.followsYou')}</h3>
+          <ul className="space-y-1.5">
+            {back.map((r) => (
+              <li key={r.code} className="flex items-center gap-3 rounded-2xl border-2 border-marker bg-marker/10 px-3 py-2">
+                <span className="text-2xl" aria-hidden="true">{AVATARS[r.avatar]}</span>
+                <span className="flex-1 min-w-0 font-bold truncate">{nick(r.avatar, r.num)}</span>
+                <Flags country={r.country} lang={r.lang} />
+                <button onClick={async () => { await follow(r.code).catch(() => {}); refresh(); }} className="rounded-xl bg-ok text-white px-3 py-1.5 text-sm font-bold flex items-center gap-1"><UserPlus className="w-4 h-4" />{t('fr.followBack')}</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       <h3 className="mt-6 mb-2 font-heading font-extrabold text-lg">{t('league.following')}</h3>
       {rows.length === 0 ? (
         <p className="sheet p-4 text-sm text-ink-soft">{t('league.noFriends')}</p>
@@ -212,9 +232,12 @@ function FriendsTab() {
               <span className="text-2xl" aria-hidden="true">{AVATARS[r.avatar]}</span>
               <span className="flex-1 min-w-0">
                 <span className="block font-bold truncate">{nick(r.avatar, r.num)}</span>
-                <span className="block text-xs text-ink-soft">{LEAGUES[r.league]?.emoji} {t(`league.l${r.league}`)} · {r.xp} XP</span>
+                <span className="block text-xs text-ink-soft">{r.mutual && <span className="font-bold text-ok">🤝 {t('fr.mutual')} · </span>}{LEAGUES[r.league]?.emoji} {t(`league.l${r.league}`)} · {r.xp} XP</span>
               </span>
               <Flags country={r.country} lang={r.lang} />
+              {r.mutual && (
+                <button onClick={() => setCheerTo({ code: r.code, name: nick(r.avatar, r.num), avatar: AVATARS[r.avatar] })} aria-label={t('ch.send')} className="w-9 h-9 rounded-xl grid place-items-center bg-marker/40 hover:bg-marker text-lg">👏</button>
+              )}
               <button onClick={async () => { await unfollow(r.code).catch(() => {}); refresh(); }} aria-label={t('league.unfollow')} className="w-8 h-8 rounded-lg grid place-items-center text-ink-soft hover:text-redpen hover:bg-redpen-soft">
                 <X className="w-4 h-4" />
               </button>
@@ -224,6 +247,7 @@ function FriendsTab() {
       )}
       <InviteSheet open={share} onClose={() => setShare(false)} title={t('league.share')} desc={t('league.shareDesc')}
         text={t('league.shareMsg', { code: me.code })} url={friendLink(me.code)} />
+      <CheerSheet to={cheerTo} onClose={() => setCheerTo(null)} />
     </>
   );
 }

@@ -2,13 +2,15 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { House, BarChart3, Gamepad2, Settings, Users } from 'lucide-react';
 import { useT } from '@/lib/settings';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { listDuels } from '@/lib/duel';
+import { unseenCheers } from '@/lib/league';
 
 // Friends holds everything played with other kids: duels, the league, invites.
 const TABS = [
   { to: '/', icon: House, key: 'nav.home', end: true },
   { to: '/stats', icon: BarChart3, key: 'nav.stats' },
-  { to: '/friends', icon: Users, key: 'nav.friends', also: ['/duel', '/league'], dot: true },
+  { to: '/friends', icon: Users, key: 'nav.friends', also: ['/duel', '/league', '/class', '/cheers'], dot: true },
   { to: '/games', icon: Gamepad2, key: 'nav.games' },
   { to: '/settings', icon: Settings, key: 'nav.settings' },
 ];
@@ -25,7 +27,13 @@ function duelTurns() {
 export default function AppShell({ header, children }) {
   const t = useT();
   const { pathname } = useLocation();
-  const turns = duelTurns();
+  const [cheers, setCheers] = useState(unseenCheers);
+  useEffect(() => {
+    const r = () => setCheers(unseenCheers());
+    window.addEventListener('lq-cheers', r);
+    return () => window.removeEventListener('lq-cheers', r);
+  }, []);
+  const turns = duelTurns() + cheers;
   return (
     <div className="paper min-h-screen">
       {header && (

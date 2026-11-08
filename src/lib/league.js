@@ -130,3 +130,62 @@ export const takePendingFollow = () => {
 
 export const friendLink = (code) => `https://adam-czpg.github.io/a-logic-quest/#/f?c=${code}`;
 export const VALID_CODE = /^[A-HJ-NP-Z2-9]{6}$/;
+
+// ---------------------------------------------------------------- classes
+// A class is "grade.letter" + a mascot – children never type a school or class name.
+export const MASCOTS = ['🚀', '⭐', '🌈', '⚡', '🔥', '🌍', '🎯', '🧩', '🎨', '⚽', '🎵', '🌻', '🐝', '🦋', '🐬', '🦖'];
+export const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+export const className = (c) => `${c.grade}.${c.letter}`;
+
+export async function createClass({ grade, letter, mascot }) {
+  return rpc('gbexam_class_create', { ...auth(), p_grade: grade, p_letter: letter, p_mascot: mascot });
+}
+// → 'ok' | 'notfound' | 'full' | 'limit'
+export async function joinClass(code) {
+  return rpc('gbexam_class_join', { ...auth(), p_code: String(code).trim().toUpperCase() });
+}
+export async function leaveClass(code) {
+  await rpc('gbexam_class_leave', { ...auth(), p_code: code });
+}
+export async function kickFromClass(code, member) {
+  return !!(await rpc('gbexam_class_kick', { ...auth(), p_code: code, p_member: member }));
+}
+export async function loadClasses() {
+  await syncXp().catch(() => {});
+  const rows = (await rpc('gbexam_my_classes', auth())) || [];
+  write(CACHE, { ...(read(CACHE) || {}), classes: { rows, at: Date.now() } });
+  return rows;
+}
+export async function classBoard(code) {
+  await syncXp().catch(() => {});
+  return (await rpc('gbexam_class_board', { ...auth(), p_code: code })) || [];
+}
+export async function classVs(code) {
+  return (await rpc('gbexam_class_vs', { ...auth(), p_code: code })) || [];
+}
+
+// ---------------------------------------------------------------- follows back + cheers
+export async function loadFollowers() {
+  return (await rpc('gbexam_followers', auth())) || [];
+}
+
+// cheers are preset phrases (numbers the app translates) – no free text between children
+export const CHEERS = ['👏', '💪', '🔥', '⚔️', '🎉', '🤝', '🚀', '🧠', '😄', '🏆', '📚', '👋'];
+// → 'ok' | 'limit' | 'notfriends' | 'bad'
+export async function sendCheer(toCode, phrase) {
+  return rpc('gbexam_cheer_send', { ...auth(), p_to: toCode, p_phrase: phrase });
+}
+export async function loadCheers() {
+  const rows = (await rpc('gbexam_cheers', auth())) || [];
+  write(CACHE, { ...(read(CACHE) || {}), unseen: 0 });
+  try { window.dispatchEvent(new Event('lq-cheers')); } catch {}
+  return rows;
+}
+export async function refreshUnseen() {
+  if (!isJoined()) return 0;
+  const n = Number(await rpc('gbexam_cheer_unseen', auth())) || 0;
+  write(CACHE, { ...(read(CACHE) || {}), unseen: n });
+  try { window.dispatchEvent(new Event('lq-cheers')); } catch {}
+  return n;
+}
+export const unseenCheers = () => (read(CACHE) || {}).unseen || 0;
