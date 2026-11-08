@@ -566,4 +566,6 @@ export default {
   'home.addEnglishDesc': "Не входить до вступних іспитів. Додай як бонусний предмет.",
   'home.add': "Додати",
   'home.optional': "за бажанням",
+  'p.draftNums': "Числа із задачі – натисни:",
+  'p.draftDone': "Готово",
 };

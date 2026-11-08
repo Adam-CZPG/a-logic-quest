@@ -566,4 +566,6 @@ export default {
   'home.addEnglishDesc': "U přijímaček není. Přidej si ji jako bonusový předmět.",
   'home.add': "Přidat",
   'home.optional': "volitelné",
+  'p.draftNums': "Čísla z úlohy – klepni:",
+  'p.draftDone': "Hotovo",
 };

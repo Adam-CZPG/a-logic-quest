@@ -567,4 +567,6 @@ export default {
   'home.addEnglishDesc': "Na prijímačkách nie je. Pridaj si ju ako bonusový predmet.",
   'home.add': "Pridať",
   'home.optional': "voliteľné",
+  'p.draftNums': "Čísla z úlohy – ťukni:",
+  'p.draftDone': "Hotovo",
 };

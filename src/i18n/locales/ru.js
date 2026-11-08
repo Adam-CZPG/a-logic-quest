@@ -566,4 +566,6 @@ export default {
   'home.addEnglishDesc': "Не входит во вступительные экзамены. Добавь как бонусный предмет.",
   'home.add': "Добавить",
   'home.optional': "по желанию",
+  'p.draftNums': "Числа из задачи – нажми:",
+  'p.draftDone': "Готово",
 };
