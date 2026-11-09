@@ -149,7 +149,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
     const touched = answers.some((a) => a !== null && a !== '') || checks.some(Boolean);
     if (!touched) return;
     saveResume(rKey, {
-      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes, fix: fixing, skipped,
+      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes, fix: fixing, skipped, left,
       ms: Date.now() - started.current, answered: answers.filter((a) => a !== null && a !== '').length,
     });
   }, [rKey, set, settings.grade, mode, idx, answers, checks, reveal, mistakes, Math.floor(elapsed / 5)]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -233,11 +233,38 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
     }
   }, [elapsed, timed, result, set.minutes, finish]);
 
-  const go = useCallback((n) => {
+  // grade task i (quietly); the first grading is what counts for points, later ones are fixes
+  function grade(i) {
+    const c = checks[i];
+    if (c && !c.stale) return null;
+    const res = checkAnswer(qs[i], answers[i]);
+    if (res.empty) return res;
+    const first = !c && !fixing;
+    if (first) recordAnswer(qs[i], res, { grade: settings.grade, firstTry: true });
+    else if (res.correct && qs[i].mistakeId) recordAnswer(qs[i], res, { grade: settings.grade, firstTry: false });
+    if (!res.correct) setMistakes((m) => m + 1);
+    setChecks((cs) => cs.map((x, k) => (k === i
+      ? { ...res, n: (x?.n || 0) + 1, firstScore: first ? res.score : (x?.firstScore ?? 0), stale: false }
+      : x)));
+    return res;
+  }
+
+  // leaving a task hands its answer in, so the overview always shows right / wrong / skipped
+  const [left, setLeft] = useState(() => saved?.left ?? qs.map(() => false));
+  function leave() {
+    grade(idx);
+    if (!left[idx]) setLeft((l) => l.map((x, k) => (k === idx ? true : x)));
+  }
+  function go(n) {
     const next = Math.max(0, Math.min(qs.length - 1, n));
+    if (next !== idx) leave();
     setIdx(next);
     playClick();
-  }, [qs.length]);
+  }
+  function openOverview() {
+    leave();
+    setOverview(true);
+  }
 
   // keyboard
   useEffect(() => {
@@ -277,19 +304,13 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
 
   function doCheck() {
     if (locked) return;
-    const res = checkAnswer(q, answers[idx]);
+    const res = grade(idx);
+    if (!res) return;
     if (res.empty) {
       playBlock();
       haptic('light');
       return;
     }
-    const first = !check && !fixing;
-    if (first) recordAnswer(q, res, { grade: settings.grade, firstTry: true });
-    else if (res.correct && q.mistakeId) recordAnswer(q, res, { grade: settings.grade, firstTry: false });
-    if (!res.correct) setMistakes((m) => m + 1);
-    setChecks((c) => c.map((x, i) => (i === idx
-      ? { ...res, n: (x?.n || 0) + 1, firstScore: first ? res.score : (x?.firstScore ?? 0), stale: false }
-      : x)));
     if (res.correct) {
       haptic('success');
       playWin();
@@ -308,7 +329,8 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
     if (c && c.stale) return 'fixing';
     if (c) return 'bad';
     if (answers[i] !== null && answers[i] !== '') return 'filled';
-    return skipped[i] ? 'skip' : 'empty';
+    // passed over without an answer (or left empty last time) = skipped
+    return skipped[i] || (left[i] && i !== idx) ? 'skip' : 'empty';
   };
   const wrongIdx = qs.map((_, i) => i).filter((i) => ['bad', 'fixing', 'skip'].includes(statusOf(i)));
   const nextWrong = () => wrongIdx.find((i) => i > idx) ?? wrongIdx.find((i) => i !== idx) ?? wrongIdx[0];
@@ -350,7 +372,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
             )}
             <span className="font-bold text-ink">{t('p.points', { a: points, b: maxPoints })}</span>
             {/* one compact button instead of a long scrolling strip of task numbers */}
-            <button onClick={() => setOverview(true)} aria-label={t('p.overview')} className="relative ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
+            <button onClick={openOverview} aria-label={t('p.overview')} className="relative ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
               {t('p.taskOf', { a: labels[idx], b: qs.length })}
               <LayoutGrid className="w-4 h-4 text-pen" />
               {wrongIdx.length > 0 && (
@@ -365,7 +387,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
         </div>
         {fixing && (
           <div className="max-w-3xl mx-auto px-3 pb-2">
-            <button onClick={() => setOverview(true)} className="w-full text-start rounded-xl bg-redpen-soft border border-redpen/40 px-3 py-1.5 text-sm font-bold text-redpen">
+            <button onClick={openOverview} className="w-full text-start rounded-xl bg-redpen-soft border border-redpen/40 px-3 py-1.5 text-sm font-bold text-redpen">
               🛠️ {wrongIdx.length ? t('p.fixBanner', { n: wrongIdx.length }) : t('p.allFixed')}
             </button>
           </div>
@@ -507,8 +529,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
               <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
                 <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-ok" />{t('p.lgOk')} {checks.filter((c) => c?.correct).length}</span>
                 <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-redpen" />{t('p.lgBad')} {qs.filter((_, i) => ['bad', 'fixing'].includes(statusOf(i))).length}</span>
-                {skipped.some(Boolean) && <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-marker/40 border border-dashed border-marker" />{t('p.lgSkip')} {qs.filter((_, i) => statusOf(i) === 'skip').length}</span>}
-                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-pen-soft border border-pen" />{t('p.lgFilled')}</span>
+                {qs.some((_, i) => statusOf(i) === 'skip') && <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-marker/40 border border-dashed border-marker" />{t('p.lgSkip')} {qs.filter((_, i) => statusOf(i) === 'skip').length}</span>}
                 <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-sheet border border-line" />{t('p.lgEmpty')}</span>
               </div>
               {wrongIdx.length > 0 ? (
