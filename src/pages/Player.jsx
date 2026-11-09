@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Timer, XCircle, ChevronLeft, Eye, X, Home as HomeIcon, RotateCcw, LayoutGrid, PencilLine, Flag, ArrowRight, CheckCheck } from 'lucide-react';
@@ -17,6 +17,7 @@ import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
 import { resumeKey, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
+import { saveLast, loadLast } from '@/lib/lastrun';
 
 const DAILY_KEY = 'lq_daily_plan_v1';
 function dailyWeak(grade, curriculum) {
@@ -93,6 +94,8 @@ export default function Player() {
 
   const set = useMemo(() => (WEB_ONLY && kind !== 'duel' ? null : buildSet(kind, params, settings)), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
   const mode = params.get('mode') === 'sim' ? 'sim' : 'practice';
+  // ?fix=1 reopens the last finished attempt so only the red / skipped tasks get fixed ("again" starts fresh)
+  const fix = params.get('fix') === '1' && nonce === 0;
 
   if (!set || !set.questions.length) {
     return (
@@ -102,10 +105,10 @@ export default function Player() {
       </div>
     );
   }
-  return <Session key={`${nonce}-${set.questions[0].id}`} set={set} mode={mode} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} onDuelDone={(id) => navigate(`/duel/${id}`, { replace: true })} />;
+  return <Session key={`${nonce}-${params.get('r') || ''}-${set.questions[0].id}`} set={set} mode={fix ? 'practice' : mode} fix={fix} t={t} settings={settings} onRestart={() => setNonce((n) => n + 1)} onExit={() => navigate(-1)} onDuelDone={(id) => navigate(`/duel/${id}`, { replace: true })} />;
 }
 
-function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
+function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onDuelDone }) {
   const { me } = useMe();
   const qs = set.questions;
   const labels = useMemo(() => taskLabels(qs), [qs]);
@@ -115,10 +118,18 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
   // an unfinished run of exactly this set (same tasks, same mode) continues where it stopped
   const rKey = useMemo(() => resumeKey(set, mode, settings.grade), [set, mode, settings.grade]);
   const saved = useMemo(() => loadResume(rKey, qs.length), [rKey, qs.length]);
+  // fixing mode: start from the last finished attempt (unless a fixing run is already being continued)
+  const last = useMemo(() => (fixAsked && !saved ? loadLast(set, settings.grade) : null), [fixAsked, saved, set, settings.grade]);
+  const fixing = !!(saved?.fix || last);
+  const [skipped] = useState(() => saved?.skipped ?? (last ? last.st.map((x) => x === 'skip') : qs.map(() => false)));
 
-  const [idx, setIdx] = useState(() => Math.min(saved?.idx ?? 0, qs.length - 1));
-  const [answers, setAnswers] = useState(() => saved?.answers ?? qs.map(() => null));
-  const [checks, setChecks] = useState(() => saved?.checks ?? qs.map(() => null)); // {correct, score, max, n, first}
+  const [idx, setIdx] = useState(() => {
+    if (saved) return Math.min(saved.idx ?? 0, qs.length - 1);
+    const firstOpen = last ? last.st.findIndex((x) => x !== 'ok') : -1;
+    return Math.max(firstOpen, 0);
+  });
+  const [answers, setAnswers] = useState(() => saved?.answers ?? (last ? last.answers.map((a, i) => (last.st[i] === 'skip' ? null : a)) : qs.map(() => null)));
+  const [checks, setChecks] = useState(() => saved?.checks ?? last?.checks ?? qs.map(() => null)); // {correct, score, max, n, first}
   const [reveal, setReveal] = useState(() => saved?.reveal ?? qs.map(() => false));
   const [mistakes, setMistakes] = useState(() => saved?.mistakes ?? 0);
   const [elapsed, setElapsed] = useState(() => (saved?.ms ?? 0) / 1000);
@@ -138,7 +149,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     const touched = answers.some((a) => a !== null && a !== '') || checks.some(Boolean);
     if (!touched) return;
     saveResume(rKey, {
-      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes,
+      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes, fix: fixing, skipped, left,
       ms: Date.now() - started.current, answered: answers.filter((a) => a !== null && a !== '').length,
     });
   }, [rKey, set, settings.grade, mode, idx, answers, checks, reveal, mistakes, Math.floor(elapsed / 5)]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -168,6 +179,12 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     // unchecked but filled answers still count at the end (like handing in the sheet)
     let extra = 0;
     const final = checks.map((c, i) => {
+      if (fixing) {
+        // when fixing, an edited or newly filled answer is checked now, but never adds points
+        if (c && !c.stale) return c;
+        const r = checkAnswer(qs[i], answers[i]);
+        return { ...r, firstScore: c?.firstScore ?? 0, n: (c?.n || 0) + 1, late: true };
+      }
       if (c) return c;
       const r = checkAnswer(qs[i], answers[i]);
       if (!r.empty) {
@@ -180,6 +197,14 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     const answered = final.filter((c) => !c.empty).length;
     finished.current = true;
     clearResume(rKey);
+    if (fixing) {
+      // fixing does not change the score or XP, it only turns red / orange tasks green
+      saveLast(set, settings.grade, { answers, checks: final, score: total, max: maxPoints });
+      setChecks(final);
+      setResult({ score: total, ms, badges: [], counted: true, fix: true });
+      return;
+    }
+    if (!set.duelId) saveLast(set, settings.grade, { answers, checks: final, score: total, max: maxPoints });
     const badges = recordFinish(set, { score: total, max: maxPoints, ms, grade: settings.grade, mode, answered, count: qs.length });
     // league: send the new XP in the background (does nothing if the child did not join)
     syncXp().catch(() => {});
@@ -199,7 +224,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
       playWin();
       confetti({ particleCount: 120, spread: 80, origin: { y: 0.4 }, colors: ['#1f3fbf', '#ffd84d', '#1f9d6b', '#e0313b'] });
     }
-  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey, me, onDuelDone]);
+  }, [checks, answers, qs, set, maxPoints, settings.grade, mode, rKey, me, onDuelDone, fixing]);
 
   useEffect(() => {
     if (timed && !result && elapsed >= set.minutes * 60) {
@@ -208,11 +233,38 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     }
   }, [elapsed, timed, result, set.minutes, finish]);
 
-  const go = useCallback((n) => {
+  // grade task i (quietly); the first grading is what counts for points, later ones are fixes
+  function grade(i) {
+    const c = checks[i];
+    if (c && !c.stale) return null;
+    const res = checkAnswer(qs[i], answers[i]);
+    if (res.empty) return res;
+    const first = !c && !fixing;
+    if (first) recordAnswer(qs[i], res, { grade: settings.grade, firstTry: true });
+    else if (res.correct && qs[i].mistakeId) recordAnswer(qs[i], res, { grade: settings.grade, firstTry: false });
+    if (!res.correct) setMistakes((m) => m + 1);
+    setChecks((cs) => cs.map((x, k) => (k === i
+      ? { ...res, n: (x?.n || 0) + 1, firstScore: first ? res.score : (x?.firstScore ?? 0), stale: false }
+      : x)));
+    return res;
+  }
+
+  // leaving a task hands its answer in, so the overview always shows right / wrong / skipped
+  const [left, setLeft] = useState(() => saved?.left ?? qs.map(() => false));
+  function leave() {
+    grade(idx);
+    if (!left[idx]) setLeft((l) => l.map((x, k) => (k === idx ? true : x)));
+  }
+  function go(n) {
     const next = Math.max(0, Math.min(qs.length - 1, n));
+    if (next !== idx) leave();
     setIdx(next);
     playClick();
-  }, [qs.length]);
+  }
+  function openOverview() {
+    leave();
+    setOverview(true);
+  }
 
   // keyboard
   useEffect(() => {
@@ -252,19 +304,13 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
 
   function doCheck() {
     if (locked) return;
-    const res = checkAnswer(q, answers[idx]);
+    const res = grade(idx);
+    if (!res) return;
     if (res.empty) {
       playBlock();
       haptic('light');
       return;
     }
-    const first = !check;
-    if (first) recordAnswer(q, res, { grade: settings.grade, firstTry: true });
-    else if (res.correct && q.mistakeId) recordAnswer(q, res, { grade: settings.grade, firstTry: false });
-    if (!res.correct) setMistakes((m) => m + 1);
-    setChecks((c) => c.map((x, i) => (i === idx
-      ? { ...res, n: (x?.n || 0) + 1, firstScore: first ? res.score : x.firstScore, stale: false }
-      : x)));
     if (res.correct) {
       haptic('success');
       playWin();
@@ -282,9 +328,11 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
     if (c?.correct) return 'ok';
     if (c && c.stale) return 'fixing';
     if (c) return 'bad';
-    return answers[i] !== null && answers[i] !== '' ? 'filled' : 'empty';
+    if (answers[i] !== null && answers[i] !== '') return 'filled';
+    // passed over without an answer (or left empty last time) = skipped
+    return skipped[i] || (left[i] && i !== idx) ? 'skip' : 'empty';
   };
-  const wrongIdx = qs.map((_, i) => i).filter((i) => { const st = statusOf(i); return st === 'bad' || st === 'fixing'; });
+  const wrongIdx = qs.map((_, i) => i).filter((i) => ['bad', 'fixing', 'skip'].includes(statusOf(i)));
   const nextWrong = () => wrongIdx.find((i) => i > idx) ?? wrongIdx.find((i) => i !== idx) ?? wrongIdx[0];
 
   if (result) {
@@ -324,7 +372,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
             )}
             <span className="font-bold text-ink">{t('p.points', { a: points, b: maxPoints })}</span>
             {/* one compact button instead of a long scrolling strip of task numbers */}
-            <button onClick={() => setOverview(true)} aria-label={t('p.overview')} className="relative ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
+            <button onClick={openOverview} aria-label={t('p.overview')} className="relative ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
               {t('p.taskOf', { a: labels[idx], b: qs.length })}
               <LayoutGrid className="w-4 h-4 text-pen" />
               {wrongIdx.length > 0 && (
@@ -337,7 +385,14 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
             <div className="h-full bg-pen transition-all" style={{ width: `${(answeredCount / qs.length) * 100}%` }} />
           </div>
         </div>
-        {resumed && (
+        {fixing && (
+          <div className="max-w-3xl mx-auto px-3 pb-2">
+            <button onClick={openOverview} className="w-full text-start rounded-xl bg-redpen-soft border border-redpen/40 px-3 py-1.5 text-sm font-bold text-redpen">
+              🛠️ {wrongIdx.length ? t('p.fixBanner', { n: wrongIdx.length }) : t('p.allFixed')}
+            </button>
+          </div>
+        )}
+        {resumed && !fixing && (
           <div className="max-w-3xl mx-auto px-3 pb-2">
             <p className="rounded-xl bg-ok-soft border border-ok/40 px-3 py-1.5 text-sm font-bold text-ok">↺ {t('resume.continued', { a: answers.filter((a) => a !== null && a !== '').length, b: qs.length })}</p>
           </div>
@@ -450,13 +505,14 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
                       key={qq.id + i}
                       onClick={() => { go(i); setOverview(false); }}
                       aria-current={i === idx}
-                      aria-label={`${labels[i]} – ${t({ ok: 'p.lgOk', bad: 'p.lgBad', fixing: 'p.lgFixing', filled: 'p.lgFilled', empty: 'p.lgEmpty' }[st])}`}
+                      aria-label={`${labels[i]} – ${t({ ok: 'p.lgOk', bad: 'p.lgBad', fixing: 'p.lgFixing', filled: 'p.lgFilled', skip: 'p.lgSkip', empty: 'p.lgEmpty' }[st])}`}
                       className={cn(
                         'relative h-11 rounded-xl border-2 font-bold text-sm tabular transition-transform active:scale-95',
                         st === 'ok' && 'border-ok bg-ok text-white',
                         st === 'bad' && 'border-redpen bg-redpen text-white',
                         st === 'fixing' && 'border-redpen border-dashed bg-redpen-soft text-redpen',
                         st === 'filled' && 'border-pen bg-pen-soft text-ink',
+                        st === 'skip' && 'border-marker border-dashed bg-marker/25 text-ink',
                         st === 'empty' && 'border-line bg-sheet text-ink',
                         // the current task keeps its colour and gets a ring instead
                         i === idx && 'ring-[3px] ring-offset-2 ring-offset-sheet ring-marker',
@@ -472,8 +528,8 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
               {/* legend */}
               <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
                 <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-ok" />{t('p.lgOk')} {checks.filter((c) => c?.correct).length}</span>
-                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-redpen" />{t('p.lgBad')} {wrongIdx.length}</span>
-                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-pen-soft border border-pen" />{t('p.lgFilled')}</span>
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-redpen" />{t('p.lgBad')} {qs.filter((_, i) => ['bad', 'fixing'].includes(statusOf(i))).length}</span>
+                {qs.some((_, i) => statusOf(i) === 'skip') && <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-marker/40 border border-dashed border-marker" />{t('p.lgSkip')} {qs.filter((_, i) => statusOf(i) === 'skip').length}</span>}
                 <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-sheet border border-line" />{t('p.lgEmpty')}</span>
               </div>
               {wrongIdx.length > 0 ? (
@@ -510,10 +566,20 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
   const [review, setReview] = useState(false);
   const pct = result.score / maxPoints;
   const correct = checks.filter((c) => c?.correct).length;
-  const wrong = checks.filter((c) => c && !c.empty && !c.correct).length;
+  // wrong and skipped tasks of this attempt; a test / set reopens itself in fixing mode
+  const wrong = checks.filter((c) => !c || c.empty || !c.correct).length;
+  const loc = useLocation();
+  const fixHref = (() => {
+    if (!['mock', 'topic', 'daily'].includes(set.kind)) return '/play/mistakes?mode=practice';
+    const p = new URLSearchParams(loc.search);
+    p.set('fix', '1');
+    p.set('mode', 'practice');
+    p.set('r', String(Date.now() % 100000)); // a fresh link, so a second round of fixing also reopens
+    return `${loc.pathname}?${p.toString()}`;
+  })();
   const mins = Math.round(result.ms / 60000);
   const verdict = pct >= 0.8 ? t('res.great') : pct >= 0.5 ? t('res.good') : t('res.keep');
-  const xp = checks.reduce((a, c, i) => a + (c?.correct && !c.late ? 10 * (qs[i].points || 1) : 0), 0) + (result.counted ? (set.kind === 'mock' ? 50 : set.kind === 'daily' ? 30 : 0) : 0);
+  const xp = result.fix ? 0 : checks.reduce((a, c, i) => a + (c?.correct && !c.late ? 10 * (qs[i].points || 1) : 0), 0) + (result.counted ? (set.kind === 'mock' ? 50 : set.kind === 'daily' ? 30 : 0) : 0);
 
   // per-topic breakdown
   const byTopic = {};
@@ -585,7 +651,7 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
 
         {/* every wrong task goes to the mistakes folder – fix them right away */}
         {wrong > 0 && !set.duelId && (
-          <Link to="/play/mistakes?mode=practice"
+          <Link to={fixHref}
             className="w-full h-12 rounded-2xl border-[3px] border-[#1B2340] bg-redpen text-white font-heading font-extrabold flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
             <RotateCcw className="w-5 h-5" />{t('p.fixMistakes', { n: wrong })}
           </Link>

@@ -583,4 +583,7 @@ export default {
   'p.nextMistake': "Nächster Fehler",
   'p.allFixed': "Alle Fehler verbessert 🎉",
   'p.tapRed': "Tippe auf eine rote Aufgabe, um sie zu verbessern.",
+  'p.lgSkip': "Übersprungen",
+  'p.fixBanner': "Verbessern: {n} Aufgaben warten – hier tippen",
+  'mode.fix': "Fehler und Übersprungenes verbessern ({n})",
 };
