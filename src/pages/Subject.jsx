@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
-import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
+import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 
@@ -33,6 +33,7 @@ export default function Subject() {
   const runsFor = (kind, a, b) => runs.filter((x) => x.meta.kind === kind && (kind === 'mock' ? x.meta.number === a : x.meta.topic === a && x.meta.variant === b));
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = blueprintFor(subject, grade).length;
+  const SET_SIZE = 12; // tasks in one topic set (see Player)
   const topics = topicsFor(subject, grade);
   const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')]];
 
@@ -90,6 +91,21 @@ export default function Subject() {
             </div>
           </div>
         )}
+
+        {/* how much there is to practise in this subject and grade */}
+        <section className="mb-3 grid grid-cols-2 gap-2">
+          <div className="sheet px-3 py-2.5">
+            <p className="text-[11px] font-bold text-ink-soft">📝 {t('subj.tests')}</p>
+            <p className="font-heading font-extrabold text-xl tabular leading-tight">{MOCK_COUNT}</p>
+            <p className="text-[11px] text-ink-soft tabular">{t('subj.tasks', { n: MOCK_COUNT * nTasks })}</p>
+          </div>
+          <div className="sheet px-3 py-2.5">
+            <p className="text-[11px] font-bold text-ink-soft">🧩 {t('subj.sets')}</p>
+            <p className="font-heading font-extrabold text-xl tabular leading-tight">{topics.length * TOPIC_VARIANTS}</p>
+            <p className="text-[11px] text-ink-soft tabular">{t('subj.tasks', { n: topics.length * TOPIC_VARIANTS * SET_SIZE })}</p>
+          </div>
+          <p className="col-span-2 px-1 text-[11px] text-ink-soft">{t('subj.fresh')}</p>
+        </section>
 
         {/* round progress: everything green → new round with fresh tasks */}
         <section className="sheet p-3 mb-3">

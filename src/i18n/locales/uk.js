@@ -568,4 +568,8 @@ export default {
   'home.optional': "за бажанням",
   'p.draftNums': "Числа із задачі – натисни:",
   'p.draftDone': "Готово",
+  'subj.tests': "Повні тести",
+  'subj.sets': "Набори за темами",
+  'subj.tasks': "завдань: {n}",
+  'subj.fresh': "У кожному новому колі з’являються нові завдання.",
 };

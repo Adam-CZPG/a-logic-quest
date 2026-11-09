@@ -570,4 +570,8 @@ export default {
   'home.optional': "freiwillig",
   'p.draftNums': "Zahlen aus der Aufgabe – tippen:",
   'p.draftDone': "Fertig",
+  'subj.tests': "Komplette Tests",
+  'subj.sets': "Themen-Sets",
+  'subj.tasks': "{n} Aufgaben",
+  'subj.fresh': "Jede neue Runde bringt neue Aufgaben.",
 };

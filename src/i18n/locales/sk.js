@@ -569,4 +569,8 @@ export default {
   'home.optional': "voliteľné",
   'p.draftNums': "Čísla z úlohy – ťukni:",
   'p.draftDone': "Hotovo",
+  'subj.tests': "Celé testy",
+  'subj.sets': "Sady podľa tém",
+  'subj.tasks': "{n} úloh",
+  'subj.fresh': "V každom novom kole pribudnú nové úlohy.",
 };

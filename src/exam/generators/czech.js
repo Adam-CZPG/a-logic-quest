@@ -2,6 +2,8 @@
 // Obsah je vždy česky, protože předmětem je čeština. Formát úloh odpovídá
 // jednotné přijímací zkoušce (uzavřené úlohy A–D, ANO/NE, otevřené odpovědi).
 
+import { EXTRA_READING, EXTRA_GENERATORS, EXTRA_FIGURES } from './czech_extra';
+
 // [správně, chybně]
 const IY = [
   ['býk', 'bík'], ['bydlet', 'bidlet'], ['obyvatel', 'obivatel'], ['bystrý', 'bistrý'], ['bylina', 'bilina'], ['kobyla', 'kobila'],
@@ -368,6 +370,7 @@ const FIGURES = [
   ['Oči měla jako dvě hvězdy.', 'přirovnání'], ['Byl silný jako medvěd.', 'přirovnání'],
   ['Celá škola tleskala.', 'metonymie'], ['Čtu Nerudu.', 'metonymie'],
   ['Ten člověk je liška.', 'metafora'], ['Na nebi kvetou hvězdy.', 'metafora'],
+  ...EXTRA_FIGURES,
 ];
 const GENRES = [
   ['bajka', 'krátký příběh, v němž zvířata jednají jako lidé, s ponaučením na konci'],
@@ -393,7 +396,7 @@ function literature(r) {
 
 // ---------------------------------------------------------------- vlastní (originální) úlohy
 // grades: [min, max]
-const CURATED = [
+const CURATED_BASE = [
   // ----- porozumění textu (originální texty)
   {
     group: 'krtek', topic: 'porozumeni', grades: [5, 7],
@@ -478,6 +481,9 @@ const CURATED = [
   { topic: 'tvaroslovi', grades: [9, 9], type: 'choice', text: 'Ve které větě je sloveso v trpném rodě?', options: ['Dům postavili dělníci.', 'Dům byl postaven loni.', 'Dělníci stavějí dům.', 'Budeme stavět dům.'], answer: 1 },
 ];
 
+// own reading passages written later live in czech_extra.js
+const CURATED = [...CURATED_BASE, ...EXTRA_READING];
+
 function curatedPick(topic) {
   return (r, ctx) => {
     const pool = [];
@@ -502,12 +508,12 @@ export function readingGroups(grade) {
 }
 
 export const CZECH_GENERATORS = {
-  pravopis: [allCorrect, allCorrect, oneWrong, fillIY, agreement, agreementSingular, agreementTF, curatedPick('pravopis')],
+  pravopis: [allCorrect, allCorrect, oneWrong, fillIY, agreement, agreementSingular, agreementTF, curatedPick('pravopis'), ...EXTRA_GENERATORS.pravopis],
   tvaroslovi: [partOfSpeech, partOfSpeech, nounPattern, verbCategory, curatedPick('tvaroslovi')],
-  skladba: [agreement, agreementSingular, agreementWhich, agreementTF, curatedPick('skladba'), curatedPick('skladba')],
-  slovni_zasoba: [synAnt, synAnt, family, curatedPick('slovni_zasoba')],
+  skladba: [agreement, agreementSingular, agreementWhich, agreementTF, curatedPick('skladba'), curatedPick('skladba'), ...EXTRA_GENERATORS.skladba],
+  slovni_zasoba: [synAnt, synAnt, family, curatedPick('slovni_zasoba'), ...EXTRA_GENERATORS.slovni_zasoba],
   porozumeni: [curatedPick('porozumeni')],
-  sloh: [curatedPick('sloh')],
+  sloh: [curatedPick('sloh'), ...EXTRA_GENERATORS.sloh],
   literatura: [literature, literature, curatedPick('porozumeni')],
 };
 
