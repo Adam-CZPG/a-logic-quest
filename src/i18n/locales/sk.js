@@ -573,4 +573,13 @@ export default {
   'subj.sets': "Sady podľa tém",
   'subj.tasks': "{n} úloh",
   'subj.fresh': "V každom novom kole pribudnú nové úlohy.",
+  'p.fixMistakes': "Opraviť chyby ({n})",
+  'p.lgOk': "Správne",
+  'p.lgBad': "Chyba",
+  'p.lgFixing': "Opravuje sa",
+  'p.lgFilled': "Neoverené",
+  'p.lgEmpty': "Bez odpovede",
+  'p.nextMistake': "Ďalšia chyba",
+  'p.allFixed': "Všetky chyby opravené 🎉",
+  'p.tapRed': "Ťukni na červenú úlohu a oprav ju.",
 };

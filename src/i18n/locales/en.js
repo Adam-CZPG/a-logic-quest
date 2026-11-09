@@ -574,4 +574,13 @@ export default {
   'subj.sets': "Topic sets",
   'subj.tasks': "{n} tasks",
   'subj.fresh': "Every new round brings new tasks.",
+  'p.fixMistakes': "Fix mistakes ({n})",
+  'p.lgOk': "Correct",
+  'p.lgBad': "Wrong",
+  'p.lgFixing': "Fixing",
+  'p.lgFilled': "Not checked",
+  'p.lgEmpty': "Empty",
+  'p.nextMistake': "Next mistake",
+  'p.allFixed': "All mistakes fixed 🎉",
+  'p.tapRed': "Tap a red task to fix it.",
 };

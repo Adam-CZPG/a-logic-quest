@@ -574,4 +574,13 @@ export default {
   'subj.sets': "Themen-Sets",
   'subj.tasks': "{n} Aufgaben",
   'subj.fresh': "Jede neue Runde bringt neue Aufgaben.",
+  'p.fixMistakes': "Fehler verbessern ({n})",
+  'p.lgOk': "Richtig",
+  'p.lgBad': "Falsch",
+  'p.lgFixing': "Wird verbessert",
+  'p.lgFilled': "Nicht geprüft",
+  'p.lgEmpty': "Offen",
+  'p.nextMistake': "Nächster Fehler",
+  'p.allFixed': "Alle Fehler verbessert 🎉",
+  'p.tapRed': "Tippe auf eine rote Aufgabe, um sie zu verbessern.",
 };
