@@ -150,7 +150,9 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
 
   const q = qs[idx];
   const check = checks[idx];
-  const locked = !!check && (mode === 'sim' || check.correct || reveal[idx]);
+  // a wrong answer is never locked: the child can come back (red tile) and fix it in both modes;
+  // points still count only the first try, so fixing helps learning, not the score
+  const locked = !!check && (check.correct || reveal[idx]);
   const points = checks.reduce((a, c) => a + (c ? c.firstScore : 0), 0);
 
   // clock
@@ -274,6 +276,16 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
 
   const answeredCount = checks.filter(Boolean).length;
   const canCheck = !locked;
+  // ok = right, bad = checked wrong, fixing = wrong but already being changed, filled = answered not checked
+  const statusOf = (i) => {
+    const c = checks[i];
+    if (c?.correct) return 'ok';
+    if (c && c.stale) return 'fixing';
+    if (c) return 'bad';
+    return answers[i] !== null && answers[i] !== '' ? 'filled' : 'empty';
+  };
+  const wrongIdx = qs.map((_, i) => i).filter((i) => { const st = statusOf(i); return st === 'bad' || st === 'fixing'; });
+  const nextWrong = () => wrongIdx.find((i) => i > idx) ?? wrongIdx.find((i) => i !== idx) ?? wrongIdx[0];
 
   if (result) {
     return <Results set={set} qs={qs} labels={labels} answers={answers} checks={checks} result={result} maxPoints={maxPoints} t={t} lang={settings.lang} onRestart={onRestart} />;
@@ -312,9 +324,12 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
             )}
             <span className="font-bold text-ink">{t('p.points', { a: points, b: maxPoints })}</span>
             {/* one compact button instead of a long scrolling strip of task numbers */}
-            <button onClick={() => setOverview(true)} aria-label={t('p.overview')} className="ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
+            <button onClick={() => setOverview(true)} aria-label={t('p.overview')} className="relative ms-auto flex items-center gap-1.5 rounded-full border-2 border-line bg-sheet ps-3 pe-2.5 py-1 font-bold text-ink hover:border-pen">
               {t('p.taskOf', { a: labels[idx], b: qs.length })}
               <LayoutGrid className="w-4 h-4 text-pen" />
+              {wrongIdx.length > 0 && (
+                <span className="absolute -top-2 -end-1.5 min-w-5 h-5 px-1 rounded-full bg-redpen text-white text-[11px] font-extrabold grid place-items-center">{wrongIdx.length}</span>
+              )}
             </button>
           </div>
           {/* progress hairline */}
@@ -348,17 +363,25 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
               t={t}
               onSubmit={doCheck}
             />
-            {mode === 'practice' && check && !check.correct && !check.stale && !reveal[idx] && (
+            {check && !check.correct && !check.stale && !reveal[idx] && (
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <p className="text-redpen font-bold">
                   {check.total && check.right ? t('p.partial', { r: check.right, t: check.total }) : t('p.wrong')}
                 </p>
-                <button onClick={() => setReveal((r) => r.map((x, i) => (i === idx ? true : x)))} className="flex items-center gap-1.5 rounded-xl border-2 border-line px-3 py-1.5 text-sm font-bold hover:border-pen">
-                  <Eye className="w-4 h-4" />{t('p.showAnswer')}
-                </button>
+                {mode === 'practice' && (
+                  <button onClick={() => setReveal((r) => r.map((x, i) => (i === idx ? true : x)))} className="flex items-center gap-1.5 rounded-xl border-2 border-line px-3 py-1.5 text-sm font-bold hover:border-pen">
+                    <Eye className="w-4 h-4" />{t('p.showAnswer')}
+                  </button>
+                )}
               </div>
             )}
-            {mode === 'practice' && check?.correct && <p className="mt-4 text-ok font-bold">{t('p.correct')}</p>}
+            {check?.correct && !check.stale && <p className="mt-4 text-ok font-bold">{t('p.correct')}</p>}
+            {/* while fixing: jump straight to the next red task */}
+            {wrongIdx.some((i) => i !== idx) && check && (check.correct || reveal[idx]) && (
+              <button onClick={() => go(nextWrong())} className="mt-3 flex items-center gap-1.5 rounded-xl border-2 border-redpen/60 bg-redpen-soft px-3 py-1.5 text-sm font-bold text-redpen">
+                <RotateCcw className="w-4 h-4" />{t('p.nextMistake')}
+              </button>
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -385,7 +408,7 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
             <PencilLine className="w-5 h-5" />
             {!draftOpen && drafts[idx]?.length > 0 && <span className="absolute top-1 end-1 w-2.5 h-2.5 rounded-full bg-marker border-2 border-sheet" />}
           </button>
-          {mode === 'practice' && check?.correct && !check.stale && idx < qs.length - 1 ? (
+          {check?.correct && !check.stale && idx < qs.length - 1 ? (
             // after a right answer the big button moves on
             <button onClick={() => go(idx + 1)}
               className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] font-heading font-extrabold text-[17px] flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
@@ -421,26 +444,49 @@ function Session({ set, mode, t, settings, onRestart, onExit, onDuelDone }) {
               </div>
               <div className="grid grid-cols-5 gap-2">
                 {qs.map((qq, i) => {
-                  const c = checks[i];
-                  const filled = answers[i] !== null && answers[i] !== '' && !c;
+                  const st = statusOf(i);
                   return (
                     <button
                       key={qq.id + i}
                       onClick={() => { go(i); setOverview(false); }}
                       aria-current={i === idx}
+                      aria-label={`${labels[i]} – ${t({ ok: 'p.lgOk', bad: 'p.lgBad', fixing: 'p.lgFixing', filled: 'p.lgFilled', empty: 'p.lgEmpty' }[st])}`}
                       className={cn(
-                        'h-11 rounded-xl border-2 font-bold text-sm tabular',
-                        i === idx ? 'bg-ink text-paper border-ink' : 'bg-sheet border-line',
-                        i !== idx && c?.correct && 'border-ok bg-ok-soft text-ok',
-                        i !== idx && c && !c.correct && 'border-redpen bg-redpen-soft text-redpen',
-                        i !== idx && filled && 'border-pen/60 bg-pen-soft',
+                        'relative h-11 rounded-xl border-2 font-bold text-sm tabular transition-transform active:scale-95',
+                        st === 'ok' && 'border-ok bg-ok text-white',
+                        st === 'bad' && 'border-redpen bg-redpen text-white',
+                        st === 'fixing' && 'border-redpen border-dashed bg-redpen-soft text-redpen',
+                        st === 'filled' && 'border-pen bg-pen-soft text-ink',
+                        st === 'empty' && 'border-line bg-sheet text-ink',
+                        // the current task keeps its colour and gets a ring instead
+                        i === idx && 'ring-[3px] ring-offset-2 ring-offset-sheet ring-marker',
                       )}
                     >
                       {labels[i]}
+                      {st === 'ok' && <span className="absolute -top-1.5 -end-1.5 w-4 h-4 rounded-full bg-sheet text-ok text-[10px] leading-4 border border-ok">✓</span>}
+                      {st === 'bad' && <span className="absolute -top-1.5 -end-1.5 w-4 h-4 rounded-full bg-sheet text-redpen text-[10px] leading-4 border border-redpen">✗</span>}
                     </button>
                   );
                 })}
               </div>
+              {/* legend */}
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-soft">
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-ok" />{t('p.lgOk')} {checks.filter((c) => c?.correct).length}</span>
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-redpen" />{t('p.lgBad')} {wrongIdx.length}</span>
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-pen-soft border border-pen" />{t('p.lgFilled')}</span>
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded bg-sheet border border-line" />{t('p.lgEmpty')}</span>
+              </div>
+              {wrongIdx.length > 0 ? (
+                <>
+                  <button onClick={() => { go(nextWrong()); setOverview(false); }}
+                    className="mt-3 w-full h-12 rounded-2xl border-[3px] border-[#1B2340] bg-redpen text-white font-heading font-extrabold flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+                    <RotateCcw className="w-5 h-5" />{t('p.fixMistakes', { n: wrongIdx.length })}
+                  </button>
+                  <p className="mt-1.5 text-center text-xs text-ink-soft">{t('p.tapRed')}</p>
+                </>
+              ) : checks.some(Boolean) && checks.filter((c) => c?.correct).length === checks.filter(Boolean).length ? (
+                <p className="mt-3 text-center text-sm font-bold text-ok">{t('p.allFixed')}</p>
+              ) : null}
             </motion.div>
           </motion.div>
         )}
@@ -464,6 +510,7 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
   const [review, setReview] = useState(false);
   const pct = result.score / maxPoints;
   const correct = checks.filter((c) => c?.correct).length;
+  const wrong = checks.filter((c) => c && !c.empty && !c.correct).length;
   const mins = Math.round(result.ms / 60000);
   const verdict = pct >= 0.8 ? t('res.great') : pct >= 0.5 ? t('res.good') : t('res.keep');
   const xp = checks.reduce((a, c, i) => a + (c?.correct && !c.late ? 10 * (qs[i].points || 1) : 0), 0) + (result.counted ? (set.kind === 'mock' ? 50 : set.kind === 'daily' ? 30 : 0) : 0);
@@ -536,6 +583,14 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
           </section>
         )}
 
+        {/* every wrong task goes to the mistakes folder – fix them right away */}
+        {wrong > 0 && !set.duelId && (
+          <Link to="/play/mistakes?mode=practice"
+            className="w-full h-12 rounded-2xl border-[3px] border-[#1B2340] bg-redpen text-white font-heading font-extrabold flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+            <RotateCcw className="w-5 h-5" />{t('p.fixMistakes', { n: wrong })}
+          </Link>
+        )}
+
         <div className="grid grid-cols-3 gap-2">
           <button onClick={() => setReview((r) => !r)} className="rounded-2xl border-2 border-line bg-sheet py-3 font-bold flex flex-col items-center gap-1 text-sm"><Eye className="w-5 h-5" />{t('res.review')}</button>
           <button onClick={onRestart} className="rounded-2xl border-2 border-line bg-sheet py-3 font-bold flex flex-col items-center gap-1 text-sm"><RotateCcw className="w-5 h-5" />{t('res.again')}</button>
@@ -547,7 +602,7 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
             {qs.map((q, i) => {
               const c = checks[i];
               return (
-                <div key={q.id + i} className="sheet p-4">
+                <div key={q.id + i} className={cn('sheet p-4 border-s-[6px]', c?.correct ? 'border-s-ok' : c && !c.empty ? 'border-s-redpen' : 'border-s-line')}>
                   <div className="flex items-start gap-2">
                     <span className="font-heading font-extrabold text-pen">{labels[i]}</span>
                     <p className="flex-1 font-bold leading-snug">{q.text}{q.expr ? ` ${q.expr}` : ''}</p>
