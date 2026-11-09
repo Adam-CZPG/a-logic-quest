@@ -581,4 +581,7 @@ export default {
   'p.nextMistake': "Další chyba",
   'p.allFixed': "Všechny chyby opraveny 🎉",
   'p.tapRed': "Ťukni na červenou úlohu a oprav ji.",
+  'p.lgSkip': "Přeskočeno",
+  'p.fixBanner': "Oprava: {n} úloh čeká na opravu – ťukni sem",
+  'mode.fix': "Opravit chyby a přeskočené ({n})",
 };

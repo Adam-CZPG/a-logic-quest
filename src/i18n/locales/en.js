@@ -583,4 +583,7 @@ export default {
   'p.nextMistake': "Next mistake",
   'p.allFixed': "All mistakes fixed 🎉",
   'p.tapRed': "Tap a red task to fix it.",
+  'p.lgSkip': "Skipped",
+  'p.fixBanner': "Fixing: {n} tasks to fix – tap here",
+  'mode.fix': "Fix mistakes and skipped ({n})",
 };

@@ -7,6 +7,7 @@ import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
+import { leftToFix } from '@/lib/lastrun';
 
 const LEVEL_EMOJI = ['🌱', '🚲', '🚀', '🏔️'];
 
@@ -31,6 +32,11 @@ export default function Subject() {
   // unfinished runs of this subject in this round → orange ring + "continue" in the mode picker
   const runs = listResume((m) => m.subject === subject && m.grade === grade && (m.cycle ?? 0) === round.cycle);
   const runsFor = (kind, a, b) => runs.filter((x) => x.meta.kind === kind && (kind === 'mock' ? x.meta.number === a : x.meta.topic === a && x.meta.variant === b));
+  // wrong + skipped tasks left from the last finished attempt of a test / topic set
+  const fixFor = (kind, a, b) => {
+    const l = leftToFix(kind === 'mock' ? { kind, subject, grade, number: a, cycle: round.cycle } : { kind, subject, grade, topic: a, variant: b, cycle: round.cycle });
+    return l ? l.bad + l.skip : 0;
+  };
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = blueprintFor(subject, grade).length;
   const SET_SIZE = 12; // tasks in one topic set (see Player)
@@ -155,7 +161,7 @@ export default function Subject() {
                         const going = !done && runsFor('mock', n).length > 0;
                         return (
                           <button key={n} aria-label={t('tests.variant', { n })}
-                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n) })}
+                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n), fix: fixFor('mock', n) })}
                             className={cn('relative aspect-[4/5] rounded-lg border-2 flex flex-col items-center justify-center leading-none tabular overflow-hidden transition-transform active:scale-95',
                               done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
                                 : going ? 'border-[#1B2340] bg-marker/60 text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
@@ -164,6 +170,9 @@ export default function Subject() {
                             <span className={cn('absolute top-0 end-0 w-3 h-3 rounded-bl-md', done || going ? 'bg-[#1B2340]/20' : 'bg-line')} aria-hidden="true" />
                             <span className="font-heading font-extrabold text-lg">{n}</span>
                             <span className="mt-1 text-[10px] font-bold">{done ? `${best}/50` : going ? '↺' : <span className="opacity-0">·</span>}</span>
+                            {fixFor('mock', n) > 0 && (
+                              <span className="absolute bottom-1 inset-x-1 rounded-md bg-redpen text-white text-[10px] font-extrabold py-0.5" aria-label={t('mode.fix', { n: fixFor('mock', n) })}>✗ {fixFor('mock', n)}</span>
+                            )}
                           </button>
                         );
                       })}
@@ -201,10 +210,11 @@ export default function Subject() {
                       const going = !done && runsFor('topic', topic, v).length > 0;
                       return (
                         <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })}
-                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v) })}
+                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v), fix: fixFor('topic', topic, v) })}
                           className={cn('relative w-10 h-10 rounded-full border-2 font-heading font-extrabold text-sm tabular grid place-items-center transition-transform active:scale-90',
                             done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340]' : going ? 'border-[#1B2340] bg-marker text-[#1B2340]' : 'border-line bg-sheet hover:border-pen')}>
                           {done ? <Check className="w-4 h-4" /> : v}
+                          {fixFor('topic', topic, v) > 0 && <span className="absolute -top-1.5 -end-1.5 min-w-4 h-4 px-0.5 rounded-full bg-redpen text-white text-[9px] font-extrabold grid place-items-center">{fixFor('topic', topic, v)}</span>}
                         </button>
                       );
                     })}
@@ -231,6 +241,13 @@ export default function Subject() {
               <p className="text-sm text-ink-soft">{t('mode.title')}</p>
               <h2 className="font-heading font-bold text-xl mb-1">{pick.title}</h2>
               <div className="space-y-2 mt-3">
+                {pick.fix > 0 && !(pick.runs || []).some((run) => run.meta.mode === 'practice') && (
+                  <button onClick={() => { const href = `${pick.href}&fix=1&mode=practice`; setPick(null); navigate(href); }}
+                    className="w-full flex items-center gap-3 rounded-2xl border-[3px] border-[#1B2340] bg-redpen text-white p-3.5 text-start shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+                    <RotateCcw className="w-6 h-6 shrink-0" />
+                    <span className="font-bold">{t('mode.fix', { n: pick.fix })}</span>
+                  </button>
+                )}
                 {(pick.runs || []).map((run) => (
                   <button key={run.key} onClick={() => start(run.meta.mode)} className="w-full flex items-start gap-3 rounded-2xl border-2 border-marker bg-marker/20 p-3.5 text-start">
                     <span className="text-xl leading-none mt-0.5" aria-hidden="true">↺</span>
