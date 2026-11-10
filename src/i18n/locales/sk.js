@@ -116,6 +116,8 @@ export default {
   'res.keep': 'Trénuj ďalej!',
   'res.time': 'Čas',
   'res.correct': 'Správne',
+  'res.firstTry': 'Napoprvýkrát',
+  'res.fixedNote': 'Body sa počítajú len za prvý pokus – opravené úlohy ({n}) body nepridávajú.',
   'res.review': 'Prejsť odpovede',
   'res.again': 'Znova',
   'res.home': 'Domov',

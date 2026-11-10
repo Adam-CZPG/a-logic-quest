@@ -116,6 +116,8 @@ export default {
   'res.keep': 'Keep practising!',
   'res.time': 'Time',
   'res.correct': 'Correct',
+  'res.firstTry': 'First try',
+  'res.fixedNote': 'Points count only for the first try – fixed tasks ({n}) add no points.',
   'res.review': 'Review answers',
   'res.again': 'Try again',
   'res.home': 'Home',

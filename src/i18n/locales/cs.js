@@ -115,6 +115,8 @@ export default {
   'res.keep': 'Trénuj dál!',
   'res.time': 'Čas',
   'res.correct': 'Správně',
+  'res.firstTry': 'Napoprvé',
+  'res.fixedNote': 'Body se počítají jen za první pokus – opravené úlohy ({n}) body nepřidávají.',
   'res.review': 'Projít odpovědi',
   'res.again': 'Znovu',
   'res.home': 'Domů',
