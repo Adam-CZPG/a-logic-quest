@@ -1,6 +1,7 @@
 // Slovenčina
 export default {
-  'app.name': 'GB Exam',
+  'app.name': 'TryFixPass',
+  'app.slogan': 'Skús. Oprav. Uspej.',
   'app.tagline': 'Príprava pre 5. · 7. · 9. ročník',
   'app.taglineCz': 'Príprava na prijímačky na gymnázium',
 
@@ -457,7 +458,7 @@ export default {
   'league.myCode': 'Tvoj kód pre kamarátov',
   'league.share': 'Poslať kód',
   'league.shareDesc': 'Kamarát si ťa pridá podľa tohto kódu.',
-  'league.shareMsg': 'Sleduj ma v GB Exam! Môj kód je {code}.',
+  'league.shareMsg': 'Sleduj ma v TryFixPass! Môj kód je {code}.',
   'league.codePh': 'Kód kamaráta',
   'league.follow': 'Sledovať',
   'league.badCode': 'Kód má 6 znakov (písmená a čísla).',
@@ -469,7 +470,7 @@ export default {
   'league.unfollow': 'Prestať sledovať',
   'league.tabLeague': 'Liga',
   'league.tabFriends': 'Kamaráti',
-  'league.friendInvite': 'Kamarát ťa pozýva do GB Exam',
+  'league.friendInvite': 'Kamarát ťa pozýva do TryFixPass',
   'league.friendInviteHint': 'Otvor aplikáciu a pridaj si ho podľa kódu:',
   'league.homeRank': '{r}. miesto · {xp} XP tento týždeň',
   'league.homeHint': 'Súťaž s deťmi z celého sveta',

@@ -1,6 +1,7 @@
 // English – the master dictionary. Every other language falls back to these keys.
 export default {
-  'app.name': 'GB Exam',
+  'app.name': 'TryFixPass',
+  'app.slogan': 'Try. Fix. Pass.',
   'app.tagline': 'Exam prep for grades 5 · 7 · 9',
   'app.taglineCz': 'Gymnasium entrance exam prep',
 
@@ -458,7 +459,7 @@ export default {
   'league.myCode': 'Your code for friends',
   'league.share': 'Send code',
   'league.shareDesc': 'A friend adds you with this code.',
-  'league.shareMsg': 'Follow me in GB Exam! My code is {code}.',
+  'league.shareMsg': 'Follow me in TryFixPass! My code is {code}.',
   'league.codePh': 'Friend’s code',
   'league.follow': 'Follow',
   'league.badCode': 'The code has 6 characters (letters and numbers).',
@@ -470,7 +471,7 @@ export default {
   'league.unfollow': 'Unfollow',
   'league.tabLeague': 'League',
   'league.tabFriends': 'Friends',
-  'league.friendInvite': 'A friend invites you to GB Exam',
+  'league.friendInvite': 'A friend invites you to TryFixPass',
   'league.friendInviteHint': 'Open the app and add them with this code:',
   'league.homeRank': '{r}. place · {xp} XP this week',
   'league.homeHint': 'Compete with kids from all over the world',
