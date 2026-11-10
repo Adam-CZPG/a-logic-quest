@@ -12,7 +12,39 @@ permissions:
   contents: write
 
 jobs:
+  # the real app in a browser on phone / tablet / desktop sizes (see playwright.config.js);
+  # the APK is only built when these pass
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests on all devices
+        run: npm run e2e
+
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
   build:
+    needs: e2e
     runs-on: ubuntu-latest
     env:
       HAS_UPLOAD_KEY: ${{ secrets.UPLOAD_KEYSTORE_BASE64 != '' }}
