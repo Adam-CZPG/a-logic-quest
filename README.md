@@ -1,4 +1,4 @@
-# GB Exam (GBLine Technology) — imtihonga tayyorlov (Chexiya · Slovakiya · Germaniya · butun dunyo)
+# TryFixPass (GBLine Technology) — imtihonga tayyorlov (Chexiya · Slovakiya · Germaniya · butun dunyo)
 
 Maktab imtihonlariga tayyorlov ilovasi. Web va Android (APK) — bitta kod. Barcha topshiriqlar o'zimizniki yoki ilova tomonidan yaratiladi; ilova hech qaysi imtihon tashkiloti bilan bog'liq emas.
 
@@ -22,10 +22,10 @@ Interfeys tillari: čeština, slovenčina, українська, English, рус
 ## Google Play
 
 - Ilova ID: **`com.gbline.gbexam`** (birinchi yuklashdan keyin o'zgarmaydi).
-- Play uchun `.aab` fayl **yopiq upload kalit** bilan imzolanadi. U repoda emas, faqat GitHub Secrets'da saqlanadi: `UPLOAD_KEYSTORE_BASE64`, `UPLOAD_KEYSTORE_PASSWORD`, `UPLOAD_KEY_ALIAS`, `UPLOAD_KEY_PASSWORD`. Secret qo'yilgach `v*` tegi yoki qo'lda ishga tushirish (Actions → Run workflow) `GB-Exam-*.aab` faylini yaratadi.
+- Play uchun `.aab` fayl **yopiq upload kalit** bilan imzolanadi. U repoda emas, faqat GitHub Secrets'da saqlanadi: `UPLOAD_KEYSTORE_BASE64`, `UPLOAD_KEYSTORE_PASSWORD`, `UPLOAD_KEY_ALIAS`, `UPLOAD_KEY_PASSWORD`. Secret qo'yilgach `v*` tegi yoki qo'lda ishga tushirish (Actions → Run workflow) `TryFixPass-*.aab` faylini yaratadi.
 - Kalit yaratish (bir marta, o'z kompyuteringizda): `keytool -genkeypair -v -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000`, so'ng `base64 -w0 upload.jks` natijasini `UPLOAD_KEYSTORE_BASE64` ga qo'ying. `upload.jks` va parolni xavfsiz joyda saqlang.
 - Play Console'da **Play App Signing** yoqiladi: Google asosiy kalitni o'zi saqlaydi, upload kalit yo'qolsa uni Google orqali almashtirish mumkin.
-- Eski boshqotirma o'yinlari (Logic Quest) GB Exam'dan olib tashlangan – ular MAT MATSTERFA ilovasiga ko'chiriladi (`src/pages/MOVED-GAMES.md`).
+- Eski boshqotirma o'yinlari (Logic Quest) TryFixPass'dan olib tashlangan – ular MAT MATSTERFA ilovasiga ko'chiriladi (`src/pages/MOVED-GAMES.md`).
 
 ## Savollar qayerdan keladi va nega doim to'g'ri
 

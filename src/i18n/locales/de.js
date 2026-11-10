@@ -1,6 +1,7 @@
 // Deutsch
 export default {
-  'app.name': 'GB Exam',
+  'app.name': 'TryFixPass',
+  'app.slogan': 'Probier. Verbessere. Besteh.',
   'app.tagline': 'Prüfungsvorbereitung für die Klassen 5 · 7 · 9',
   'app.taglineCz': 'Vorbereitung auf die Aufnahmeprüfung am Gymnasium',
 
@@ -458,7 +459,7 @@ export default {
   'league.myCode': 'Dein Code für Freunde',
   'league.share': 'Code senden',
   'league.shareDesc': 'Ein Freund fügt dich mit diesem Code hinzu.',
-  'league.shareMsg': 'Folge mir in GB Exam! Mein Code ist {code}.',
+  'league.shareMsg': 'Folge mir in TryFixPass! Mein Code ist {code}.',
   'league.codePh': 'Code eines Freundes',
   'league.follow': 'Folgen',
   'league.badCode': 'Der Code hat 6 Zeichen (Buchstaben und Zahlen).',
@@ -470,7 +471,7 @@ export default {
   'league.unfollow': 'Nicht mehr folgen',
   'league.tabLeague': 'Liga',
   'league.tabFriends': 'Freunde',
-  'league.friendInvite': 'Ein Freund lädt dich zu GB Exam ein',
+  'league.friendInvite': 'Ein Freund lädt dich zu TryFixPass ein',
   'league.friendInviteHint': 'Öffne die App und füge ihn mit diesem Code hinzu:',
   'league.homeRank': '{r}. Platz · {xp} XP diese Woche',
   'league.homeHint': 'Miss dich mit Kindern aus der ganzen Welt',

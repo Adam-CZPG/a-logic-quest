@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">GB Exam</string>
-    <string name="title_activity_main">GB Exam</string>
+    <string name="app_name">TryFixPass</string>
+    <string name="title_activity_main">TryFixPass</string>
     <string name="package_name">com.gbline.gbexam</string>
     <string name="custom_url_scheme">com.gbline.gbexam</string>
 </resources>

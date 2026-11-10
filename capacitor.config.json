@@ -1,6 +1,6 @@
 {
   "appId": "com.gbline.gbexam",
-  "appName": "GB Exam",
+  "appName": "TryFixPass",
   "webDir": "dist",
   "android": {
     "backgroundColor": "#f7f8fc"
@@ -9,7 +9,7 @@
     "SplashScreen": {
       "launchShowDuration": 600,
       "launchAutoHide": true,
-      "backgroundColor": "#1f3fbf",
+      "backgroundColor": "#1b2340",
       "showSpinner": false
     },
     "LocalNotifications": {

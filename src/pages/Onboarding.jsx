@@ -44,6 +44,7 @@ export default function Onboarding() {
                   <img src={logo} alt="" className="w-14 h-14 rounded-2xl shadow-md" />
                   {t('app.name')}
                 </h1>
+                <p className="mt-2 font-heading font-extrabold text-lg">{t('app.slogan')}</p>
                 <p className="mt-2 text-ink-soft text-lg">{t('ob.welcome')} {t('ob.pickLang')}</p>
                 <div className="mt-6 grid grid-cols-2 gap-2.5">
                   {LANGS.map((l) => (

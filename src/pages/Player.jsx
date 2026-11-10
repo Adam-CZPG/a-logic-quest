@@ -453,7 +453,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
         />
       )}
 
-      {/* GB Exam's own control row: sticker buttons on the notebook page */}
+      {/* TryFixPass's own control row: sticker buttons on the notebook page */}
       <footer className="fixed bottom-0 inset-x-0 z-30 bg-gradient-to-t from-paper via-paper/95 to-paper/0 pt-6" style={{ paddingBottom: 'var(--safe-bottom)' }}>
         <div className="max-w-3xl mx-auto px-3 pb-3 flex items-center gap-2">
           <button onClick={() => go(idx - 1)} disabled={idx === 0} aria-label={t('common.back')}
