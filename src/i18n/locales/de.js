@@ -116,6 +116,8 @@ export default {
   'res.keep': 'Weiter üben!',
   'res.time': 'Zeit',
   'res.correct': 'Richtig',
+  'res.firstTry': 'Beim 1. Versuch',
+  'res.fixedNote': 'Punkte zählen nur beim ersten Versuch – korrigierte Aufgaben ({n}) bringen keine Punkte.',
   'res.review': 'Antworten ansehen',
   'res.again': 'Nochmal',
   'res.home': 'Start',

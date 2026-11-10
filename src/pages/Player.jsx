@@ -252,7 +252,9 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
   // leaving a task hands its answer in, so the overview always shows right / wrong / skipped
   const [left, setLeft] = useState(() => saved?.left ?? qs.map(() => false));
   function leave() {
-    grade(idx);
+    // a task with several parts (ANO/NE rows, pairs) is only handed in once every part is filled:
+    // swiping away from a half-done task must not cost its first-try points
+    if (!partial(qs[idx], answers[idx])) grade(idx);
     if (!left[idx]) setLeft((l) => l.map((x, k) => (k === idx ? true : x)));
   }
   function go(n) {
@@ -562,10 +564,21 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
   );
 }
 
+// some parts of a multi-part task are still empty
+function partial(q, resp) {
+  if (q.type !== 'tf' && q.type !== 'match') return false;
+  return Array.isArray(resp) && resp.some((v) => v === null || v === undefined) && resp.some((v) => v !== null && v !== undefined);
+}
+
+// right on the first try (full points from the first check), not only after a fix
+const firstOk = (c, q) => !!c && !c.empty && (c.firstScore ?? 0) >= (q.points || 1);
+
 function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang, onRestart }) {
   const [review, setReview] = useState(false);
   const pct = result.score / maxPoints;
-  const correct = checks.filter((c) => c?.correct).length;
+  // the big number counts first tries only, so the counters below must count them the same way
+  const correct = checks.filter((c, i) => firstOk(c, qs[i])).length;
+  const fixedLater = checks.filter((c, i) => c?.correct && !firstOk(c, qs[i])).length;
   // wrong and skipped tasks of this attempt; a test / set reopens itself in fixing mode
   const wrong = checks.filter((c) => !c || c.empty || !c.correct).length;
   const loc = useLocation();
@@ -579,7 +592,7 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
   })();
   const mins = Math.round(result.ms / 60000);
   const verdict = pct >= 0.8 ? t('res.great') : pct >= 0.5 ? t('res.good') : t('res.keep');
-  const xp = result.fix ? 0 : checks.reduce((a, c, i) => a + (c?.correct && !c.late ? 10 * (qs[i].points || 1) : 0), 0) + (result.counted ? (set.kind === 'mock' ? 50 : set.kind === 'daily' ? 30 : 0) : 0);
+  const xp = result.fix ? 0 : checks.reduce((a, c, i) => a + (firstOk(c, qs[i]) ? 10 * (qs[i].points || 1) : 0), 0) + (result.counted ? (set.kind === 'mock' ? 50 : set.kind === 'daily' ? 30 : 0) : 0);
 
   // per-topic breakdown
   const byTopic = {};
@@ -603,10 +616,11 @@ function Results({ set, qs, labels, answers, checks, result, maxPoints, t, lang,
           </div>
           <h2 className="font-heading font-bold text-2xl mt-3"><span className="marker px-1">{verdict}</span></h2>
           <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-            <div><p className="text-ink-soft">{t('res.correct')}</p><p className="font-bold text-lg tabular">{correct}/{qs.length}</p></div>
+            <div><p className="text-ink-soft">{t('res.firstTry')}</p><p className="font-bold text-lg tabular">{correct}/{qs.length}</p></div>
             <div><p className="text-ink-soft">{t('res.time')}</p><p className="font-bold text-lg tabular">{mins} min</p></div>
             <div><p className="text-ink-soft">XP</p><p className="font-bold text-lg tabular text-ok">{t('res.xp', { xp })}</p></div>
           </div>
+          {fixedLater > 0 && !result.fix && <p className="mt-4 text-sm font-bold text-ink-soft">🛠️ {t('res.fixedNote', { n: fixedLater })}</p>}
           {set.kind === 'mock' && <p className="mt-4 text-sm text-ink-soft">{t('res.pass')}</p>}
         </section>
 
