@@ -15,7 +15,8 @@
     "android:open": "cap open android",
     "android:apk": "vite build && cap sync android && cd android && ./gradlew assembleDebug",
     "e2e": "playwright test",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "test:unit": "node --test scripts/scoring.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

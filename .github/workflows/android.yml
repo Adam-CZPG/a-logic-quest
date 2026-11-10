@@ -28,6 +28,12 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Lint (missing imports, unused code)
+        run: npm run lint
+
+      - name: Unit tests (scoring rules)
+        run: npm run test:unit
+
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
 

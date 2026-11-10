@@ -10,6 +10,7 @@ export default [
       "src/components/**/*.{js,mjs,cjs,jsx}",
       "src/pages/**/*.{js,mjs,cjs,jsx}",
       "src/App.jsx",
+      "src/exam/**/*.js",
     ],
     ignores: ["src/lib/**/*", "src/components/ui/**/*"],
     ...pluginJs.configs.recommended,
@@ -35,6 +36,9 @@ export default [
       "unused-imports": pluginUnusedImports,
     },
     rules: {
+      // a missing import must fail the build, not show a white screen to a child
+      "no-undef": "error",
+      "react/jsx-no-undef": "error",
       "no-unused-vars": "off",
       "react/jsx-uses-vars": "error",
       "react/jsx-uses-react": "error",
