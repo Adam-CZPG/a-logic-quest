@@ -21,11 +21,52 @@ function fresh() {
   };
 }
 
+// ---- keeping the child's results safe ------------------------------------------------------
+// Once a day the stored results are copied aside (SNAP_KEY). If the main record is ever
+// unreadable or missing, the copy is used instead of starting from zero.
+const SNAP_KEY = 'lq_stats_snap_v1';
+
+function parseStats(raw) {
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStored() {
+  let raw = null;
+  try {
+    raw = localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+  const main = parseStats(raw);
+  if (main) return main;
+  // main record damaged or gone: fall back to the last daily copy and put it back
+  let snap = null;
+  try {
+    snap = parseStats(JSON.parse(localStorage.getItem(SNAP_KEY) || 'null')?.raw);
+  } catch {}
+  if (snap) {
+    try {
+      if (raw) localStorage.setItem(`${KEY}_damaged`, raw);
+      localStorage.setItem(KEY, JSON.stringify(snap));
+    } catch {}
+  }
+  return snap;
+}
+
+// how much the child has done – never goes down except by "reset" in the settings
+const progressOf = (s) => (s?.solved || 0) + (s?.history?.length || 0) + (s?.xp || 0);
+
 export function getStats() {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return fresh();
-    const s = { ...fresh(), ...JSON.parse(raw) };
+    const stored = readStored();
+    if (!stored) return fresh();
+    const s = { ...fresh(), ...stored };
     if (!s.days || typeof s.days !== 'object') s.days = {};
     if (!s.tried || typeof s.tried !== 'object') s.tried = {};
     if (!s.rounds || typeof s.rounds !== 'object') s.rounds = {};
@@ -57,8 +98,20 @@ export function getStats() {
   }
 }
 
-function save(s) {
+function save(s, { reset = false } = {}) {
   try {
+    const prevRaw = localStorage.getItem(KEY);
+    const prev = parseStats(prevRaw);
+    // a save that would wipe existing results (a bug, a failed read) is refused – only "reset" may do that
+    if (!reset && prev && progressOf(prev) > 0 && progressOf(s) === 0) return;
+    if (prev && !reset) {
+      const day = dailyKey();
+      let snapDay = null;
+      try {
+        snapDay = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null')?.day;
+      } catch {}
+      if (snapDay !== day) localStorage.setItem(SNAP_KEY, JSON.stringify({ day, raw: prevRaw }));
+    }
     localStorage.setItem(KEY, JSON.stringify(s));
   } catch {}
   try {
@@ -67,7 +120,10 @@ function save(s) {
 }
 
 export function resetStats() {
-  save(fresh());
+  try {
+    localStorage.removeItem(SNAP_KEY);
+  } catch {}
+  save(fresh(), { reset: true });
 }
 
 export function levelFromXp(xp) {
