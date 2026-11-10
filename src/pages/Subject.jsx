@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw, X } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
@@ -68,7 +68,7 @@ export default function Subject() {
               <h1 className="font-heading font-extrabold text-xl leading-tight truncate">{t(`subject.${subject}`)}</h1>
               <p className="text-xs text-ink-soft">{t('grade.n', { g: grade })}{subjectLevel(subject, grade) && ` · ${t('level.en', { l: subjectLevel(subject, grade) })}`}</p>
             </div>
-            <button onClick={() => setHelp((h) => !h)} aria-expanded={help} aria-label={t('howTo.title')} className={cn('w-10 h-10 rounded-xl grid place-items-center', help ? 'bg-pen-soft text-pen' : 'hover:bg-pen-soft')}>
+            <button onClick={() => setHelp(true)} aria-expanded={help} aria-label={t('howTo.title')} className={cn('w-10 h-10 rounded-xl grid place-items-center', help ? 'bg-pen-soft text-pen' : 'hover:bg-pen-soft')}>
               <CircleHelp className="w-5 h-5" />
             </button>
           </div>
@@ -85,18 +85,6 @@ export default function Subject() {
       </header>
 
       <div className="max-w-3xl mx-auto px-3 pt-3 pb-10">
-        {help && (
-          <div className="sheet mb-3 p-3 text-sm grid sm:grid-cols-2 gap-3">
-            <div>
-              <h2 className="font-heading font-bold text-pen mb-1">{t('howTo.title')}</h2>
-              {['howTo.1', 'howTo.2'].map((k) => <p key={k} className="flex gap-1.5"><Check className="w-4 h-4 mt-0.5 text-pen shrink-0" />{t(k)}</p>)}
-            </div>
-            <div>
-              <h2 className="font-heading font-bold text-pen mb-1">{t('controls.title')}</h2>
-              {['controls.1', 'controls.2', 'controls.3', 'controls.4'].map((k) => <p key={k} className="flex gap-1.5"><Check className="w-4 h-4 mt-0.5 text-pen shrink-0" />{t(k)}</p>)}
-            </div>
-          </div>
-        )}
 
         {/* how much there is to practise in this subject and grade */}
         <section className="mb-3 grid grid-cols-2 gap-2">
@@ -232,6 +220,39 @@ export default function Subject() {
           <p className="mt-4 px-1 text-xs text-ink-soft">{t('sk.standard')}</p>
         )}
       </div>
+
+      {/* help: a sheet over the screen, so it is visible wherever the child has scrolled */}
+      <AnimatePresence>
+        {help && (
+          <motion.div className="fixed inset-0 z-40 bg-ink/40 grid place-items-end sm:place-items-center p-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setHelp(false)}>
+            <motion.div role="dialog" aria-modal="true" aria-label={t('howTo.title')} className="sheet w-full max-w-md p-4 max-h-[80vh] overflow-y-auto text-sm space-y-4" initial={{ y: 40 }} animate={{ y: 0 }} exit={{ y: 40 }} onClick={(e) => e.stopPropagation()} style={{ marginBottom: 'var(--safe-bottom)' }}>
+              <div className="flex items-center">
+                <h2 className="font-heading font-bold text-lg flex-1">{t('howTo.title')}</h2>
+                <button onClick={() => setHelp(false)} aria-label={t('common.close')} className="w-9 h-9 rounded-xl grid place-items-center hover:bg-pen-soft"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="space-y-1">
+                {['howTo.1', 'howTo.2'].map((k) => <p key={k} className="flex gap-1.5"><Check className="w-4 h-4 mt-0.5 text-pen shrink-0" />{t(k)}</p>)}
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-pen mb-1.5">{t('help.lg')}</h3>
+                <div className="space-y-2">
+                  <p className="flex items-center gap-2.5"><span className="w-8 h-9 shrink-0 rounded-md border-2 border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] text-[10px] font-extrabold grid place-items-center leading-none">43</span>{t('help.done')}</p>
+                  <p className="flex items-center gap-2.5"><span className="w-8 h-9 shrink-0 rounded-md border-2 border-[#1B2340] bg-marker/60 text-[#1B2340] text-xs font-extrabold grid place-items-center">↺</span>{t('help.going')}</p>
+                  <p className="flex items-center gap-2.5"><span className="w-8 h-9 shrink-0 rounded-md border-2 border-line bg-sheet grid place-items-end p-0.5"><span className="w-full rounded bg-redpen text-white text-[9px] font-extrabold text-center">✗ 2</span></span>{t('help.fix')}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                {['help.pts', 'help.half', 'help.round'].map((k) => <p key={k} className="flex gap-1.5"><Check className="w-4 h-4 mt-0.5 text-pen shrink-0" />{t(k)}</p>)}
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-pen mb-1">{t('controls.title')}</h3>
+                {['controls.1', 'controls.2', 'controls.3', 'controls.4'].map((k) => <p key={k} className="flex gap-1.5"><Check className="w-4 h-4 mt-0.5 text-pen shrink-0" />{t(k)}</p>)}
+              </div>
+              <button onClick={() => setHelp(false)} className="w-full h-11 rounded-2xl bg-pen text-on-pen font-bold">{t('common.close')}</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* mode picker */}
       <AnimatePresence>
