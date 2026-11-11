@@ -1,6 +1,10 @@
 export default {
   'app.name': 'TryFixPass',
   'app.slogan': 'Zkus. Oprav. Uspěj.',
+  'err.title': 'Něco se pokazilo',
+  'err.text': 'Tvoje výsledky jsou v bezpečí. Zkus to znovu.',
+  'err.retry': 'Zkusit znovu',
+  'err.home': 'Domů',
   'app.tagline': 'Příprava pro 5. · 7. · 9. ročník',
   'app.taglineCz': 'Příprava na přijímačky na gymnázium',
 

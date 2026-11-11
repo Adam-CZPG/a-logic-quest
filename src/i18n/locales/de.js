@@ -2,6 +2,10 @@
 export default {
   'app.name': 'TryFixPass',
   'app.slogan': 'Probier. Verbessere. Besteh.',
+  'err.title': 'Etwas ist schiefgelaufen',
+  'err.text': 'Deine Ergebnisse sind sicher. Versuch es noch einmal.',
+  'err.retry': 'Noch einmal',
+  'err.home': 'Start',
   'app.tagline': 'Prüfungsvorbereitung für die Klassen 5 · 7 · 9',
   'app.taglineCz': 'Vorbereitung auf die Aufnahmeprüfung am Gymnasium',
 
