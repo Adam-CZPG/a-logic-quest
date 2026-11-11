@@ -185,7 +185,7 @@ function Learn({ info, mistakes, t }) {
               <Link key={r.tp} to={topicLink(sub, r.tp)} className="flex items-center gap-2.5 rounded-xl border border-line px-2.5 py-2 hover:border-pen">
                 <span className="w-6 text-center" aria-hidden="true">{TOPIC_EMOJI[r.tp]}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-bold leading-tight truncate">{t(`topic.${r.tp}`)}</span>
+                  <span className="block text-sm font-bold leading-tight break-words">{t(`topic.${r.tp}`)}</span>
                   <span className="mt-1 flex items-center gap-2">
                     <span className="flex-1"><Bar value={r.acc} className={r.acc >= 0.4 ? 'bg-marker' : 'bg-redpen'} /></span>
                     <span className="text-[11px] tabular font-bold text-redpen">{Math.round(r.acc * 100)}%</span>
@@ -289,7 +289,7 @@ export default function Stats() {
               {topicRows.filter((r) => r.sub === sub).map(({ tp, acc }) => (
                 <div key={tp} className="flex items-center gap-2 text-sm">
                   <span className="w-6 text-center">{TOPIC_EMOJI[tp]}</span>
-                  <span className="flex-1 truncate">{t(`topic.${tp}`)}</span>
+                  <span className="flex-1 min-w-0 leading-tight break-words">{t(`topic.${tp}`)}</span>
                   <span className="w-20 h-2 rounded-full bg-line overflow-hidden">
                     <span className={cn('block h-full', acc === null ? '' : acc >= 0.7 ? 'bg-ok' : acc >= 0.4 ? 'bg-marker' : 'bg-redpen')} style={{ width: `${(acc ?? 0) * 100}%` }} />
                   </span>

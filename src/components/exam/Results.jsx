@@ -96,7 +96,7 @@ export default function Results({ set, qs, labels, answers, checks, result, maxP
             {Object.entries(byTopic).map(([topic, v]) => (
               <div key={topic}>
                 <div className="flex justify-between text-sm gap-3">
-                  <span className="truncate">{TOPIC_EMOJI[topic] || '•'} {t(`topic.${topic}`)}</span>
+                  <span className="min-w-0 break-words">{TOPIC_EMOJI[topic] || '•'} {t(`topic.${topic}`)}</span>
                   <span className="tabular font-bold shrink-0">{v.got}/{v.max}</span>
                 </div>
                 <div className="h-2 rounded-full bg-line mt-1 overflow-hidden">

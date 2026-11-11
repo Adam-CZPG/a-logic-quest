@@ -65,7 +65,7 @@ export default function Subject() {
             </Link>
             <span className="text-2xl" aria-hidden="true">{SUBJECTS[subject].emoji}</span>
             <div className="flex-1 min-w-0">
-              <h1 className="font-heading font-extrabold text-xl leading-tight truncate">{t(`subject.${subject}`)}</h1>
+              <h1 className="font-heading font-extrabold text-xl leading-tight break-words">{t(`subject.${subject}`)}</h1>
               <p className="text-xs text-ink-soft">{t('grade.n', { g: grade })}{subjectLevel(subject, grade) && ` · ${t('level.en', { l: subjectLevel(subject, grade) })}`}</p>
             </div>
             <button onClick={() => setHelp(true)} aria-expanded={help} aria-label={t('howTo.title')} className={cn('w-10 h-10 rounded-xl grid place-items-center', help ? 'bg-pen-soft text-pen' : 'hover:bg-pen-soft')}>

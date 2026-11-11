@@ -6,11 +6,20 @@ const SOFT = 'hsl(var(--ink-soft))';
 const LINE = 'hsl(var(--line))';
 const FILL = 'hsl(var(--pen) / 0.14)';
 
+// Room a label needs, so the drawing area always grows with its text and nothing is cut off
+// (wide digits and long units included). Checked for every generated figure in e2e/figures.spec.js.
+const textW = (label, size = 13) => String(label).length * size * 0.62 + 6;
+const withUnit = (n, unit) => (unit ? `${n} ${unit}` : String(n));
+
 function Bars({ labels, values }) {
   const max = Math.max(...values);
-  const step = max <= 12 ? 1 : max <= 30 ? 5 : 10;
+  // at most ~6 grid lines, whatever the size of the numbers
+  let step = max <= 12 ? 1 : max <= 30 ? 5 : 10;
+  for (const m of [2, 2.5, 2]) { if (max / step > 6) step *= m; }
+  while (max / step > 6) step *= 10;
   const top = Math.ceil(max / step) * step;
-  const W = 340, H = 210, L = 34, B = 34, T = 12;
+  const W = 340, H = 210, B = 34, T = 12;
+  const L = Math.max(34, textW(top, 11) + 8);
   const bw = (W - L - 10) / labels.length;
   const y = (v) => T + (H - T - B) * (1 - v / top);
   const ticks = [];
@@ -53,11 +62,15 @@ function Table({ headers, rows }) {
 function Rect({ a, b, unit }) {
   const s = 200 / Math.max(a, b);
   const w = a * s, h = b * s;
+  const la = withUnit(a, unit), lb = withUnit(b, unit);
+  // a narrow shape still needs room for the label under it
+  const x0 = Math.max(30, (textW(la) - w) / 2 + 6);
+  const W = Math.max(x0 + w + 8 + textW(lb), x0 + w / 2 + textW(la) / 2 + 4);
   return (
-    <svg viewBox={`0 0 ${w + 60} ${h + 50}`} className="w-full max-w-[260px]">
-      <rect x="30" y="15" width={w} height={h} fill={FILL} stroke={PEN} strokeWidth="2.5" />
-      <text x={30 + w / 2} y={h + 38} textAnchor="middle" fontSize="13" fill={INK}>{a} {unit}</text>
-      <text x={w + 38} y={15 + h / 2} fontSize="13" fill={INK}>{b} {unit}</text>
+    <svg viewBox={`0 0 ${W} ${h + 50}`} className="w-full max-w-[260px]">
+      <rect x={x0} y="15" width={w} height={h} fill={FILL} stroke={PEN} strokeWidth="2.5" />
+      <text x={x0 + w / 2} y={h + 38} textAnchor="middle" fontSize="13" fill={INK}>{la}</text>
+      <text x={x0 + w + 8} y={15 + h / 2 + 4} fontSize="13" fill={INK}>{lb}</text>
     </svg>
   );
 }
@@ -65,14 +78,17 @@ function Rect({ a, b, unit }) {
 function LShape({ a, b, c, unit }) {
   const s = 200 / Math.max(a, b);
   const W = a * s, H = b * s, C = c * s;
-  const p = `30,15 ${30 + W - C},15 ${30 + W - C},${15 + C} ${30 + W},${15 + C} ${30 + W},${15 + H} 30,${15 + H}`;
+  const la = withUnit(a, unit), lb = withUnit(b, unit);
+  const x0 = Math.max(30, (textW(la) - W) / 2 + 6);
+  const VW = Math.max(x0 + W + 8 + textW(lb), x0 + W / 2 + textW(la) / 2 + 4);
+  const p = `${x0},15 ${x0 + W - C},15 ${x0 + W - C},${15 + C} ${x0 + W},${15 + C} ${x0 + W},${15 + H} ${x0},${15 + H}`;
   return (
-    <svg viewBox={`0 0 ${W + 70} ${H + 50}`} className="w-full max-w-[280px]">
-      <rect x={30 + W - C} y="15" width={C} height={C} fill="none" stroke={SOFT} strokeDasharray="4 4" />
+    <svg viewBox={`0 0 ${VW} ${H + 50}`} className="w-full max-w-[280px]">
+      <rect x={x0 + W - C} y="15" width={C} height={C} fill="none" stroke={SOFT} strokeDasharray="4 4" />
       <polygon points={p} fill={FILL} stroke={PEN} strokeWidth="2.5" />
-      <text x={30 + W / 2} y={H + 38} textAnchor="middle" fontSize="13" fill={INK}>{a} {unit}</text>
-      <text x={W + 38} y={15 + (H + C) / 2} fontSize="13" fill={INK}>{b} {unit}</text>
-      <text x={30 + W - C / 2} y={15 + C / 2 + 4} textAnchor="middle" fontSize="12" fill={SOFT}>{c}</text>
+      <text x={x0 + W / 2} y={H + 38} textAnchor="middle" fontSize="13" fill={INK}>{la}</text>
+      <text x={x0 + W + 8} y={15 + (H + C) / 2 + 4} fontSize="13" fill={INK}>{lb}</text>
+      <text x={x0 + W - C / 2} y={15 + C / 2 + 4} textAnchor="middle" fontSize="12" fill={SOFT}>{c}</text>
     </svg>
   );
 }
@@ -80,17 +96,20 @@ function LShape({ a, b, c, unit }) {
 function Cuboid({ a, b, c, unit }) {
   const s = 150 / Math.max(a, b + c * 0.5, c);
   const w = a * s, h = c * s, d = b * s * 0.5;
-  const x0 = 25, y0 = 15 + d;
+  const la = withUnit(a, unit), lb = withUnit(b, unit);
+  const x0 = Math.max(25, textW(c) + 10, (textW(la) - w) / 2 + 6), y0 = 15 + d;
+  const bx = x0 + w + d / 2 + 8;
+  const VW = Math.max(x0 + w + d + 12, bx + textW(lb), x0 + w / 2 + textW(la) / 2 + 4);
   const front = `${x0},${y0} ${x0 + w},${y0} ${x0 + w},${y0 + h} ${x0},${y0 + h}`;
   const topF = `${x0},${y0} ${x0 + d},${y0 - d} ${x0 + w + d},${y0 - d} ${x0 + w},${y0}`;
   const side = `${x0 + w},${y0} ${x0 + w + d},${y0 - d} ${x0 + w + d},${y0 + h - d} ${x0 + w},${y0 + h}`;
   return (
-    <svg viewBox={`0 0 ${w + d + 70} ${h + d + 45}`} className="w-full max-w-[260px]">
+    <svg viewBox={`0 0 ${VW} ${h + d + 45}`} className="w-full max-w-[260px]">
       <polygon points={topF} fill="hsl(var(--pen) / 0.22)" stroke={PEN} strokeWidth="2" />
       <polygon points={side} fill="hsl(var(--pen) / 0.08)" stroke={PEN} strokeWidth="2" />
       <polygon points={front} fill={FILL} stroke={PEN} strokeWidth="2" />
-      <text x={x0 + w / 2} y={y0 + h + 20} textAnchor="middle" fontSize="13" fill={INK}>{a}{unit ? ` ${unit}` : ''}</text>
-      <text x={x0 + w + d / 2 + 8} y={y0 + h - d / 2 + 14} fontSize="13" fill={INK}>{b}{unit ? ` ${unit}` : ''}</text>
+      <text x={x0 + w / 2} y={y0 + h + 20} textAnchor="middle" fontSize="13" fill={INK}>{la}</text>
+      <text x={bx} y={y0 + h - d / 2 + 14} fontSize="13" fill={INK}>{lb}</text>
       <text x={x0 - 6} y={y0 + h / 2} textAnchor="end" fontSize="13" fill={INK}>{c}</text>
     </svg>
   );
@@ -112,7 +131,7 @@ function Grid({ size, cells, axis, small }) {
       })}
       <rect x="1" y="1" width={size * s} height={size * s} fill="none" stroke={SOFT} strokeWidth="1.5" />
       {axis === 'vertical' && (
-        <line x1={W / 2} x2={W / 2} y1="-4" y2={W + 4} stroke="hsl(var(--redpen))" strokeWidth="2.5" strokeDasharray="6 5" />
+        <line x1={W / 2} x2={W / 2} y1="0" y2={W} stroke="hsl(var(--redpen))" strokeWidth="2.5" strokeDasharray="6 5" />
       )}
       {axis === 'point' && <circle cx={W / 2} cy={W / 2} r={small ? 3 : 5} fill="hsl(var(--redpen))" />}
     </svg>
