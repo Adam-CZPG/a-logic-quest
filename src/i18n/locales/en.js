@@ -2,6 +2,10 @@
 export default {
   'app.name': 'TryFixPass',
   'app.slogan': 'Try. Fix. Pass.',
+  'err.title': 'Something went wrong',
+  'err.text': 'Your results are safe. Please try again.',
+  'err.retry': 'Try again',
+  'err.home': 'Home',
   'app.tagline': 'Exam prep for grades 5 · 7 · 9',
   'app.taglineCz': 'Gymnasium entrance exam prep',
 

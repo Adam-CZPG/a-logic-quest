@@ -1,20 +1,32 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { HashRouter as Router, Route, Routes, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import PageNotFound from './lib/PageNotFound';
 import ScrollToTop from './components/ScrollToTop';
 import { SettingsProvider, useSettings } from '@/lib/settings';
 import { onHardwareBack, exitApp, setupNativeChrome, syncReminder, onAppUrl } from '@/lib/native';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Onboarding from '@/pages/Onboarding';
 import Home from '@/pages/Home';
-import Subject from '@/pages/Subject';
-import Player from '@/pages/Player';
-import Stats from '@/pages/Stats';
-import Settings from '@/pages/Settings';
-import { DuelHub, DuelView, DuelOpen, WebHome, WEB_ONLY } from '@/pages/Duel';
-import League, { FollowOpen } from '@/pages/League';
-import Friends from '@/pages/Friends';
-import { ClassesHome, ClassView, CheersInbox } from '@/pages/Classes';
+
+// The first screen loads at once; every other screen is fetched when the child opens it.
+const page = (load, name) => lazy(() => load().then((m) => ({ default: name ? m[name] : m.default })));
+const Subject = page(() => import('@/pages/Subject'));
+const Player = page(() => import('@/pages/Player'));
+const Stats = page(() => import('@/pages/Stats'));
+const Settings = page(() => import('@/pages/Settings'));
+const Friends = page(() => import('@/pages/Friends'));
+const League = page(() => import('@/pages/League'));
+const FollowOpen = page(() => import('@/pages/League'), 'FollowOpen');
+const DuelHub = page(() => import('@/pages/Duel'), 'DuelHub');
+const DuelView = page(() => import('@/pages/Duel'), 'DuelView');
+const DuelOpen = page(() => import('@/pages/Duel'), 'DuelOpen');
+const WebHome = page(() => import('@/pages/Duel'), 'WebHome');
+const ClassesHome = page(() => import('@/pages/Classes'), 'ClassesHome');
+const ClassView = page(() => import('@/pages/Classes'), 'ClassView');
+const CheersInbox = page(() => import('@/pages/Classes'), 'CheersInbox');
+
+// the public web page (duel links) only runs duels – same flag as in pages/Duel
+const WEB_ONLY = import.meta.env.VITE_WEB_DUEL === '1';
 
 function NativeBridge() {
   const location = useLocation();
@@ -53,6 +65,16 @@ function NativeBridge() {
   return null;
 }
 
+// errors on one screen do not take the whole app down; opening another screen clears them
+function Screens({ children }) {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary resetKey={pathname}>
+      <Suspense fallback={<div className="min-h-screen bg-paper" aria-busy="true" />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
+
 function Guard({ children }) {
   const { settings } = useSettings();
   if (!settings.onboarded) return <Navigate to="/welcome" replace />;
@@ -65,6 +87,7 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <NativeBridge />
+        <Screens>
         {WEB_ONLY ? (
           // the public web page (duel links) only runs duels; everything else is in the app
           <Routes>
@@ -95,9 +118,10 @@ export default function App() {
             <Route path="/settings" element={<Guard><Settings /></Guard>} />
             {/* the old puzzle games (Logic Quest) move to the MAT MATSTERFA app; old links land on Home */}
             {['/games', '/game/:level', '/logic', '/achievements'].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
-            <Route path="*" element={<PageNotFound />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
+        </Screens>
         <Toaster />
       </Router>
     </SettingsProvider>

@@ -126,3 +126,14 @@ test('the ? help opens on top of the screen even when the list is scrolled', asy
   await help.getByRole('button', { name: 'Zavřít' }).last().click();
   await expect(help).toBeHidden();
 });
+
+test('a screen that fails to load shows a calm message and recovers, results untouched', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('lq_stats_v1', JSON.stringify({ xp: 777, solved: 5, correct: 4 })));
+  await page.route('**/src/pages/Stats.jsx*', (r) => r.abort());
+  await page.goto('/#/stats');
+  await expect(page.getByRole('alert')).toContainText('Tvoje výsledky jsou v bezpečí');
+  await page.unroute('**/src/pages/Stats.jsx*');
+  await page.getByRole('button', { name: 'Zkusit znovu' }).click();
+  await expect(page.getByRole('heading', { name: 'Statistiky' })).toBeVisible();
+  expect((await stats(page)).xp).toBe(777);
+});

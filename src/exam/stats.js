@@ -1,6 +1,6 @@
 // Learning progress: XP, streak, per-topic accuracy, test history, mistakes, badges.
 // Stored locally (works offline in the APK).
-import { dailyKey } from './engine';
+import { dailyKey } from './dates';
 import { topicsFor, subjectsFor, MOCK_COUNT, TOPIC_VARIANTS } from './taxonomy';
 
 const KEY = 'lq_stats_v1';

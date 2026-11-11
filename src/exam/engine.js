@@ -8,6 +8,10 @@ import { slovakGeneratorsFor, readingGroups as slovakReading } from './generator
 import { SUBJECTS, topicsFor, subjectsFor, contentGrade, englishLevel, blueprintFor, READING_TOPIC } from './taxonomy';
 import { translate, currencyFor } from '@/i18n';
 import { fmt } from './checker';
+import { dailyKey, DUEL_SIZE } from './dates';
+
+// small helpers live in ./dates so the first screen does not have to load the task generators
+export { dailyKey, DUEL_SIZE };
 
 export function makeCtx({ lang, grade, curriculum }) {
   return {
@@ -135,11 +139,6 @@ export function buildMockTest({ subject, grade, number, lang, curriculum, cycle 
 }
 
 // ---------------------------------------------------------------- daily plan: 3 tasks from each subject
-export function dailyKey(date = new Date()) {
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
 export function buildDailyPlan({ grade, lang, curriculum, weakTopics = {}, date = new Date(), perSubject = 3 }) {
   const day = dailyKey(date);
   const r = makeRng(`daily:${day}:${grade}:${curriculum}`);
@@ -166,7 +165,6 @@ export function buildDailyPlan({ grade, lang, curriculum, weakTopics = {}, date 
 // ---------------------------------------------------------------- duel
 // 10 short tasks of one subject. The same seed + subject + grade + country give exactly the same
 // tasks on every phone (in every interface language), so two children can compete without a server.
-export const DUEL_SIZE = 10;
 export function buildDuelSet({ subject, grade, curriculum, lang, seed }) {
   const r = makeRng(`duel:${subject}:${grade}:${curriculum}:${seed}`);
   const ctx = { ...makeCtx({ lang, grade, curriculum }), seenKeys: new Set() };

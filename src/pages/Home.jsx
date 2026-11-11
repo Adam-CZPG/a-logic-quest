@@ -4,7 +4,7 @@ import { Flame, ChevronRight, CalendarCheck, RotateCcw, Check, Target } from 'lu
 import AppShell from '@/components/AppShell';
 import { useSettings } from '@/lib/settings';
 import { getStats, levelFromXp, currentStreak, topicAccuracy } from '@/exam/stats';
-import { dailyKey } from '@/exam/engine';
+import { dailyKey } from '@/exam/dates';
 import { CURRICULA, subjectsFor, SUBJECTS, topicsFor, subjectLevel, deInfo } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';

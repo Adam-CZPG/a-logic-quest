@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import { ArrowLeft, Swords, Send, Download, Smartphone } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { CURRICULA, subjectsFor, SUBJECTS } from '@/exam/taxonomy';
-import { DUEL_SIZE } from '@/exam/engine';
+import { DUEL_SIZE } from '@/exam/dates';
 import {
   AVATARS, listDuels, getDuel, saveDuel, newDuel, decodeDuel, duelLink, outcome, record, setPendingDuel, takePendingDuel, fmtTime, encodeDuel,
 } from '@/lib/duel';

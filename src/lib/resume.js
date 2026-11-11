@@ -1,7 +1,7 @@
 // Unfinished tests are kept on the device, so a child can stop in the middle and continue later
 // exactly where they left off (answers, checks, current task, time used).
 import { hashString } from '@/exam/rng';
-import { dailyKey } from '@/exam/engine';
+import { dailyKey } from '@/exam/dates';
 
 const KEY = 'lq_resume_v1';
 const MAX = 20;
