@@ -121,7 +121,7 @@ export default function Home() {
         </span>
         <div className="flex-1 min-w-0">
           <h2 className="font-heading font-bold leading-tight">{t('home.daily')}</h2>
-          <p className={cn('text-sm leading-snug truncate', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : dailyLeft ? `↺ ${t('resume.daily', { a: dailyLeft.answered, b: dailyLeft.meta.total })}` : t('home.dailyDesc')}</p>
+          <p className={cn('text-sm leading-snug line-clamp-2', doneToday ? 'text-ink-soft' : 'text-on-pen/80')}>{doneToday ? t('home.dailyDone') : dailyLeft ? `↺ ${t('resume.daily', { a: dailyLeft.answered, b: dailyLeft.meta.total })}` : t('home.dailyDesc')}</p>
           <div className="mt-1.5 flex gap-1">
             {subjects.flatMap((sub, si) => [0, 1, 2].map((i) => (
               <span key={`${sub}${i}`} className={cn('h-1.5 flex-1 rounded-full', doneToday || (dailyLeft && si * 3 + i < dailyLeft.answered) ? 'bg-ok' : 'bg-on-pen/30')} />
@@ -145,7 +145,7 @@ export default function Home() {
           <Link key={sub} to={`/subject/${sub}`} className="sheet p-3 hover:border-pen transition-colors">
             <div className="flex items-center gap-2">
               <span className="w-9 h-9 rounded-xl bg-pen-soft grid place-items-center text-xl shrink-0" aria-hidden="true">{SUBJECTS[sub].emoji}</span>
-              <h3 className="font-heading font-bold text-[15px] leading-tight flex-1 min-w-0 line-clamp-2 break-words">
+              <h3 className="font-heading font-bold text-[15px] leading-tight flex-1 min-w-0 break-words hyphens-auto">
                 {t(`subject.${sub}`)}
                 {CURRICULA[curriculum]?.optional?.includes(sub) && <span className="ms-1 inline-block align-middle whitespace-nowrap text-[10px] font-bold rounded-md bg-line text-ink-soft px-1.5 py-0.5">{t('home.optional')}</span>}
                 {subjectLevel(sub, grade) && <span className="ms-1 align-middle text-[11px] font-bold rounded-md bg-pen-soft text-pen px-1.5 py-0.5">{subjectLevel(sub, grade)}</span>}

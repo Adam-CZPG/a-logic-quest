@@ -60,7 +60,7 @@ export default function AppShell({ header, children }) {
                       <Icon className="w-[18px] h-[18px]" strokeWidth={isActive || extra ? 2.5 : 2} />
                       {dot && turns > 0 && <span className="absolute -top-0.5 end-1.5 w-2.5 h-2.5 rounded-full bg-redpen border-2 border-sheet" aria-label={t('duel.turns', { n: turns })} />}
                     </span>
-                    <span className="max-w-full truncate px-0.5">{t(key)}</span>
+                    <span className={cn('max-w-full px-0.5 text-center leading-tight whitespace-nowrap', String(t(key)).length > 10 && 'text-[10px] tracking-tight')}>{t(key)}</span>
                   </>
                 )}
               </NavLink>
@@ -76,7 +76,7 @@ export default function AppShell({ header, children }) {
 export function PageTitle({ children, right }) {
   return (
     <div className="flex items-center gap-2 h-10">
-      <h1 className="font-heading font-extrabold text-2xl leading-none flex-1 truncate">{children}</h1>
+      <h1 className="font-heading font-extrabold text-2xl leading-tight flex-1 min-w-0 break-words">{children}</h1>
       {right}
     </div>
   );

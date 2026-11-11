@@ -434,13 +434,13 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
           {check?.correct && !check.stale && idx < qs.length - 1 ? (
             // after a right answer the big button moves on
             <button onClick={() => go(idx + 1)}
-              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] font-heading font-extrabold text-[17px] flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
-              {t('p.next')}<ArrowRight className="w-5 h-5 rtl:rotate-180" />
+              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] font-heading font-extrabold text-[clamp(13px,4.4vw,17px)] leading-[1.05] text-center px-1.5 min-w-0 flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">
+              {t('p.next')}<ArrowRight className="w-5 h-5 shrink-0 rtl:rotate-180 max-[359px]:hidden" />
             </button>
           ) : (
             <button onClick={doCheck} disabled={!canCheck}
-              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-marker text-[#1B2340] font-heading font-extrabold text-[17px] flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-45 disabled:shadow-none">
-              <CheckCheck className="w-5 h-5" />{t('p.check')}
+              className="flex-1 h-12 rounded-2xl border-[3px] border-[#1B2340] bg-marker text-[#1B2340] font-heading font-extrabold text-[clamp(13px,4.4vw,17px)] leading-[1.05] text-center px-1.5 min-w-0 flex items-center justify-center gap-2 shadow-[3px_3px_0_0_rgba(27,35,64,0.85)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-45 disabled:shadow-none">
+              <CheckCheck className="w-5 h-5 shrink-0 max-[359px]:hidden" />{t('p.check')}
             </button>
           )}
           {idx < qs.length - 1 ? (
