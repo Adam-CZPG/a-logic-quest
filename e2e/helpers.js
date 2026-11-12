@@ -4,13 +4,15 @@ import { expect } from '@playwright/test';
 export const GRADE = 5;
 
 // fresh device with a finished onboarding (Czech, grade 5); runs once per page, before the app loads
-export async function freshChild(page, extra = {}) {
-  await page.addInitScript((settings) => {
+// full version on by default (the tests open paid tests); { free: true } = the free version
+export async function freshChild(page, { free = false, ...extra } = {}) {
+  await page.addInitScript(({ settings, free }) => {
     if (sessionStorage.getItem('e2e-init')) return;
     sessionStorage.setItem('e2e-init', '1');
     localStorage.clear();
     localStorage.setItem('lq_settings_v1', JSON.stringify(settings));
-  }, { lang: 'cs', onboarded: true, name: 'Test', curriculum: 'cz', grade: GRADE, startedAt: Date.now(), ...extra });
+    if (!free) localStorage.setItem('lq_premium_v1', JSON.stringify({ on: true, at: Date.now() }));
+  }, { settings: { lang: 'cs', onboarded: true, name: 'Test', curriculum: 'cz', grade: GRADE, startedAt: Date.now(), ...extra }, free });
 }
 
 export async function stats(page) {

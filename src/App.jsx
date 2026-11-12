@@ -5,6 +5,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { SettingsProvider, useSettings } from '@/lib/settings';
 import { onHardwareBack, exitApp, setupNativeChrome, syncReminder, onAppUrl } from '@/lib/native';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { refreshPremium } from '@/lib/premium';
 import Onboarding from '@/pages/Onboarding';
 import Home from '@/pages/Home';
 
@@ -32,6 +33,11 @@ function NativeBridge() {
   const location = useLocation();
   const navigate = useNavigate();
   const { settings, t } = useSettings();
+
+  // full version: ask Google Play once per start (also unlocks a payment that finished later)
+  useEffect(() => {
+    refreshPremium();
+  }, []);
 
   useEffect(() => {
     setupNativeChrome(document.documentElement.classList.contains('dark'));

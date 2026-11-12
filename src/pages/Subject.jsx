@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw, X, Lock } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
 import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 import { leftToFix } from '@/lib/lastrun';
+import { usePremium, isFree } from '@/lib/premium';
+import PaywallSheet from '@/components/PaywallSheet';
 
 const LEVEL_EMOJI = ['🌱', '🚲', '🚀', '🏔️'];
 
@@ -20,6 +22,9 @@ export default function Subject() {
   const [help, setHelp] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [, bump] = useState(0);
+  const [paywall, setPaywall] = useState(false);
+  const premium = usePremium();
+  const locked = (kind, opts) => !premium && !isFree(kind, opts);
   const { grade, curriculum } = settings;
   const isCz = curriculum === 'cz';
   const tab = params.get('tab') === 'topics' ? 'topics' : 'tests';
@@ -130,6 +135,7 @@ export default function Subject() {
         {tab === 'tests' && (
           <>
             <p className="text-xs text-ink-soft mb-2 px-1">{t('tests.info', { n: nTasks, min: minutes })}</p>
+            {!premium && <UnlockBar t={t} onClick={() => setPaywall(true)} />}
             <div className="space-y-3">
               {Array.from({ length: MOCK_LEVELS }, (_, l) => l).map((l) => {
                 const nums = Array.from({ length: MOCK_PER_LEVEL }, (_, i) => l * MOCK_PER_LEVEL + i + 1);
@@ -147,9 +153,10 @@ export default function Subject() {
                         const best = round.items[`t:${n}`];
                         const done = best !== undefined;
                         const going = !done && runsFor('mock', n).length > 0;
+                        const lock = locked('mock', { number: n });
                         return (
-                          <button key={n} aria-label={t('tests.variant', { n })}
-                            onClick={() => setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n), fix: fixFor('mock', n) })}
+                          <button key={n} aria-label={t('tests.variant', { n })} title={lock ? t('pay.locked') : undefined}
+                            onClick={() => lock ? setPaywall(true) : setPick({ href: `/play/mock?subject=${subject}&n=${n}`, title: t('tests.variant', { n }), timed: true, runs: runsFor('mock', n), fix: fixFor('mock', n) })}
                             className={cn('relative aspect-[4/5] rounded-lg border-2 flex flex-col items-center justify-center leading-none tabular overflow-hidden transition-transform active:scale-95',
                               done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
                                 : going ? 'border-[#1B2340] bg-marker/60 text-[#1B2340] shadow-[2px_2px_0_0_rgba(27,35,64,0.85)]'
@@ -157,7 +164,7 @@ export default function Subject() {
                             {/* folded corner = a sheet of paper */}
                             <span className={cn('absolute top-0 end-0 w-3 h-3 rounded-bl-md', done || going ? 'bg-[#1B2340]/20' : 'bg-line')} aria-hidden="true" />
                             <span className="font-heading font-extrabold text-lg">{n}</span>
-                            <span className="mt-1 text-[10px] font-bold">{done ? `${best}/50` : going ? '↺' : <span className="opacity-0">·</span>}</span>
+                            <span className="mt-1 text-[10px] font-bold">{done ? `${best}/50` : lock ? <Lock className="w-3 h-3 text-ink-soft" aria-hidden="true" /> : going ? '↺' : <span className="opacity-0">·</span>}</span>
                             {fixFor('mock', n) > 0 && (
                               <span className="absolute bottom-1 inset-x-1 rounded-md bg-redpen text-white text-[10px] font-extrabold py-0.5" aria-label={t('mode.fix', { n: fixFor('mock', n) })}>✗ {fixFor('mock', n)}</span>
                             )}
@@ -173,6 +180,7 @@ export default function Subject() {
           </>
         )}
 
+        {tab === 'topics' && !premium && <UnlockBar t={t} onClick={() => setPaywall(true)} />}
         {tab === 'topics' && (
           <ul className="space-y-2">
             {topics.map((topic) => {
@@ -196,12 +204,14 @@ export default function Subject() {
                     {variants.map((v) => {
                       const done = round.items[`v:${topic}:${v}`] !== undefined;
                       const going = !done && runsFor('topic', topic, v).length > 0;
+                      const lock = locked('topic', { variant: v });
                       return (
-                        <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })}
-                          onClick={() => setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v), fix: fixFor('topic', topic, v) })}
+                        <button key={v} aria-label={t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v })} title={lock ? t('pay.locked') : undefined}
+                          onClick={() => lock ? setPaywall(true) : setPick({ href: `/play/topic?subject=${subject}&topic=${topic}&v=${v}`, title: t('topics.variantTitle', { topic: t(`topic.${topic}`), n: v }), timed: false, runs: runsFor('topic', topic, v), fix: fixFor('topic', topic, v) })}
                           className={cn('relative w-10 h-10 rounded-full border-2 font-heading font-extrabold text-sm tabular grid place-items-center transition-transform active:scale-90',
                             done ? 'border-[#1B2340] bg-[#BDF0CF] text-[#1B2340]' : going ? 'border-[#1B2340] bg-marker text-[#1B2340]' : 'border-line bg-sheet hover:border-pen')}>
                           {done ? <Check className="w-4 h-4" /> : v}
+                          {lock && !done && <span className="absolute -bottom-1 -end-1 w-4 h-4 rounded-full bg-sheet border border-line grid place-items-center" aria-hidden="true"><Lock className="w-2.5 h-2.5 text-ink-soft" /></span>}
                           {fixFor('topic', topic, v) > 0 && <span className="absolute -top-1.5 -end-1.5 min-w-4 h-4 px-0.5 rounded-full bg-redpen text-white text-[9px] font-extrabold grid place-items-center">{fixFor('topic', topic, v)}</span>}
                         </button>
                       );
@@ -290,6 +300,21 @@ export default function Subject() {
           </motion.div>
         )}
       </AnimatePresence>
+      <PaywallSheet open={paywall} onClose={() => setPaywall(false)} />
     </div>
+  );
+}
+
+// free version: a slim bar above the tiles that opens the full-version sheet
+function UnlockBar({ t, onClick }) {
+  return (
+    <button onClick={onClick} className="w-full mb-3 flex items-center gap-3 rounded-2xl border-2 border-[#1B2340] bg-marker/50 text-[#1B2340] px-3 py-2.5 text-start shadow-[2px_2px_0_0_rgba(27,35,64,0.85)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+      <Lock className="w-5 h-5 shrink-0" />
+      <span className="flex-1 min-w-0">
+        <span className="block font-bold leading-tight">{t('pay.bar')}</span>
+        <span className="block text-xs leading-snug opacity-80">{t('pay.barHint')}</span>
+      </span>
+      <span className="font-heading font-extrabold text-sm shrink-0">{t('pay.unlock')} →</span>
+    </button>
   );
 }

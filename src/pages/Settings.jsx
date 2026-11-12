@@ -8,9 +8,11 @@ import { resetStats } from '@/exam/stats';
 import { isSoundOn, toggleSound } from '@/lib/sfx';
 import { syncReminder, isNative } from '@/lib/native';
 import { cn } from '@/lib/utils';
+import { usePremium, restorePremium } from '@/lib/premium';
+import PaywallSheet from '@/components/PaywallSheet';
 import {
   Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
-  Volume2, Bell, RotateCcw, Info, BookOpen,
+  Volume2, Bell, RotateCcw, Info, BookOpen, Crown, RefreshCw,
 } from 'lucide-react';
 
 function Group({ title, children }) {
@@ -64,6 +66,9 @@ export default function Settings() {
   const { settings, update, t } = useSettings();
   const [sound, setSound] = useState(isSoundOn);
   const [msg, setMsg] = useState(null);
+  const premium = usePremium();
+  const [paywall, setPaywall] = useState(false);
+  const [payMsg, setPayMsg] = useState(null);
   const [editing, setEditing] = useState(!settings.name);
   const [draftName, setDraftName] = useState(settings.name || '');
 
@@ -175,6 +180,22 @@ export default function Settings() {
           <Switch on={settings.reminder.on} onClick={() => setReminder({ on: !settings.reminder.on })} label={t('plan.reminder')} />
         </Row>
       </Group>
+
+      <Group title={t('pay.full')}>
+        {premium ? (
+          <Row icon={Crown} label={t('pay.active')} hint={t('pay.activeHint')} />
+        ) : (
+          <Row icon={Crown} label={t('pay.unlock')} hint={t('pay.barHint')} onClick={() => setPaywall(true)} />
+        )}
+        {!premium && (
+          <Row icon={RefreshCw} label={t('pay.restore')} onClick={async () => {
+            const r = await restorePremium();
+            setPayMsg(r === 'ok' ? { ok: true, text: t('pay.thanks') } : { ok: false, text: t(r === 'none' ? 'pay.noneFound' : 'pay.unavailable') });
+          }} />
+        )}
+      </Group>
+      {payMsg && <p role="status" className={cn('mt-2 px-1 text-sm font-bold', payMsg.ok ? 'text-ok' : 'text-redpen')}>{payMsg.text}</p>}
+      <PaywallSheet open={paywall} onClose={() => setPaywall(false)} />
 
       <Group title={t('set.data')}>
         <Row icon={RotateCcw} label={t('set.reset')} danger onClick={() => { if (window.confirm(t('set.resetConfirm'))) { resetStats(); setMsg({ ok: true, text: '✓' }); } }} />
