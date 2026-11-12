@@ -16,7 +16,7 @@ import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
-import { resumeKey, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
+import { resumeKey, resumeIds, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
 import { saveLast, loadLast } from '@/lib/lastrun';
 
 const DAILY_KEY = 'lq_daily_plan_v1';
@@ -102,7 +102,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
 
   // an unfinished run of exactly this set (same tasks, same mode) continues where it stopped
   const rKey = useMemo(() => resumeKey(set, mode, settings.grade), [set, mode, settings.grade]);
-  const saved = useMemo(() => loadResume(rKey, qs.length), [rKey, qs.length]);
+  const saved = useMemo(() => loadResume(rKey, set, mode, settings.grade), [rKey, set, mode, settings.grade]);
   // fixing mode: start from the last finished attempt (unless a fixing run is already being continued)
   const last = useMemo(() => (fixAsked && !saved ? loadLast(set, settings.grade) : null), [fixAsked, saved, set, settings.grade]);
   const fixing = !!(saved?.fix || last);
@@ -134,7 +134,7 @@ function Session({ set, mode, fix: fixAsked, t, settings, onRestart, onExit, onD
     const touched = answers.some((a) => a !== null && a !== '') || checks.some(Boolean);
     if (!touched) return;
     saveResume(rKey, {
-      meta: metaFor(set, settings.grade, mode), idx, answers, checks, reveal, mistakes, fix: fixing, skipped, left,
+      meta: metaFor(set, settings.grade, mode), ...resumeIds(qs), idx, answers, checks, reveal, mistakes, fix: fixing, skipped, left,
       ms: Date.now() - started.current, answered: answers.filter((a) => a !== null && a !== '').length,
     });
   }, [rKey, set, settings.grade, mode, idx, answers, checks, reveal, mistakes, Math.floor(elapsed / 5)]); // eslint-disable-line react-hooks/exhaustive-deps

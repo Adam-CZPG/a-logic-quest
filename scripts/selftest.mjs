@@ -137,7 +137,7 @@ for (let seed = 0; seed < 400; seed++) {
     if (m && FEM.has(m[1]) !== m[2].endsWith('a')) fail(`cs: gender mismatch "${m[1]} ${m[2]}"`, q);
   });
 }
-for (const lang of ['ru', 'uk']) {
+for (const lang of ['uk']) {
   for (let seed = 0; seed < 100; seed++) {
     const set = engine.buildTopicSet({ subject: 'math', grade: 5, topic: 'slovni', lang, curriculum: 'cz', count: 10, seed });
     set.questions.forEach((q) => { if (/\((а|ла)\)/.test(q.text)) fail(`${lang}: unresolved gender form`, q); });
@@ -178,11 +178,33 @@ for (const lang of ['ru', 'uk']) {
   if (k === rs.resumeKey(set, 'sim', 5)) fail('resume: sim and practice share a key');
   const answers = set.questions.map((q, i) => (i < 4 ? 0 : null));
   rs.saveResume(k, { meta: rs.metaFor(set, 5, 'practice'), idx: 4, answers, checks: answers.map(() => null), reveal: answers.map(() => false), mistakes: 1, ms: 90000, answered: 4 });
-  const back = rs.loadResume(k, set.questions.length);
+  const back = rs.loadResume(k, set, 'practice', 5);
   if (!back || back.idx !== 4 || back.answered !== 4 || back.ms !== 90000) fail('resume: saved run not restored');
   if (rs.listResume((m) => m.kind === 'daily').length !== 1) fail('resume: daily run not listed');
   rs.clearResume(k);
-  if (rs.loadResume(k, set.questions.length)) fail('resume: finished run still there');
+  if (rs.loadResume(k, set, 'practice', 5)) fail('resume: finished run still there');
+  // math and Czech tests come back too: after switching the interface language (math texts change)
+  for (const subject of ['math', 'czech', 'english']) {
+    const a = engine.buildMockTest({ subject, grade: 5, number: 2, lang: 'cs', curriculum: 'cz' });
+    const b = engine.buildMockTest({ subject, grade: 5, number: 2, lang: 'uk', curriculum: 'cz' });
+    const ka = rs.resumeKey(a, 'practice', 5);
+    if (ka !== rs.resumeKey(b, 'practice', 5)) fail(`resume ${subject}: key depends on the interface language`);
+    const ans = a.questions.map((q, i) => (i < 3 ? q.answer : null));
+    rs.saveResume(ka, { meta: rs.metaFor(a, 5, 'practice'), ...rs.resumeIds(a.questions), idx: 3, answers: ans, checks: ans.map(() => null), reveal: ans.map(() => false), mistakes: 0, ms: 1000, answered: 3 });
+    const got = rs.loadResume(ka, b, 'practice', 5);
+    if (!got || got.idx !== 3 || got.answers.filter((x) => x !== null).length !== 3) fail(`resume ${subject}: run lost after a language switch`);
+    rs.clearResume(ka);
+  }
+  // a run saved by an older version (key = hash of task ids) is still found and moved to the new key
+  {
+    const a = engine.buildMockTest({ subject: 'czech', grade: 5, number: 3, lang: 'cs', curriculum: 'cz' });
+    const old = `mock:czech:5:practice:${(await load('/src/exam/rng.js')).hashString(a.questions.map((q) => q.id).join('|'))}`;
+    const ans = a.questions.map((q, i) => (i < 2 ? q.answer : null));
+    rs.saveResume(old, { meta: rs.metaFor(a, 5, 'practice'), idx: 2, answers: ans, checks: ans.map(() => null), reveal: ans.map(() => false), mistakes: 0, ms: 1000, answered: 2 });
+    const got = rs.loadResume(rs.resumeKey(a, 'practice', 5), a, 'practice', 5);
+    if (!got || got.idx !== 2) fail('resume: run saved by an older version lost');
+    if (rs.listResume().length !== 1) fail('resume: old run not moved to the new key');
+  }
   delete globalThis.localStorage;
 }
 

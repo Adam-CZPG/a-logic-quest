@@ -1,21 +1,19 @@
 import en from './locales/en';
 import cs from './locales/cs';
 import uk from './locales/uk';
-import ru from './locales/ru';
 import de from './locales/de';
 import sk from './locales/sk';
 
-// The four languages most used by families in Czechia + German for Germany.
+// Czech, Ukrainian, English, Slovak + German for Germany (Russian removed; old Russian users fall back to the device language).
 export const LANGS = [
   { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
   { code: 'uk', name: 'Українська', flag: '🇺🇦' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
 ];
 
-const DICTS = { en, cs, uk, ru, de, sk };
+const DICTS = { en, cs, uk, de, sk };
 
 export function isRtl() {
   return false;
