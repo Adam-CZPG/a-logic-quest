@@ -6,11 +6,9 @@ import { currencyFor } from '@/i18n';
 import { getOffer, buyPremium, restorePremium, usePremium } from '@/lib/premium';
 import { haptic } from '@/lib/native';
 
-// shown until Play answers (or in the browser): 599 crossed out, 299 as the price
+// shown until Play answers (or in the browser); the real price always comes from Google Play
 function fallbackOffer(lang, curriculum) {
-  const cur = currencyFor(lang, curriculum);
-  if (cur === 'Kč') return { price: '299 Kč', was: '599 Kč' };
-  return { price: '11,99 €', was: '24 €' };
+  return { price: currencyFor(lang, curriculum) === 'Kč' ? '299 Kč' : '11,99 €' };
 }
 
 // "Unlock everything" sheet: what the full version gives, the price, buy and restore.
@@ -87,16 +85,14 @@ export default function PaywallSheet({ open, onClose }) {
                   ))}
                 </ul>
 
-                {/* price as a discount: the old price crossed out */}
+                {/* one honest price, no fake discount */}
                 <div className="mt-4 rounded-2xl border-2 border-dashed border-pen/50 bg-pen-soft/60 p-3 flex items-center gap-3">
                   <span className="flex-1 min-w-0">
                     <span className="block text-xs font-bold uppercase tracking-wide text-ink-soft">{t('pay.once')}</span>
                     <span className="flex items-baseline gap-2 flex-wrap">
-                      {shown.was && <s className="text-ink-soft font-bold tabular" aria-label={t('pay.was', { p: shown.was })}>{shown.was}</s>}
                       <span className="font-heading font-extrabold text-3xl text-pen tabular">{shown.price}</span>
                     </span>
                   </span>
-                  {shown.was && <span className="rounded-full bg-redpen text-white text-xs font-extrabold px-2 py-1 -rotate-6">−50 %</span>}
                 </div>
 
                 <button onClick={buy} disabled={!!busy}

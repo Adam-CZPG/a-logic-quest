@@ -608,7 +608,6 @@ export default {
   "pay.perk3": "Alle Fächer und Klassen, auch neue Runden",
   "pay.perk4": "Keine Werbung, kein Abo",
   "pay.once": "Einmalige Zahlung, für immer",
-  "pay.was": "statt {p}",
   "pay.buy": "Alles freischalten",
   "pay.restore": "Kauf wiederherstellen",
   "pay.note": "Bezahlung über Google Play",

@@ -608,7 +608,6 @@ export default {
   "pay.perk3": "All subjects and grades, new rounds too",
   "pay.perk4": "No ads, no subscription",
   "pay.once": "One-time payment, forever",
-  "pay.was": "was {p}",
   "pay.buy": "Unlock everything",
   "pay.restore": "Restore purchase",
   "pay.note": "Paid through Google Play",
