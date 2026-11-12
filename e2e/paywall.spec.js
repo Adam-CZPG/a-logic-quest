@@ -16,8 +16,8 @@ for (const subject of ['math', 'czech']) {
     await page.getByRole('button', { name: 'Test 3', exact: true }).click();
     const pay = page.getByRole('dialog', { name: 'Odemkni všechny testy' });
     await expect(pay).toBeVisible();
-    await expect(pay).toContainText('599 Kč');
     await expect(pay).toContainText('299 Kč');
+    await expect(pay).not.toContainText('599');
     await pay.getByRole('button', { name: 'Zavřít' }).click();
     await expect(pay).toBeHidden();
 

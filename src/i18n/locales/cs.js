@@ -606,7 +606,6 @@ export default {
   "pay.perk3": "Všechny předměty a ročníky, i nová kola",
   "pay.perk4": "Bez reklam a bez předplatného",
   "pay.once": "Jednorázová platba, navždy",
-  "pay.was": "původně {p}",
   "pay.buy": "Odemknout vše",
   "pay.restore": "Obnovit nákup",
   "pay.note": "Platba přes Google Play",
