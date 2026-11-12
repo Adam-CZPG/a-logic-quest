@@ -90,7 +90,7 @@ export async function refreshPremium() {
   }
 }
 
-// price from Play (in the buyer's currency); the crossed-out price is shown as double
+// price from Play, in the buyer's currency
 export async function getOffer() {
   const m = await plugin();
   if (!m) return null;
@@ -98,11 +98,7 @@ export async function getOffer() {
     const { products } = await m.NativePurchases.getProducts({ productIdentifiers: [PRODUCT_ID], productType: m.PURCHASE_TYPE.INAPP });
     const p = (products || []).find((x) => x.identifier === PRODUCT_ID);
     if (!p) return null;
-    let was = null;
-    try {
-      was = new Intl.NumberFormat(undefined, { style: 'currency', currency: p.currencyCode, maximumFractionDigits: 0 }).format(Math.ceil(p.price * 2));
-    } catch {}
-    return { price: p.priceString, was };
+    return { price: p.priceString };
   } catch {
     return null;
   }
