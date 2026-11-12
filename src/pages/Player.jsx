@@ -16,6 +16,8 @@ import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
+import { usePremium, canOpen } from '@/lib/premium';
+import PaywallSheet from '@/components/PaywallSheet';
 import { resumeKey, resumeIds, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
 import { saveLast, loadLast } from '@/lib/lastrun';
 
@@ -34,7 +36,7 @@ function dailyWeak(grade, curriculum) {
   return weak;
 }
 
-function buildSet(kind, params, settings) {
+function buildSet(kind, params, settings, premium) {
   const { lang, grade, curriculum } = settings;
   if (kind === 'duel') {
     // the duel's own subject, grade and country – so both players get the very same tasks
@@ -51,7 +53,8 @@ function buildSet(kind, params, settings) {
     return buildMockTest({ subject, grade, number: Math.min(Math.max(number || 1, 1), 40), lang, curriculum, cycle });
   }
   if (kind === 'topic') {
-    const variant = Number(params.get('v')) || null;
+    // without the full version a "practise this topic" link opens the free set 1
+    const variant = Number(params.get('v')) || (premium ? null : 1);
     return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12, variant, cycle });
   }
   if (kind === 'daily') {
@@ -77,7 +80,8 @@ export default function Player() {
   const navigate = useNavigate();
   const [nonce, setNonce] = useState(0);
 
-  const set = useMemo(() => (WEB_ONLY && kind !== 'duel' ? null : buildSet(kind, params, settings)), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce]);
+  const premium = usePremium();
+  const set = useMemo(() => (WEB_ONLY && kind !== 'duel' ? null : buildSet(kind, params, settings, premium)), [kind, params.toString(), settings.grade, settings.lang, settings.curriculum, nonce, premium]);
   const mode = params.get('mode') === 'sim' ? 'sim' : 'practice';
   // ?fix=1 reopens the last finished attempt so only the red / skipped tasks get fixed ("again" starts fresh)
   const fix = params.get('fix') === '1' && nonce === 0;
@@ -87,6 +91,14 @@ export default function Player() {
       <div className="paper min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-lg">{kind === 'mistakes' ? t('home.noMistakes') : '—'}</p>
         <Link to="/" className="rounded-2xl bg-pen text-on-pen px-5 py-3 font-bold">{t('res.home')}</Link>
+      </div>
+    );
+  }
+  // a paid test opened without the full version (old link, unfinished run from before): offer it
+  if (!canOpen(set.kind, { number: set.number, variant: set.variant })) {
+    return (
+      <div className="paper min-h-screen">
+        <PaywallSheet open onClose={() => navigate(-1)} />
       </div>
     );
   }
