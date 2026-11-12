@@ -229,5 +229,25 @@ export const MOCK_PER_LEVEL = 10;
 export const MOCK_COUNT = MOCK_LEVELS * MOCK_PER_LEVEL;
 // every topic has fixed practice variants so the child can see what is done (green)
 export const TOPIC_VARIANTS = 5;
+export const TOPIC_SET_SIZE = 12; // tasks in one topic set
 
 
+
+// what the app holds for a country, grade by grade – shown to parents before they pay
+// [{ grade, subjects: [{ subject, optional, tests, sets, tasks }] }]
+export function contentSummary(curriculum) {
+  const c = CURRICULA[curriculum] || CURRICULA.intl;
+  return gradesFor(c.id).map((grade) => ({
+    grade,
+    subjects: allSubjects(c.id).map((subject) => {
+      const sets = topicsFor(subject, grade).length * TOPIC_VARIANTS;
+      return {
+        subject,
+        optional: !c.subjects.includes(subject),
+        tests: MOCK_COUNT,
+        sets,
+        tasks: MOCK_COUNT * blueprintFor(subject, grade).length + sets * TOPIC_SET_SIZE,
+      };
+    }),
+  }));
+}

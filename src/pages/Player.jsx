@@ -16,6 +16,7 @@ import Scratchpad from '@/components/exam/Scratchpad';
 import { haptic } from '@/lib/native';
 import { playWin, playBlock, playClick, playTimeUp } from '@/lib/sfx';
 import { cn } from '@/lib/utils';
+import { TOPIC_SET_SIZE } from '@/exam/taxonomy';
 import { usePremium, canOpen } from '@/lib/premium';
 import PaywallSheet from '@/components/PaywallSheet';
 import { resumeKey, resumeIds, metaFor, loadResume, saveResume, clearResume } from '@/lib/resume';
@@ -55,7 +56,7 @@ function buildSet(kind, params, settings, premium) {
   if (kind === 'topic') {
     // without the full version a "practise this topic" link opens the free set 1
     const variant = Number(params.get('v')) || (premium ? null : 1);
-    return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: 12, variant, cycle });
+    return buildTopicSet({ subject, grade, topic: params.get('topic'), lang, curriculum, count: TOPIC_SET_SIZE, variant, cycle });
   }
   if (kind === 'daily') {
     // the plan is fixed for the whole day (weak topics taken in the morning), so a break never changes it

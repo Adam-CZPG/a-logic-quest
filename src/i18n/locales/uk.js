@@ -621,4 +621,10 @@ export default {
   "pay.full": "Повна версія",
   "pay.active": "Повна версія активна ✓",
   "pay.activeHint": "Усі тести й набори відкриті",
+  // what the app holds (shown before paying)
+  "cat.show": "Що саме є в застосунку?",
+  "cat.subject": "Предмет",
+  "cat.tasks": "Завдання",
+  "cat.optional": "за бажанням",
+  "cat.free": "Безкоштовно: тести 1–2 і набір 1 кожної теми.",
 };

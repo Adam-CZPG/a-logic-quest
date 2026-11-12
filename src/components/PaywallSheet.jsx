@@ -5,6 +5,7 @@ import { useSettings } from '@/lib/settings';
 import { currencyFor } from '@/i18n';
 import { getOffer, buyPremium, restorePremium, usePremium } from '@/lib/premium';
 import { haptic } from '@/lib/native';
+import ContentSummary from '@/components/ContentSummary';
 
 // shown until Play answers (or in the browser); the real price always comes from Google Play
 function fallbackOffer(lang, curriculum) {
@@ -63,7 +64,7 @@ export default function PaywallSheet({ open, onClose }) {
     <AnimatePresence>
       {open && (
         <motion.div className="fixed inset-0 z-50 bg-ink/40 grid place-items-end sm:place-items-center p-3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-          <motion.div role="dialog" aria-modal="true" aria-label={t('pay.title')} className="sheet relative w-full max-w-md p-4 pt-5"
+          <motion.div role="dialog" aria-modal="true" aria-label={t('pay.title')} className="sheet relative w-full max-w-md p-4 pt-5 max-h-[92vh] overflow-y-auto"
             initial={{ y: 40 }} animate={{ y: 0 }} exit={{ y: 40 }} onClick={(e) => e.stopPropagation()} style={{ marginBottom: 'var(--safe-bottom)' }}>
             <button onClick={onClose} aria-label={t('common.close')} className="absolute top-3 end-3 w-9 h-9 rounded-full grid place-items-center hover:bg-pen-soft"><X className="w-5 h-5" /></button>
 
@@ -84,6 +85,7 @@ export default function PaywallSheet({ open, onClose }) {
                     <li key={k} className="flex gap-2 text-[15px]"><Check className="w-5 h-5 text-ok shrink-0 mt-0.5" />{t(k)}</li>
                   ))}
                 </ul>
+                <ContentSummary className="mt-3" />
 
                 {/* one honest price, no fake discount */}
                 <div className="mt-4 rounded-2xl border-2 border-dashed border-pen/50 bg-pen-soft/60 p-3 flex items-center gap-3">

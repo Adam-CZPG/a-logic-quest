@@ -10,6 +10,7 @@ import { syncReminder, isNative } from '@/lib/native';
 import { cn } from '@/lib/utils';
 import { usePremium, restorePremium } from '@/lib/premium';
 import PaywallSheet from '@/components/PaywallSheet';
+import ContentSummary from '@/components/ContentSummary';
 import {
   Sun, Moon, Monitor, Pencil, Check, GraduationCap, Globe2, Languages, Palette,
   Volume2, Bell, RotateCcw, Info, BookOpen, Crown, RefreshCw,
@@ -193,6 +194,7 @@ export default function Settings() {
             setPayMsg(r === 'ok' ? { ok: true, text: t('pay.thanks') } : { ok: false, text: t(r === 'none' ? 'pay.noneFound' : 'pay.unavailable') });
           }} />
         )}
+        <div className="px-3.5 py-2.5"><ContentSummary /></div>
       </Group>
       {payMsg && <p role="status" className={cn('mt-2 px-1 text-sm font-bold', payMsg.ok ? 'text-ok' : 'text-redpen')}>{payMsg.text}</p>}
       <PaywallSheet open={paywall} onClose={() => setPaywall(false)} />
