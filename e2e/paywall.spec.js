@@ -42,3 +42,19 @@ test('full version: no locks, settings say it is active', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByText('Plná verze je aktivní ✓')).toBeVisible();
 });
+
+test('parents see what the app holds: tests, sets and tasks per grade and subject', async ({ page }) => {
+  await freshChild(page, { free: true });
+  await openSubject(page, 'math');
+  await page.getByRole('button', { name: 'Test 3', exact: true }).click();
+  const pay = page.getByRole('dialog', { name: 'Odemkni všechny testy' });
+  await pay.getByRole('button', { name: 'Co přesně je v aplikaci?' }).click();
+  // grade 5 first: maths 40 tests, 45 sets, 40×16 + 45×12 = 1 180 tasks
+  const g5 = pay.getByRole('region', { name: '5. ročník' });
+  const math = g5.getByRole('row', { name: /Matematika/ });
+  await expect(math).toContainText('40');
+  await expect(math).toContainText('45');
+  await expect(math).toContainText(/1\s?180/);
+  await expect(g5.getByRole('row', { name: /Český jazyk/ })).toBeVisible();
+  await expect(pay.getByRole('region', { name: '9. ročník' })).toBeVisible();
+});

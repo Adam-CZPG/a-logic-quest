@@ -621,4 +621,10 @@ export default {
   "pay.full": "Plná verze",
   "pay.active": "Plná verze je aktivní ✓",
   "pay.activeHint": "Všechny testy a sady jsou odemčené",
+  // what the app holds (shown before paying)
+  "cat.show": "Co přesně je v aplikaci?",
+  "cat.subject": "Předmět",
+  "cat.tasks": "Úlohy",
+  "cat.optional": "volitelně",
+  "cat.free": "Zdarma: testy 1–2 a sada 1 každého tématu.",
 };

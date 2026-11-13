@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, Timer, Dumbbell, Check, CircleHelp, RotateCcw, X, Lock } from 'lucide-react';
 import { useSettings } from '@/lib/settings';
 import { getStats, topicAccuracy, getRound, startNewRound } from '@/exam/stats';
-import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
+import { subjectsFor, SUBJECTS, MOCK_LEVELS, MOCK_PER_LEVEL, MOCK_COUNT, TOPIC_VARIANTS, TOPIC_SET_SIZE, topicsFor, TOPIC_EMOJI, blueprintFor, subjectLevel } from '@/exam/taxonomy';
 import { cn } from '@/lib/utils';
 import { listResume } from '@/lib/resume';
 import { leftToFix } from '@/lib/lastrun';
@@ -44,7 +44,7 @@ export default function Subject() {
   };
   const minutes = SUBJECTS[subject].minutes;
   const nTasks = blueprintFor(subject, grade).length;
-  const SET_SIZE = 12; // tasks in one topic set (see Player)
+  const SET_SIZE = TOPIC_SET_SIZE;
   const topics = topicsFor(subject, grade);
   const tabs = [['tests', t('tab.tests')], ['topics', t('tab.topics')]];
 

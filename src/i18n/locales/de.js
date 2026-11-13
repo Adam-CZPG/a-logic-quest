@@ -623,4 +623,10 @@ export default {
   "pay.full": "Vollversion",
   "pay.active": "Vollversion ist aktiv ✓",
   "pay.activeHint": "Alle Tests und Sets sind freigeschaltet",
+  // what the app holds (shown before paying)
+  "cat.show": "Was genau ist enthalten?",
+  "cat.subject": "Fach",
+  "cat.tasks": "Aufgaben",
+  "cat.optional": "freiwillig",
+  "cat.free": "Gratis: Test 1–2 und Set 1 jedes Themas.",
 };
